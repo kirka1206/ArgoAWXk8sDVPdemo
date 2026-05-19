@@ -58,6 +58,13 @@ flowchart LR
 | `scripts/destroy.sh` | Removes the demo namespaces and local port-forwards. |
 | `docs/use-cases.md` | Use cases and demo script. |
 
+## Russian documentation
+
+- [README.ru.md](README.ru.md) - full Russian project description.
+- [docs/use-cases.ru.md](docs/use-cases.ru.md) - use cases and demonstration scenario in Russian.
+- [docs/demo-talk-track.ru.md](docs/demo-talk-track.ru.md) - short talk track for a live demo.
+- [docs/operations.ru.md](docs/operations.ru.md) - operational runbook and troubleshooting notes.
+
 ## Requirements
 
 - Docker Desktop Kubernetes or another Kubernetes cluster with a default StorageClass.
@@ -142,4 +149,3 @@ Keep the same split:
 
 - desired VM/Kubernetes state lives in Git and is reconciled by Argo CD;
 - guest OS configuration is executed by AWX/Ansible.
-
