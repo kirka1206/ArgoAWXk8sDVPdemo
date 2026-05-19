@@ -1,0 +1,30 @@
+- name: Configure Linux pods managed by Argo CD
+  hosts: linux_pods
+  gather_facts: true
+  tasks:
+    - name: Write Ansible marker file inside the pod OS
+      ansible.builtin.copy:
+        dest: /etc/ansible-managed-by-awx
+        content: |
+          managed_by=AWX
+          deployed_by=Argo CD
+          host={{ inventory_hostname }}
+          kernel={{ ansible_kernel }}
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Install a small demo package
+      ansible.builtin.command: apk add --no-cache htop
+      become: true
+      register: apk_result
+      changed_when: "'OK:' in apk_result.stdout or 'OK:' in apk_result.stderr"
+
+    - name: Read marker back
+      ansible.builtin.command: cat /etc/ansible-managed-by-awx
+      register: marker
+      changed_when: false
+
+    - name: Show result
+      ansible.builtin.debug:
+        var: marker.stdout_lines

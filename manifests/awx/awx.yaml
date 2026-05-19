@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: awx
+---
+apiVersion: awx.ansible.com/v1beta1
+kind: AWX
+metadata:
+  name: awx-demo
+  namespace: awx
+spec:
+  service_type: clusterip
+  ingress_type: none
+  hostname: awx-demo.local
+  postgres_storage_class: standard
+  postgres_storage_requirements:
+    requests:
+      storage: 4Gi
+  projects_persistence: false
+  web_resource_requirements:
+    requests:
+      cpu: 250m
+      memory: 1Gi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  task_resource_requirements:
+    requests:
+      cpu: 250m
+      memory: 1Gi
+    limits:
+      cpu: "1"
+      memory: 2Gi
