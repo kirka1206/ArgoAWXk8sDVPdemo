@@ -1,108 +1,78 @@
-# Argo CD + AWX + Kubernetes + DVP demo
+# Демо-стенд Argo CD + AWX + Kubernetes + DVP
 
-This project builds a local, repeatable demo stand that shows how GitOps and Ansible can work together in a Kubernetes-native environment.
+Проект показывает, как GitOps и Ansible/AWX дополняют друг друга в Kubernetes-native платформе и в Deckhouse Virtualization Platform.
 
-The extended scenario set is designed for presale and architecture discussions. It shows how a Git change can drive application rollout, infrastructure reconciliation, DVP-style VM lifecycle changes, AWX post-configuration and validation.
+Ключевая граница:
 
-The important boundary:
+- Argo CD управляет Kubernetes/DVP-ресурсами из Git.
+- AWX/Ansible выполняет настройку внутри ОС уже созданных workload'ов или виртуальных машин.
 
-- Argo CD manages Kubernetes resources from Git.
-- AWX/Ansible manages the OS/userspace inside the workloads that Argo CD created.
+В локальном Docker Desktop Kubernetes для простого запуска используются два Linux pod'а с SSH. В DKP/DVP-кластере дополнительно разворачивается настоящий минимальный DVP-контур: приложение, tenant и тестовая VM `postgres-vm`.
 
-For a DVP/KubeVirt-style platform the same pattern maps cleanly to CRDs such as `VirtualMachine`, `VirtualDisk`, `VirtualImage`, `VirtualMachineClass` and Services. Argo CD still reconciles Kubernetes objects. Ansible still handles operational configuration inside the guest OS over SSH or another remote execution channel.
+## Что демонстрирует стенд
 
-## Components
+1. Git является source of truth для манифестов, сценариев и Ansible-кода.
+2. Argo CD применяет desired state без ручного `kubectl apply`.
+3. DVP VM создаётся декларативно через CRD `virtualization.deckhouse.io`.
+4. AWX запускает Ansible job и показывает, зачем нужен procedural слой после GitOps.
+5. Drift, rollback, scale и tenant onboarding показываются как изменения в Git.
 
-| Component | Namespace | Purpose |
+## Компоненты
+
+| Компонент | Namespace | Роль |
 | --- | --- | --- |
-| Gitea | `gitea` | Local Git server used as the single source of truth for manifests and Ansible code. |
-| Argo CD | `argocd` | Watches the Gitea repository and reconciles Kubernetes resources. |
-| AWX | `awx` | Runs Ansible jobs against the Linux pods. |
-| Demo OS pods | `demo-os` | Two SSH-enabled Linux pods managed by Argo CD and configured by AWX. |
-| Demo platform | `demo-prod` | Extended GitOps scenario with app, RBAC, Ingress, monitoring placeholder and DVP VM template. |
-| Tenant example | `customer-a` | Self-service tenant onboarding example. |
+| Gitea | `gitea` | Git-сервер стенда, источник манифестов и playbook'ов. |
+| Argo CD | `argocd` | Синхронизирует desired state из Git. |
+| AWX | `awx` | Запускает Ansible job'ы для настройки ОС/userspace. |
+| Demo OS pods | `demo-os` | Локальный pod-only сценарий для Docker Desktop. |
+| Demo platform | `demo-prod` | Расширенный DKP/DVP сценарий: приложение, RBAC, Ingress, заготовка monitoring-объектов, DVP VM. |
+| Tenant example | `customer-a` | Пример self-service onboarding tenant'а. |
 
-## Architecture
-
-```mermaid
-flowchart LR
-  User["Demo operator"] --> GiteaUI["Gitea UI\nlocalhost:3001"]
-  User --> ArgoUI["Argo CD UI\nlocalhost:3000"]
-  User --> AWXUI["AWX UI\nlocalhost:3002"]
-
-  subgraph Git["Gitea repository: codex/demo"]
-    K8sManifests["gitops/demo-manifests\nNamespace, Deployments, Services"]
-    Playbook["awx/os-demo-playbook.yml\nAnsible automation"]
-  end
-
-  GiteaUI --> Git
-  Argo["Argo CD Application\nansible-os-pods"] -->|pulls manifests| Git
-  Argo -->|syncs desired state| K8s["Kubernetes API"]
-  K8s --> Pods["ol-node-1 / ol-node-2\nSSH + Python + sudo"]
-
-  AWX["AWX Job Template\nConfigure OS pods"] -->|pulls playbook| Git
-  AWX -->|runs Ansible over SSH| Pods
-  AWX --> Marker["/etc/ansible-managed-by-awx\nhtop package"]
-```
-
-Extended presale flow:
+## Архитектура
 
 ```mermaid
 flowchart LR
-  Commit["Git commit"] --> ArgoCD["ArgoCD automated sync"]
-  ArgoCD --> K8s["Kubernetes resources"]
-  ArgoCD --> DVP["DVP VM resources\nadaptable CRD template"]
-  DVP --> AWX["AWX post-configuration"]
-  K8s --> Monitor["Validation / Monitoring"]
-  AWX --> Monitor
+  Commit["Git commit"] --> Gitea["Gitea\ncodex/demo"]
+  Gitea --> Argo["Argo CD\nansible-os-pods / demo-platform"]
+  Argo --> K8s["Kubernetes API"]
+  K8s --> Pods["demo-os pod'ы\nлокальный сценарий"]
+  K8s --> App["demo-app\nnamespace demo-prod"]
+  K8s --> DVP["DVP VM\npostgres-vm"]
+  DVP --> AWX["AWX\npost-configuration"]
+  Pods --> AWX
+  AWX --> Validation["Validation / marker / stdout"]
 ```
 
-## Repository layout
+## Структура репозитория
 
-| Path | Description |
+| Путь | Назначение |
 | --- | --- |
-| `gitops/demo-manifests/` | Kubernetes desired state that Argo CD syncs. |
-| `gitops/environments/prod/` | Extended prod demo with centralized values, app, RBAC, quotas and monitoring placeholder. |
-| `gitops/environments/dev/`, `gitops/environments/test/` | Placeholders for future environment overlays. |
-| `gitops/infrastructure/dvp/` | DVP VM reference template. The active minimal VM manifest is in `gitops/environments/prod/dvp-postgres-vm.yaml`. |
-| `gitops/awx/` | AWX playbooks, PostSync hook example and safe dummy secret example. |
-| `gitops/environments/prod/tenants/customer-a/` | Self-service tenant provisioning example. |
-| `scenarios/` | Step-by-step demo scenarios. |
-| `awx/os-demo-playbook.yml` | Playbook that configures the OS layer inside the demo pods. |
-| `awx/ansible-inventory.ini` | Static inventory reference for manual runs or documentation. |
-| `manifests/argocd/` | Argo CD install manifest and Application resource. |
-| `manifests/gitea/` | Gitea deployment, PVC and services. |
-| `manifests/awx/` | AWX custom resource and local projects PVC compatibility manifest. |
-| `scripts/bootstrap.sh` | Full repeatable installation and configuration script. |
-| `scripts/run-demo-job.sh` | Launches the AWX job and verifies marker files in the pods. |
-| `scripts/port-forward.sh` | Reopens UI port-forwards. |
-| `scripts/stop-port-forward.sh` | Stops UI port-forwards started by the scripts. |
-| `scripts/destroy.sh` | Removes the demo namespaces and local port-forwards. |
-| `docs/use-cases.md` | Use cases and demo script. |
+| `gitops/demo-manifests/` | Локальный pod-only desired state для Application `ansible-os-pods`. |
+| `gitops/environments/prod/` | Расширенный prod-контур для Application `demo-platform`. |
+| `gitops/environments/prod/values.yaml` | Централизованные demo-параметры окружения. |
+| `gitops/environments/prod/dvp-postgres-vm.yaml` | Реальный минимальный DVP manifest для `postgres-vm`. |
+| `gitops/environments/prod/tenants/customer-a/` | Пример self-service tenant. |
+| `gitops/awx/` | AWX playbooks, PostSync hook и пример Secret без реальных токенов. |
+| `gitops/infrastructure/dvp/` | Reference template для DVP VM. |
+| `scenarios/` | Подробные демонстрационные сценарии. |
+| `awx/os-demo-playbook.yml` | Playbook для pod-only сценария `demo-os`. |
+| `manifests/argocd/` | Argo CD Application manifests. |
+| `manifests/dkp/` | Ingress'ы для DKP-кластера. |
+| `scripts/` | Bootstrap, deploy, port-forward, run-demo-job, cleanup. |
+| `docs/` | Русские use cases, runbook и talk track. |
 
-## Russian documentation
+## Требования
 
-- [README.ru.md](README.ru.md) - full Russian project description.
-- [docs/use-cases.ru.md](docs/use-cases.ru.md) - use cases and demonstration scenario in Russian.
-- [docs/demo-talk-track.ru.md](docs/demo-talk-track.ru.md) - short talk track for a live demo.
-- [docs/operations.ru.md](docs/operations.ru.md) - operational runbook and troubleshooting notes.
-
-## Requirements
-
-- Docker Desktop Kubernetes or another Kubernetes cluster with a default StorageClass.
 - `kubectl`
 - `git`
 - `curl`
 - `jq`
-- Network access to pull images from Docker Hub, Quay and the AWX operator repository.
+- Kubernetes-кластер с default StorageClass
+- Для DVP-сценария: DKP/DVP с CRD `virtualization.deckhouse.io`
 
-The default local ports are:
+Для локального сценария достаточно Docker Desktop Kubernetes. Для DVP-сценария используется кластер `d8.kir.lab`.
 
-- Argo CD: `3000`
-- Gitea: `3001`
-- AWX: `3002`
-
-## Quick start
+## Быстрый локальный запуск
 
 ```bash
 git clone https://github.com/kirka1206/ArgoAWXk8sDVPdemo.git
@@ -110,121 +80,147 @@ cd ArgoAWXk8sDVPdemo
 ./scripts/bootstrap.sh
 ```
 
-The script prints UI URLs and generated passwords at the end.
+Скрипт поднимает Gitea, Argo CD, AWX, Application `ansible-os-pods` и два Linux pod'а.
 
-Run the Ansible part of the demo:
+Запуск AWX job:
 
 ```bash
 ./scripts/run-demo-job.sh
 ```
 
-For DKP deployment through Ingress, run:
-
-```bash
-AWX_URL=http://awx-demo.d8.kir.lab ./scripts/run-demo-job.sh
-```
-
-## DKP deployment
-
-For the `d8.kir.lab` DKP cluster, use:
+## Запуск в DKP/DVP d8.kir.lab
 
 ```bash
 ./scripts/deploy-dkp.sh
 ```
 
-The script expects kube-context `codex-api.d8.kir.lab` and creates DKP ingress resources:
+Скрипт ожидает kube-context `codex-api.d8.kir.lab` и создаёт Ingress'ы:
 
 - Gitea: `http://gitea-awx.d8.kir.lab`
 - Argo CD: `http://argocd-awx.d8.kir.lab`
 - AWX: `http://awx-demo.d8.kir.lab`
 
-Make sure these names resolve to the DKP ingress address in DNS or `/etc/hosts`.
+Для запуска AWX job в DKP используйте Ingress, а не случайный старый port-forward:
 
-## Scenario catalog
+```bash
+AWX_URL=http://awx-demo.d8.kir.lab ./scripts/run-demo-job.sh
+```
 
-| Scenario | Focus |
-| --- | --- |
-| [01. Initial Deploy](scenarios/01-initial-deploy.md) | First Git-driven rollout of namespace, RBAC, app, Ingress, VM template and monitoring placeholder. |
-| [02. Scale Application](scenarios/02-scale-application.md) | Scaling `demo-app` from Git instead of `kubectl scale`. |
-| [03. Drift Correction](scenarios/03-drift-correction.md) | ArgoCD self-healing after manual replica drift. |
-| [04. VM Resize](scenarios/04-vm-resize.md) | CPU/RAM change through Git for an adaptable DVP VM manifest. |
-| [05. AWX Post-Configuration](scenarios/05-awx-post-config.md) | AWX bootstrap, PostgreSQL tuning and validation after ArgoCD changes infrastructure. |
-| [06. Broken Release And Rollback](scenarios/06-broken-release-and-rollback.md) | ImagePullBackOff and recovery through `git revert`. |
-| [07. Self-Service Tenant](scenarios/07-self-service-tenant.md) | Tenant onboarding by adding a Git directory. |
+## Расширенный DVP-контур
 
-## Extended GitOps objects
+Application `demo-platform` синхронизирует путь:
 
-The extended Application example is:
+```text
+gitops/environments/prod
+```
+
+Создать Application:
 
 ```bash
 kubectl apply -f manifests/argocd/application-demo-platform.yaml
 ```
 
-It uses:
+Проверить:
 
-- automated sync;
-- `prune: true`;
-- `selfHeal: true`;
-- retry limit `5`;
-- sync waves for namespace/RBAC, infrastructure, app, monitoring and AWX hook.
-
-The centralized demo values live in:
-
-```text
-gitops/environments/prod/values.yaml
+```bash
+kubectl get application -n argocd demo-platform
+kubectl get deploy,svc,ingress -n demo-prod
+kubectl get vi,vd,vm -n demo-prod -o wide
+kubectl get ns customer-a
 ```
 
-The current manifests are plain Kubernetes YAML, so values are documented and mirrored in the demo manifests. If the repo is later converted to Helm or Kustomize replacements, this file should become the single input for generated manifests.
+Ожидаемое состояние DVP VM:
 
-## What the bootstrap script does
+```text
+VirtualImage demo-alpine-cloud: Ready
+VirtualDisk postgres-vm-root: Ready, 256Mi
+VirtualMachine postgres-vm: Running
+CPU: 1 core, coreFraction 5%
+RAM: 512Mi
+```
 
-1. Installs Argo CD.
-2. Installs Gitea.
-3. Creates a Gitea user and repository.
-4. Pushes this project into Gitea.
-5. Creates an Argo CD Application pointing to `gitops/demo-manifests`.
-6. Waits for Argo CD to deploy `ol-node-1` and `ol-node-2`.
-7. Installs the AWX operator and AWX.
-8. Configures AWX inventory, group, hosts, machine credential, project, execution environment and job template.
-9. Starts local port-forwards for all UIs.
+VM специально минимальная, чтобы стенд не потреблял лишние ресурсы.
 
-## Validation commands
+## Сценарии
+
+| Сценарий | Что показывает |
+| --- | --- |
+| [01. Initial Deploy](scenarios/01-initial-deploy.md) | Первичное развёртывание из Git. |
+| [02. Scale Application](scenarios/02-scale-application.md) | Scale через Git, а не `kubectl scale`. |
+| [03. Drift Correction](scenarios/03-drift-correction.md) | Self-healing после ручного drift. |
+| [04. VM Resize](scenarios/04-vm-resize.md) | Изменение параметров DVP VM через Git. |
+| [05. AWX Post-Configuration](scenarios/05-awx-post-config.md) | Post-config ОС/БД через AWX. |
+| [06. Broken Release And Rollback](scenarios/06-broken-release-and-rollback.md) | Ошибка image tag и rollback через Git. |
+| [07. Self-Service Tenant](scenarios/07-self-service-tenant.md) | Tenant onboarding через каталог в Git. |
+
+## Что делает bootstrap
+
+1. Устанавливает Argo CD.
+2. Устанавливает Gitea.
+3. Создаёт пользователя и репозиторий в Gitea.
+4. Загружает проект в Gitea.
+5. Создаёт Application `ansible-os-pods`.
+6. Ждёт pod'ы `ol-node-1` и `ol-node-2`.
+7. Устанавливает AWX operator и AWX.
+8. Создаёт AWX inventory, hosts, credential, project, execution environment и job template.
+9. Поднимает локальные port-forward'ы для UI.
+
+## Проверка pod-only сценария
 
 ```bash
 kubectl get application -n argocd ansible-os-pods
-kubectl get pods -n gitea
-kubectl get pods -n argocd
-kubectl get pods -n awx
 kubectl get pods -n demo-os
 kubectl exec -n demo-os deploy/ol-node-1 -- cat /etc/ansible-managed-by-awx
 kubectl exec -n demo-os deploy/ol-node-2 -- cat /etc/ansible-managed-by-awx
 ```
 
-Extended scenario checks:
-
-```bash
-argocd app get demo-platform
-kubectl get deploy,svc,ingress -n demo-prod
-kubectl get resourcequota,limitrange -n demo-prod
-kubectl get ns customer-a
-```
-
-Expected marker content:
+Ожидаемый marker:
 
 ```text
 managed_by=AWX
 deployed_by=Argo CD
-host=ol-node-1.demo-os.svc.cluster.local
+host=...
 kernel=...
 ```
 
-## Cleanup
+## Troubleshooting
+
+### `run-demo-job.sh` возвращает 401
+
+Частая причина: `localhost:3002` смотрит на старый AWX из другого kube-context. В DKP запускайте так:
 
 ```bash
-./scripts/destroy.sh
+AWX_URL=http://awx-demo.d8.kir.lab ./scripts/run-demo-job.sh
 ```
 
-For scenario-only changes, prefer Git rollback:
+### `demo-platform` OutOfSync
+
+```bash
+kubectl describe application -n argocd demo-platform
+kubectl get events -n demo-prod --sort-by=.lastTimestamp
+```
+
+### DVP disk долго в `Provisioning`
+
+Проверить disk и events:
+
+```bash
+kubectl describe vd postgres-vm-root -n demo-prod
+kubectl get events -n demo-prod --sort-by=.lastTimestamp
+```
+
+Для первого запуска нормально, что image скачивается, а disk импортируется несколько минут.
+
+### AWX долго стартует
+
+```bash
+kubectl get job,pods -n awx
+kubectl logs -n awx job/awx-demo-migration-24.6.1 --tail=100
+```
+
+## Rollback и очистка
+
+Сценарные изменения откатывайте через Git:
 
 ```bash
 git revert HEAD
@@ -232,58 +228,14 @@ git push
 argocd app get demo-platform
 ```
 
-## Troubleshooting
-
-### ArgoCD is OutOfSync
+Удаление локального стенда:
 
 ```bash
-argocd app get demo-platform
-kubectl describe application -n argocd demo-platform
+./scripts/destroy.sh
 ```
 
-Check whether the Git path exists and whether placeholder DVP manifests were accidentally included before adapting the CRD.
-
-### Demo app is ImagePullBackOff
+Для DVP-ресурсов дополнительно проверьте, что удаление VM/disk допустимо для текущего стенда:
 
 ```bash
-kubectl get pods -n demo-prod
-kubectl describe pod -n demo-prod -l app=demo-app
+kubectl get vi,vd,vm -n demo-prod
 ```
-
-This is expected in the broken release scenario. Revert the Git commit to recover.
-
-### AWX hook cannot authenticate
-
-Do not commit real tokens. Create a real Secret from `gitops/awx/secrets/awx-token.example.yaml` using your secure values:
-
-```bash
-kubectl create secret generic awx-api-token \
-  -n demo-prod \
-  --from-literal=url=https://awx.example.local \
-  --from-literal=token=demo-token-replace-me
-```
-
-Replace the example URL and token before using it outside the demo.
-
-## Notes for DVP/KubeVirt adaptation
-
-This demo uses simple Linux pods because it runs on plain Docker Desktop Kubernetes. In a Deckhouse Virtualization Platform or KubeVirt environment, replace `gitops/demo-manifests/os-nodes.yaml` or adapt `gitops/infrastructure/dvp/postgres-vm.template.yaml` with the platform-native VM resources:
-
-- `VirtualMachine`
-- `VirtualDisk`
-- `VirtualImage`
-- `VirtualMachineClass`
-- Services or publishing resources for SSH access
-
-Keep the same split:
-
-- desired VM/Kubernetes state lives in Git and is reconciled by Argo CD;
-- guest OS configuration is executed by AWX/Ansible.
-
-The DKP/DVP lab profile includes one minimal test VM manifest:
-
-- `VirtualImage`: `demo-alpine-cloud`
-- `VirtualDisk`: `postgres-vm-root`, `256Mi`
-- `VirtualMachine`: `postgres-vm`, `1` core, `coreFraction: 5%`, `512Mi` RAM
-
-This is intentionally small for demo clusters with limited resources.

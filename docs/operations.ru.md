@@ -1,12 +1,19 @@
 # Операционная памятка
 
-## Запуск стенда
+## Контуры стенда
+
+В проекте есть два рабочих контура:
+
+- `ansible-os-pods`: локальный pod-only сценарий для Docker Desktop и базовой демонстрации Argo CD + AWX.
+- `demo-platform`: расширенный DKP/DVP сценарий с `demo-app`, tenant `customer-a` и минимальной DVP VM `postgres-vm`.
+
+## Запуск локального стенда
 
 ```bash
 ./scripts/bootstrap.sh
 ```
 
-Скрипт устанавливает и настраивает:
+Скрипт устанавливает:
 
 - Gitea;
 - Argo CD;
@@ -14,27 +21,57 @@
 - demo Linux pod'ы;
 - AWX inventory, project, credentials, execution environment и job template.
 
-## Повторно открыть интерфейсы
+## Запуск DKP/DVP профиля
 
-Если port-forward'ы были остановлены:
+```bash
+./scripts/deploy-dkp.sh
+```
+
+Проверить kube-context:
+
+```bash
+kubectl config current-context
+```
+
+Ожидаемый context:
+
+```text
+codex-api.d8.kir.lab
+```
+
+Проверить Ingress:
+
+```bash
+kubectl get ingress -A | grep -E 'gitea-awx|argocd-awx|awx-demo'
+```
+
+## Повторно открыть локальные интерфейсы
 
 ```bash
 ./scripts/port-forward.sh
 ```
 
-Интерфейсы:
+Локальные URL:
 
 - Gitea: `http://localhost:3001`
 - Argo CD: `http://localhost:3000`
 - AWX: `http://localhost:3002`
 
-## Запуск демонстрационного job
+DKP URL:
+
+- Gitea: `http://gitea-awx.d8.kir.lab`
+- Argo CD: `http://argocd-awx.d8.kir.lab`
+- AWX: `http://awx-demo.d8.kir.lab`
+
+## Запуск AWX job
+
+Локально:
 
 ```bash
 ./scripts/run-demo-job.sh
 ```
 
-Для DKP-кластера можно запускать job напрямую через AWX Ingress:
+В DKP:
 
 ```bash
 AWX_URL=http://awx-demo.d8.kir.lab ./scripts/run-demo-job.sh
@@ -44,78 +81,146 @@ AWX_URL=http://awx-demo.d8.kir.lab ./scripts/run-demo-job.sh
 
 1. находит AWX job template `Configure OS pods`;
 2. запускает job;
-3. ждет финальный статус;
-4. выводит последние строки stdout;
-5. проверяет marker-файлы внутри pod'ов.
+3. ждёт финальный статус;
+4. выводит stdout;
+5. проверяет marker-файлы в pod'ах `demo-os`.
 
-## Проверка состояния
+## Проверка Argo CD
 
 ```bash
+kubectl get application -n argocd
 kubectl get application -n argocd ansible-os-pods
-kubectl get pods -n gitea
-kubectl get pods -n argocd
-kubectl get pods -n awx
-kubectl get pods -n demo-os
+kubectl get application -n argocd demo-platform
+```
+
+Ожидаемо:
+
+```text
+ansible-os-pods   Synced   Healthy
+demo-platform     Synced   Healthy
+```
+
+## Проверка pod-only сценария
+
+```bash
+kubectl get pods,svc -n demo-os
+kubectl exec -n demo-os deploy/ol-node-1 -- cat /etc/ansible-managed-by-awx
+kubectl exec -n demo-os deploy/ol-node-2 -- cat /etc/ansible-managed-by-awx
+```
+
+## Проверка DVP-сценария
+
+```bash
+kubectl get deploy,svc,ingress -n demo-prod
+kubectl get vi,vd,vm -n demo-prod -o wide
+kubectl describe vm postgres-vm -n demo-prod
+```
+
+Ожидаемые параметры VM:
+
+```text
+postgres-vm Running
+1 core
+coreFraction 5%
+memory 512Mi
+disk 256Mi
+```
+
+## Проверка tenant
+
+```bash
+kubectl get ns customer-a
+kubectl get resourcequota -n customer-a
+kubectl get limitrange -n customer-a
+kubectl get rolebinding -n customer-a
+kubectl get deploy,svc,ingress -n customer-a
 ```
 
 ## Частые проблемы
 
-### ImagePullBackOff или долгий ContainerCreating
+### 401 при запуске AWX job
 
-На свежем Docker Desktop это чаще всего связано с долгой загрузкой образов или временным сетевым сбоем registry.
+Скорее всего, скрипт попал в старый AWX через `localhost:3002`.
 
-Что проверить:
+Проверить:
 
 ```bash
-kubectl describe pod -n <namespace> <pod>
+curl -fsS http://localhost:3002/api/v2/ping/
+curl -fsS http://awx-demo.d8.kir.lab/api/v2/ping/
 ```
 
-Если ошибка похожа на `unexpected EOF`, обычно помогает повторный pull или перезапуск pod'а.
+Для DKP используйте:
+
+```bash
+AWX_URL=http://awx-demo.d8.kir.lab ./scripts/run-demo-job.sh
+```
+
+### DVP VM зависла в Pending
+
+Проверить image, disk, VM и events:
+
+```bash
+kubectl get vi,vd,vm -n demo-prod -o wide
+kubectl describe vi demo-alpine-cloud -n demo-prod
+kubectl describe vd postgres-vm-root -n demo-prod
+kubectl describe vm postgres-vm -n demo-prod
+kubectl get events -n demo-prod --sort-by=.lastTimestamp
+```
+
+На первом запуске DVP скачивает image и импортирует disk. Это может занять несколько минут.
 
 ### AWX долго стартует
 
-AWX поднимает PostgreSQL, web, task, миграции и execution environment. Первый запуск может занять несколько минут.
-
-Что смотреть:
-
 ```bash
-kubectl get pods -n awx
+kubectl get job,pods -n awx
 kubectl logs -n awx job/awx-demo-migration-24.6.1 --tail=100
 ```
 
 ### Argo CD Application не Synced
 
-Проверить:
-
 ```bash
+kubectl describe application -n argocd demo-platform
 kubectl describe application -n argocd ansible-os-pods
 ```
 
 Типовые причины:
 
-- Gitea repo еще не создан или не запушен;
+- Gitea repo не обновлён;
 - указан неверный path;
-- repo-server Argo CD еще не готов.
+- CRD DVP ещё не готов;
+- namespace или StorageClass недоступны.
 
-### AWX job successful, но hosts skipped
+## Master node scheduling
 
-Значит playbook не нашел группу inventory. В этом проекте playbook ожидает группу `linux_pods`.
+В стендовом кластере taint с master node снят, чтобы scheduler мог использовать ресурсы `dmaster`.
 
-Проверить в AWX:
+Проверка:
 
-- inventory `Demo OS pods`;
-- group `linux_pods`;
-- hosts `ol-node-1.demo-os.svc.cluster.local` и `ol-node-2.demo-os.svc.cluster.local`.
+```bash
+kubectl get nodes -o json | jq -r '.items[] | .metadata.name as $n | "\($n)\t\(.spec.taints // [])"'
+kubectl get pods -A -o wide | grep dmaster
+```
+
+## Rollback
+
+Для сценарных изменений:
+
+```bash
+git revert HEAD
+git push
+argocd app get demo-platform
+```
 
 ## Очистка
+
+Локальный cleanup:
 
 ```bash
 ./scripts/destroy.sh
 ```
 
-Скрипт удаляет namespaces:
+Перед удалением DVP-ресурсов проверьте, что они не нужны:
 
-- `demo-os`
-- `awx`
-- `gitea`
-- `argocd`
+```bash
+kubectl get vi,vd,vm -n demo-prod
+```

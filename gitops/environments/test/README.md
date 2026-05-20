@@ -1,3 +1,3 @@
-# Test Environment
+# Test environment
 
-Placeholder for the test GitOps environment. Keep test-only overrides here, separate from `gitops/environments/prod`.
+Заготовка для test-окружения GitOps-стенда. Храните здесь test-only overrides отдельно от `gitops/environments/prod`.

@@ -1,13 +1,13 @@
-# customer-a Tenant
+# Tenant customer-a
 
-This directory demonstrates self-service tenant provisioning through Git.
+Каталог демонстрирует self-service provisioning tenant'а через Git.
 
-Adding the directory to the environment repository models a platform-team approved onboarding flow:
+Добавление tenant-каталога моделирует согласованный platform-team процесс onboarding:
 
-- namespace is created from Git;
-- quota and limit range are applied from Git;
-- RBAC is standardized;
-- a starter workload is deployed;
-- an optional VM manifest is kept as an adaptable DVP example.
+- namespace создаётся из Git;
+- quota и limit range применяются из Git;
+- RBAC стандартизирован;
+- starter workload разворачивается автоматически;
+- `vm.yaml` оставлен как пример VM-манифеста для tenant'а.
 
-Before applying `vm.yaml`, replace the placeholder API with the actual DVP CRD schema used in the target cluster.
+Файл `vm.yaml` не подключён в `kustomization.yaml`, чтобы случайно не создавать дополнительные VM на небольшом стенде. Перед применением адаптируйте его под фактический сценарий tenant'а и осознанно добавьте в kustomization.

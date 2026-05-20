@@ -1,9 +1,9 @@
-# Tenant Template
+# Tenant template
 
-Copy this directory to create a new tenant:
+Шаблон для создания нового tenant'а:
 
 ```bash
 cp -r gitops/environments/prod/tenants/template gitops/environments/prod/tenants/customer-a
 ```
 
-Then replace placeholder names with the tenant name and add the resulting files to Git.
+После копирования замените примерные имена на имя tenant'а, добавьте нужные manifests и отправьте изменения в Git.

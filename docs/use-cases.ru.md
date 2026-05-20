@@ -1,155 +1,261 @@
 # Use cases и сценарии применения
 
-## 1. GitOps-доставка вычислительных ресурсов
+Документ описывает, что именно показывать аудитории на стенде Argo CD + AWX + Kubernetes + DVP.
 
-Инженер меняет манифесты в Git. Argo CD обнаруживает изменение и приводит Kubernetes-кластер к описанному состоянию.
+## 1. GitOps-доставка Kubernetes-ресурсов
 
-В локальном демо это два Linux pod'а:
+Инженер меняет манифесты в Git. Argo CD обнаруживает изменение и приводит кластер к описанному состоянию.
 
-- `ol-node-1`
-- `ol-node-2`
+В локальном сценарии это:
 
-В DVP/KubeVirt ту же роль могут выполнять:
+- namespace `demo-os`;
+- pod'ы `ol-node-1`, `ol-node-2`;
+- Services для SSH.
 
-- `VirtualMachine`
-- `VirtualDisk`
-- `VirtualImage`
-- `VirtualMachineClass`
+В DKP/DVP сценарии это:
+
+- namespace `demo-prod`;
+- Deployment/Service/Ingress `demo-app`;
+- RBAC, quotas, limit ranges;
+- tenant `customer-a`.
 
 Ценность: состояние инфраструктуры версионируется, проходит review и может быть восстановлено из Git.
 
-## 2. Настройка ОС после создания ресурса
+## 2. GitOps-доставка DVP VM
 
-После того как Argo CD создал workload'ы, AWX запускает Ansible playbook и подключается к ним по SSH. Playbook записывает marker-файл и устанавливает пакет.
+Argo CD синхронизирует реальные DVP CRD:
 
-Ценность: lifecycle Kubernetes-объектов и lifecycle ОС разделены, но связаны в единую операционную модель.
+- `VirtualImage demo-alpine-cloud`;
+- `VirtualDisk postgres-vm-root`;
+- `VirtualMachine postgres-vm`.
 
-## 3. Единый audit trail
+VM создана с минимальными ресурсами:
+
+```text
+1 core
+coreFraction 5%
+memory 512Mi
+disk 256Mi
+```
+
+Ценность: виртуальная машина становится частью того же GitOps-контура, что и Kubernetes workload'ы.
+
+## 3. Настройка ОС после создания ресурса
+
+После того как Argo CD создал workload или VM, AWX запускает Ansible playbook и выполняет настройку внутри ОС.
+
+В pod-only сценарии playbook:
+
+- собирает facts;
+- записывает `/etc/ansible-managed-by-awx`;
+- устанавливает `htop`;
+- выводит результат.
+
+В DVP/VM сценарии подготовлены playbooks:
+
+- `gitops/awx/playbooks/bootstrap-vm.yml`;
+- `gitops/awx/playbooks/postgresql-tuning.yml`;
+- `gitops/awx/playbooks/validate-vm.yml`.
+
+Ценность: lifecycle Kubernetes/DVP-объектов и lifecycle ОС разделены, но связаны в единую операционную модель.
+
+## 4. Configuration drift и self-healing
+
+Администратор вручную меняет состояние в кластере, например:
+
+```bash
+kubectl scale deployment demo-app --replicas=10 -n demo-prod
+```
+
+Argo CD видит расхождение с Git и возвращает Deployment к значению из репозитория.
+
+Ценность: Git остаётся источником истины, даже если кто-то изменил кластер вручную.
+
+## 5. Rollback через Git
+
+В Git попадает ошибка, например несуществующий image tag:
+
+```yaml
+app:
+  image: nginx:broken-demo-tag
+```
+
+Kubernetes показывает `ImagePullBackOff`, Argo CD показывает `Progressing` или `Degraded`, затем команда делает:
+
+```bash
+git revert HEAD
+git push
+```
+
+Ценность: восстановление выполняется тем же процессом, что и доставка, а история изменений сохраняется.
+
+## 6. Self-service tenant onboarding
+
+Platform team добавляет каталог:
+
+```text
+gitops/environments/prod/tenants/customer-a/
+```
+
+Argo CD создаёт:
+
+- namespace;
+- ResourceQuota;
+- LimitRange;
+- RBAC;
+- starter workload;
+- опциональный VM template.
+
+Ценность: onboarding нового внутреннего заказчика становится повторяемым и стандартизированным.
+
+## 7. Единый audit trail
 
 Gitea хранит:
 
-- Kubernetes-манифесты;
-- Ansible playbook;
-- inventory reference.
+- Kubernetes manifests;
+- DVP manifests;
+- Ansible playbooks;
+- сценарии демонстрации;
+- документацию.
 
-Argo CD показывает sync status и расхождения с Git. AWX показывает историю job'ов, stdout, recap и результат по каждому host'у.
+Argo CD показывает sync status и drift. AWX показывает историю job'ов, stdout и результат по host'ам.
 
 Ценность: можно объяснить, что изменилось, каким инструментом и на каком уровне.
-
-## 4. Подготовка к DVP/KubeVirt внедрению
-
-Демо можно использовать до развертывания полноценной виртуализационной платформы. На ноутбуке показывается операционная модель, а в целевой среде pod'ы заменяются на VM CRD.
-
-Ценность: команда и заказчик обсуждают не абстрактный GitOps, а конкретный рабочий процесс.
-
-## 5. Разделение зон ответственности
-
-Argo CD отвечает за декларативное состояние платформы:
-
-- какие workload'ы существуют;
-- какие Services созданы;
-- какие labels/selectors используются;
-- какие классы, диски или образы подключены в DVP/KubeVirt-варианте.
-
-AWX отвечает за действия внутри ОС:
-
-- установка пакетов;
-- настройка файлов;
-- запуск команд;
-- сбор facts;
-- проверка состояния.
-
-Ценность: снижается путаница между platform management и configuration management.
 
 ## Демонстрационный сценарий
 
 ### Подготовка
 
-1. Запустить чистый Docker Desktop Kubernetes.
-2. Выполнить:
+Проверить контекст:
 
-   ```bash
-   ./scripts/bootstrap.sh
-   ```
+```bash
+kubectl config current-context
+```
 
-3. Открыть интерфейсы:
+Для DKP ожидается:
 
-   - Gitea: `http://localhost:3001`
-   - Argo CD: `http://localhost:3000`
-   - AWX: `http://localhost:3002`
+```text
+codex-api.d8.kir.lab
+```
 
-### Шаг 1. Показать Git как источник истины
+Проверить приложения:
 
-Открыть Gitea и репозиторий `codex/demo`.
+```bash
+kubectl get application -n argocd
+```
+
+Ожидаемо:
+
+```text
+ansible-os-pods   Synced   Healthy
+demo-platform     Synced   Healthy
+```
+
+### Шаг 1. Показать Git как source of truth
+
+Открыть Gitea:
+
+```text
+http://gitea-awx.d8.kir.lab
+```
 
 Показать файлы:
 
-- `gitops/demo-manifests/os-nodes.yaml`
-- `awx/os-demo-playbook.yml`
+- `gitops/demo-manifests/os-nodes.yaml`;
+- `gitops/environments/prod/dvp-postgres-vm.yaml`;
+- `gitops/environments/prod/values.yaml`;
+- `gitops/awx/playbooks/validate-vm.yml`;
+- `scenarios/`.
 
-Сообщение для аудитории: в одном Git-репозитории лежит и декларативное состояние платформы, и автоматизация настройки ОС.
+Сообщение для аудитории: в одном Git-репозитории лежит декларативное состояние платформы, сценарии изменений и Ansible-автоматизация.
 
-### Шаг 2. Показать работу Argo CD
+### Шаг 2. Показать Argo CD
 
-Открыть Argo CD Application `ansible-os-pods`.
+Открыть:
 
-Показать:
+```text
+http://argocd-awx.d8.kir.lab
+```
 
-- `Synced`
-- `Healthy`
-- дерево ресурсов приложения.
+Показать Applications:
+
+- `ansible-os-pods`;
+- `demo-platform`.
 
 Проверить из терминала:
 
 ```bash
-kubectl get pods,svc -n demo-os
+kubectl get deploy,svc,ingress -n demo-prod
+kubectl get vi,vd,vm -n demo-prod -o wide
 ```
 
-Сообщение для аудитории: Argo CD создал Linux pod'ы и Services из Git и продолжает контролировать их desired state.
+Сообщение для аудитории: Argo CD синхронизирует и обычные Kubernetes-объекты, и DVP CRD.
 
-### Шаг 3. Показать работу AWX
-
-Открыть AWX job template `Configure OS pods`.
-
-Запустить job из UI или командой:
+### Шаг 3. Показать DVP VM
 
 ```bash
-./scripts/run-demo-job.sh
+kubectl describe vm postgres-vm -n demo-prod
 ```
 
-Показать в output:
+Что подчеркнуть:
 
-- `Gathering Facts`;
-- запись `/etc/ansible-managed-by-awx`;
-- установку `htop`;
-- recap с `failed=0`.
+- VM создана из Git;
+- ресурсы минимальны для стенда;
+- disk и image тоже управляются как Kubernetes CRD;
+- VM находится в `Running`.
 
-Сообщение для аудитории: AWX не создает Kubernetes-ресурсы. Он выполняет настройку внутри ОС workload'ов, которые доставил Argo CD.
+### Шаг 4. Показать AWX
 
-### Шаг 4. Проверить результат внутри workload'ов
-
-```bash
-kubectl exec -n demo-os deploy/ol-node-1 -- cat /etc/ansible-managed-by-awx
-kubectl exec -n demo-os deploy/ol-node-2 -- cat /etc/ansible-managed-by-awx
-```
-
-Ожидаемый результат:
+Открыть:
 
 ```text
-managed_by=AWX
-deployed_by=Argo CD
-host=...
-kernel=...
+http://awx-demo.d8.kir.lab
 ```
 
-### Шаг 5. Объяснить перенос на DVP/KubeVirt
+Запустить pod-only job:
 
-| Локальное демо | DVP/KubeVirt |
-| --- | --- |
-| Linux pod Deployment | `VirtualMachine` |
-| Container image/bootstrap | `VirtualImage`, cloud-init или Sysprep |
-| Kubernetes Service для SSH | Service или platform-specific publishing |
-| AWX SSH target | DNS/IP гостевой ОС |
+```bash
+AWX_URL=http://awx-demo.d8.kir.lab ./scripts/run-demo-job.sh
+```
 
-Финальная мысль: Argo CD управляет заявленным состоянием Kubernetes/DVP-платформы, AWX управляет конфигурацией гостевой ОС.
+Показать:
 
+- `Gathering Facts`;
+- marker `/etc/ansible-managed-by-awx`;
+- recap `failed=0`.
+
+Сообщение для аудитории: AWX не заменяет Argo CD. Он работает на другом уровне: внутри ОС.
+
+### Шаг 5. Показать drift correction
+
+```bash
+kubectl scale deployment demo-app --replicas=10 -n demo-prod
+argocd app get demo-platform
+kubectl get deploy demo-app -n demo-prod
+```
+
+После self-heal replicas должны вернуться к значению из Git.
+
+### Шаг 6. Показать rollback
+
+Следовать сценарию:
+
+```text
+scenarios/06-broken-release-and-rollback.md
+```
+
+Главная мысль: ошибка и восстановление проходят через Git, а не через ручное исправление в кластере.
+
+### Шаг 7. Показать tenant onboarding
+
+```bash
+kubectl get ns customer-a
+kubectl get resourcequota,limitrange,rolebinding -n customer-a
+kubectl get deploy,svc,ingress -n customer-a
+```
+
+Сообщение для аудитории: новый tenant появляется через каталог в Git, а не через ручной набор действий.
+
+## Финальная формулировка
+
+Argo CD отвечает за долгоживущее декларативное состояние Kubernetes/DVP-платформы. AWX отвечает за процедурную настройку внутри ОС. Вместе они дают воспроизводимый путь от Git commit до работающего и проверенного workload'а.

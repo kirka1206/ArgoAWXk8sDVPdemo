@@ -1,18 +1,28 @@
-# AWX Post-Configuration
+# AWX post-configuration
 
-This directory contains examples for VM post-configuration after Argo CD applies Kubernetes or DVP resources.
+Каталог содержит примеры для post-configuration после того, как Argo CD применил Kubernetes или DVP-ресурсы.
 
-Do not store real AWX tokens in Git. Copy `secrets/awx-token.example.yaml`, replace the dummy values outside the repository, and apply the real Secret through your secure delivery process.
+Важное правило: реальные AWX tokens нельзя хранить в Git.
 
-Example flow:
+Используйте `secrets/awx-token.example.yaml` только как пример структуры Secret. Для реального запуска замените dummy-значения безопасным способом вне репозитория.
+
+Пример:
 
 ```bash
-kubectl apply -f gitops/awx/secrets/awx-token.example.yaml
-kubectl apply -f gitops/awx/hooks/awx-postsync-job.yaml
+kubectl create secret generic awx-api-token \
+  -n demo-prod \
+  --from-literal=url=https://awx.example.local \
+  --from-literal=token=demo-token-replace-me
 ```
 
-Before production use, replace:
+Перед использованием замените:
 
-- `https://awx.example.local`
-- `demo-token-replace-me`
-- `replace-with-template-id`
+- `https://awx.example.local`;
+- `demo-token-replace-me`;
+- `replace-with-template-id` в `hooks/awx-postsync-job.yaml`.
+
+Playbooks:
+
+- `playbooks/bootstrap-vm.yml` - базовая настройка ОС;
+- `playbooks/postgresql-tuning.yml` - пример настройки PostgreSQL;
+- `playbooks/validate-vm.yml` - проверка доступности, сервисов и портов.

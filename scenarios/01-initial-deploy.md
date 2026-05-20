@@ -8,7 +8,7 @@
 
 - Репозиторий подключен к ArgoCD Application `demo-platform`.
 - В кластере есть ArgoCD и доступ к Git-репозиторию.
-- Для DVP VM используется адаптируемый шаблон `gitops/infrastructure/dvp/postgres-vm.template.yaml`.
+- Для DVP VM используется реальный минимальный manifest `gitops/environments/prod/dvp-postgres-vm.yaml`.
 
 ## Что меняем в Git
 
@@ -19,7 +19,7 @@
 - `gitops/environments/prod/demo-app.yaml`
 - `gitops/environments/prod/monitoring.yaml`
 - `gitops/environments/prod/values.yaml`
-- `gitops/infrastructure/dvp/postgres-vm.template.yaml`
+- `gitops/environments/prod/dvp-postgres-vm.yaml`
 
 ## Пошаговое выполнение
 
@@ -35,13 +35,13 @@ kubectl get vm -n demo-prod
 kubectl get events -n demo-prod --sort-by=.lastTimestamp
 ```
 
-Если DVP CRD ещё не адаптирован, команда `kubectl get vm` может быть неприменима. В этом случае покажите VM-шаблон в Git и явно проговорите, что он заменяется на фактический CRD платформы.
+В DKP/DVP стенде команда `kubectl get vm` должна показать `postgres-vm` в namespace `demo-prod`.
 
 ## Что показывать в ArgoCD
 
 - Application `demo-platform`.
 - Status `Synced` и `Healthy`.
-- Resource tree: namespace, RBAC, Deployment, Service, Ingress, monitoring placeholder.
+- Дерево ресурсов: namespace, RBAC, Deployment, Service, Ingress, DVP VirtualImage, VirtualDisk, VirtualMachine, заготовка monitoring-объектов.
 - Sync waves: сначала базовые объекты, затем приложение и monitoring.
 
 ## Что показывать в AWX

@@ -1,3 +1,3 @@
-# Dev Environment
+# Dev environment
 
-Placeholder for the dev GitOps environment. Add a `kustomization.yaml` or Helm values here when the demo is expanded to separate environment overlays.
+Заготовка для dev-окружения GitOps-стенда. Добавьте сюда `kustomization.yaml`, Helm values или overlay, когда потребуется отдельный dev-контур.
