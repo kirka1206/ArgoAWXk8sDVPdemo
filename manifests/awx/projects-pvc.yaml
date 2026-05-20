@@ -6,8 +6,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: standard
+  storageClassName: k8nfs
   resources:
     requests:
       storage: 2Gi
-

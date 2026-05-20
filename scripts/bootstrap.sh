@@ -157,6 +157,12 @@ wait_deploy awx awx-operator-controller-manager 300s
 log "Installing AWX"
 "$KUBECTL" apply -f "${ROOT_DIR}/manifests/awx/awx.yaml"
 "$KUBECTL" apply -f "${ROOT_DIR}/manifests/awx/projects-pvc.yaml"
+for deploy in "${AWX_NAME}-web" "${AWX_NAME}-task"; do
+  for _ in $(seq 1 120); do
+    "$KUBECTL" -n awx get "deployment/${deploy}" >/dev/null 2>&1 && break
+    sleep 2
+  done
+done
 wait_deploy awx "${AWX_NAME}-web" 600s
 wait_deploy awx "${AWX_NAME}-task" 600s
 start_port_forward awx awx "${AWX_NAME}-service" "${AWX_LOCAL_PORT}:80"

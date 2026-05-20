@@ -12,22 +12,26 @@ spec:
   service_type: clusterip
   ingress_type: none
   hostname: awx-demo.local
-  postgres_storage_class: standard
+  postgres_storage_class: k8nfs
   postgres_storage_requirements:
     requests:
       storage: 4Gi
+  postgres_data_volume_init: true
+  postgres_security_context_settings:
+    fsGroup: 26
+    fsGroupChangePolicy: OnRootMismatch
   projects_persistence: false
   web_resource_requirements:
     requests:
-      cpu: 250m
-      memory: 1Gi
+      cpu: 100m
+      memory: 512Mi
     limits:
       cpu: "1"
       memory: 2Gi
   task_resource_requirements:
     requests:
-      cpu: 250m
-      memory: 1Gi
+      cpu: 100m
+      memory: 512Mi
     limits:
       cpu: "1"
       memory: 2Gi
