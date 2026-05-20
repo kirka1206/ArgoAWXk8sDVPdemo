@@ -22,6 +22,8 @@ metadata:
   namespace: gitea
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: gitea
@@ -30,6 +32,9 @@ spec:
       labels:
         app: gitea
     spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: gitea
           image: gitea/gitea:1.24.6-rootless
@@ -97,4 +102,3 @@ spec:
     - name: ssh
       port: 2222
       targetPort: ssh
-
