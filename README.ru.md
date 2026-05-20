@@ -118,6 +118,12 @@ cd ArgoAWXk8sDVPdemo
 
 Локальные port-forward'ы также остаются доступными как fallback на портах `3100`, `3101`, `3102`.
 
+Запуск Ansible-части в DKP лучше выполнять через Ingress, чтобы не зависеть от локальных port-forward'ов:
+
+```bash
+AWX_URL=http://awx-demo.d8.kir.lab ./scripts/run-demo-job.sh
+```
+
 ## Что делает bootstrap
 
 1. Устанавливает Argo CD.

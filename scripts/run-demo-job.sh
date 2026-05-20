@@ -6,7 +6,7 @@ CURL="${CURL:-curl}"
 JQ="${JQ:-jq}"
 AWX_LOCAL_PORT="${AWX_LOCAL_PORT:-3002}"
 AWX_NAME="${AWX_NAME:-awx-demo}"
-AWX_URL="http://localhost:${AWX_LOCAL_PORT}"
+AWX_URL="${AWX_URL:-http://localhost:${AWX_LOCAL_PORT}}"
 
 AWX_ADMIN_USER=admin
 AWX_ADMIN_PASSWORD="$("$KUBECTL" -n awx get secret "${AWX_NAME}-admin-password" -o jsonpath='{.data.password}' | base64 -d)"

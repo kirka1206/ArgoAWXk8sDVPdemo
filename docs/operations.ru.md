@@ -34,6 +34,12 @@
 ./scripts/run-demo-job.sh
 ```
 
+Для DKP-кластера можно запускать job напрямую через AWX Ingress:
+
+```bash
+AWX_URL=http://awx-demo.d8.kir.lab ./scripts/run-demo-job.sh
+```
+
 Скрипт:
 
 1. находит AWX job template `Configure OS pods`;
@@ -113,4 +119,3 @@ kubectl describe application -n argocd ansible-os-pods
 - `awx`
 - `gitea`
 - `argocd`
-
