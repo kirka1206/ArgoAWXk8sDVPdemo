@@ -17,10 +17,18 @@
       ansible.builtin.hostname:
         name: "{{ demo_hostname }}"
 
-    - name: Install base packages
+    - name: Install base packages on Alpine
+      community.general.apk:
+        name: "{{ base_packages }}"
+        state: present
+        update_cache: true
+      when: ansible_pkg_mgr == "apk"
+
+    - name: Install base packages on non-Alpine systems
       ansible.builtin.package:
         name: "{{ base_packages }}"
         state: present
+      when: ansible_pkg_mgr != "apk"
 
     - name: Ensure chrony is enabled
       ansible.builtin.service:
@@ -29,12 +37,26 @@
         enabled: true
       when: ansible_service_mgr == "systemd"
 
+    - name: Ensure chrony is enabled on OpenRC
+      ansible.builtin.service:
+        name: chronyd
+        state: started
+        enabled: true
+      when: ansible_service_mgr == "openrc"
+
     - name: Ensure qemu guest agent is enabled
       ansible.builtin.service:
         name: qemu-guest-agent
         state: started
         enabled: true
       when: ansible_service_mgr == "systemd"
+
+    - name: Ensure qemu guest agent is enabled on OpenRC
+      ansible.builtin.service:
+        name: qemu-guest-agent
+        state: started
+        enabled: true
+      when: ansible_service_mgr == "openrc"
 
     - name: Create node exporter user
       ansible.builtin.user:
