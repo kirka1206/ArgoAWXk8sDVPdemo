@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - rbac.yaml
+  - dvp-postgres-vm.yaml
   - demo-app.yaml
   - monitoring.yaml
   - tenants/customer-a

@@ -1,0 +1,80 @@
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualImage
+metadata:
+  name: demo-alpine-cloud
+  namespace: demo-prod
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  labels:
+    app.kubernetes.io/name: postgres-vm
+    app.kubernetes.io/part-of: demo-platform
+spec:
+  storage: ContainerRegistry
+  dataSource:
+    type: HTTP
+    http:
+      url: https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/cloud/generic_alpine-3.23.3-x86_64-bios-cloudinit-r0.qcow2
+---
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualDisk
+metadata:
+  name: postgres-vm-root
+  namespace: demo-prod
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  labels:
+    app.kubernetes.io/name: postgres-vm
+    app.kubernetes.io/part-of: demo-platform
+spec:
+  dataSource:
+    type: ObjectRef
+    objectRef:
+      kind: VirtualImage
+      name: demo-alpine-cloud
+  persistentVolumeClaim:
+    size: 256Mi
+    storageClassName: k8nfs
+---
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualMachine
+metadata:
+  name: postgres-vm
+  namespace: demo-prod
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  labels:
+    app.kubernetes.io/name: postgres-vm
+    app.kubernetes.io/part-of: demo-platform
+spec:
+  virtualMachineClassName: generic
+  runPolicy: AlwaysOnUnlessStoppedManually
+  osType: Generic
+  bootloader: BIOS
+  cpu:
+    cores: 1
+    coreFraction: 5%
+  memory:
+    size: 512Mi
+  blockDeviceRefs:
+    - kind: VirtualDisk
+      name: postgres-vm-root
+  provisioning:
+    type: UserData
+    userData: |
+      #cloud-config
+      hostname: postgres-vm
+      users:
+        - name: ansible
+          lock_passwd: false
+          passwd: $1$demoans$ZvqsQCamGDBaHD6nqXyqT/
+          sudo: ALL=(ALL) NOPASSWD:ALL
+          shell: /bin/sh
+      ssh_pwauth: true
+      package_update: false
+      packages:
+        - openssh
+        - python3
+        - sudo
+      runcmd:
+        - rc-update add sshd default || true
+        - service sshd start || true

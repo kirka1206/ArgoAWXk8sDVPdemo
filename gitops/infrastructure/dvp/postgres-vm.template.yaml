@@ -1,7 +1,5 @@
-# Adapt this example before applying it.
-# The current repository does not contain the exact DVP CRD schema for VM objects.
-# Replace apiVersion, kind and spec fields with the actual Deckhouse Virtualization Platform CRD from your cluster.
-apiVersion: virtualization.example.local/v1alpha1
+# Minimal real DVP example for clusters with Deckhouse Virtualization Platform.
+apiVersion: virtualization.deckhouse.io/v1alpha2
 kind: VirtualMachine
 metadata:
   name: postgres-vm
@@ -9,10 +7,27 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  running: true
-  resources:
-    cpu: 2
-    memory: 4Gi
-  image: postgres-vm-base
-  network:
-    sshServiceName: postgres-vm-ssh
+  virtualMachineClassName: generic
+  runPolicy: AlwaysOnUnlessStoppedManually
+  osType: Generic
+  bootloader: BIOS
+  cpu:
+    cores: 1
+    coreFraction: 5%
+  memory:
+    size: 512Mi
+  blockDeviceRefs:
+    - kind: VirtualDisk
+      name: postgres-vm-root
+  provisioning:
+    type: UserData
+    userData: |
+      #cloud-config
+      hostname: postgres-vm
+      users:
+        - name: ansible
+          lock_passwd: false
+          passwd: $1$demoans$ZvqsQCamGDBaHD6nqXyqT/
+          sudo: ALL=(ALL) NOPASSWD:ALL
+          shell: /bin/sh
+      ssh_pwauth: true
