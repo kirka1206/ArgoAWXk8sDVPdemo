@@ -14,8 +14,10 @@ app:
 
 vm:
   name: postgres-vm
-  cpu: 2
-  memory: 4Gi
+  cpu: 1
+  coreFraction: 5%
+  memory: 512Mi
+  diskSize: 256Mi
 
 postgresql:
   shared_buffers: 1GB

@@ -7,8 +7,8 @@
 ## Исходное состояние
 
 - В Git есть `gitops/environments/prod/values.yaml`.
-- В Git есть адаптируемый VM-шаблон `gitops/infrastructure/dvp/postgres-vm.template.yaml`.
-- Перед запуском сценария VM manifest должен быть адаптирован под фактический CRD DVP в вашем кластере.
+- В Git есть реальный минимальный DVP manifest `gitops/environments/prod/dvp-postgres-vm.yaml`.
+- VM уже развернута с минимальными ресурсами для стенда: `1` core, `coreFraction: 5%`, `512Mi` RAM, disk `256Mi`.
 
 ## Что меняем в Git
 
@@ -22,26 +22,28 @@ gitops/environments/prod/values.yaml
 
 ```yaml
 vm:
-  cpu: 2
-  memory: 4Gi
+  cpu: 1
+  coreFraction: 5%
+  memory: 512Mi
 ```
 
 Стало:
 
 ```yaml
 vm:
-  cpu: 4
-  memory: 8Gi
+  cpu: 1
+  coreFraction: 10%
+  memory: 1Gi
 ```
 
-Если VM-шаблон уже адаптирован под DVP, синхронно измените CPU/RAM в соответствующем VM manifest.
+Для бережного стенда не увеличивайте количество core без необходимости. Для демонстрации resize достаточно поднять `coreFraction` с `5%` до `10%` или RAM с `512Mi` до `1Gi`.
 
 ## Пошаговое выполнение
 
 ```bash
 kubectl get vm postgres-vm -n demo-prod -o yaml
 git diff
-git add gitops/environments/prod/values.yaml gitops/infrastructure/dvp/postgres-vm.template.yaml
+git add gitops/environments/prod/values.yaml gitops/environments/prod/dvp-postgres-vm.yaml
 git commit -m "Resize postgres VM"
 git push
 argocd app get demo-platform
@@ -82,4 +84,4 @@ argocd app get demo-platform
 
 ## Пояснение для демонстратора
 
-Не нужно выдумывать VM API на демо. Если точный CRD DVP отличается, честно покажите шаблон и объясните, что в реальном проекте сюда подставляется фактический `VirtualMachine`-ресурс платформы. Главная идея сохраняется: параметры инфраструктуры меняются через Git и проходят тот же audit trail.
+На этом шаге важно не раздувать стенд. Для демонстрации достаточно минимальной VM и небольшого изменения `coreFraction` или RAM. Главная идея сохраняется: параметры инфраструктуры меняются через Git и проходят тот же audit trail.

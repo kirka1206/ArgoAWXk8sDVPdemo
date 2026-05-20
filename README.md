@@ -64,7 +64,7 @@ flowchart LR
 | `gitops/demo-manifests/` | Kubernetes desired state that Argo CD syncs. |
 | `gitops/environments/prod/` | Extended prod demo with centralized values, app, RBAC, quotas and monitoring placeholder. |
 | `gitops/environments/dev/`, `gitops/environments/test/` | Placeholders for future environment overlays. |
-| `gitops/infrastructure/dvp/` | Adaptable DVP VM template. It is not applied until adjusted to the real CRD. |
+| `gitops/infrastructure/dvp/` | DVP VM reference template. The active minimal VM manifest is in `gitops/environments/prod/dvp-postgres-vm.yaml`. |
 | `gitops/awx/` | AWX playbooks, PostSync hook example and safe dummy secret example. |
 | `gitops/environments/prod/tenants/customer-a/` | Self-service tenant provisioning example. |
 | `scenarios/` | Step-by-step demo scenarios. |
@@ -280,4 +280,10 @@ Keep the same split:
 - desired VM/Kubernetes state lives in Git and is reconciled by Argo CD;
 - guest OS configuration is executed by AWX/Ansible.
 
-The repository intentionally does not invent a production DVP CRD schema. Before applying VM examples, adapt them to the actual CRD installed in the target cluster.
+The DKP/DVP lab profile includes one minimal test VM manifest:
+
+- `VirtualImage`: `demo-alpine-cloud`
+- `VirtualDisk`: `postgres-vm-root`, `256Mi`
+- `VirtualMachine`: `postgres-vm`, `1` core, `coreFraction: 5%`, `512Mi` RAM
+
+This is intentionally small for demo clusters with limited resources.
