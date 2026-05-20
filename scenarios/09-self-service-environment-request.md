@@ -126,6 +126,7 @@ open self-service-ui/index.html
 - app image: `nginx:1.27`;
 - VM image: `alpine-base-3-23-v1`.
 - VM image kind: `ClusterVirtualImage`, чтобы tenant namespace мог использовать утверждённый платформенный образ.
+- VM в generated-примере запускается с `runPolicy: AlwaysOn`, но с минимальными ресурсами: `1` core, `coreFraction: 5%`, `512Mi`.
 
 Скопируйте YAML.
 

@@ -26,7 +26,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "1"
 spec:
   virtualMachineClassName: generic
-  runPolicy: Manual
+  runPolicy: AlwaysOn
   osType: Generic
   bootloader: BIOS
   cpu:
@@ -54,6 +54,9 @@ spec:
         - openssh
         - python3
         - sudo
+        - qemu-guest-agent
       runcmd:
         - rc-update add sshd default || true
         - service sshd start || true
+        - rc-update add qemu-guest-agent default || true
+        - service qemu-guest-agent start || true
