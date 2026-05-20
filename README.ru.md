@@ -181,6 +181,8 @@ open self-service-ui/index.html
 
 UI не создаёт ресурсы напрямую. Он генерирует `EnvironmentRequest` YAML и Git-команды. Дальше request проходит через Git, review/merge, Argo CD sync и AWX post-configuration.
 
+Для DVP VM self-service использует утверждённые `ClusterVirtualImage`, чтобы tenant namespace мог создавать диски из общего платформенного каталога образов без копирования namespaced `VirtualImage`.
+
 ## Что делает bootstrap
 
 1. Устанавливает Argo CD.

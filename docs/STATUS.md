@@ -1,6 +1,6 @@
 # Current Status
 
-Updated: 2026-05-21 00:45 MSK
+Updated: 2026-05-21 01:10 MSK
 
 ## Repository Rule
 
@@ -41,6 +41,7 @@ Namespace: `demo-prod`
 - `qemu-guest-agent`: installed and started by AWX bootstrap; DVP reported `AgentReady=True` during last check.
 - Golden image source import:
   - `VirtualImage/alpine-base-3-23-v1`: `Ready`, imported from URL in Git.
+  - `ClusterVirtualImage/alpine-base-3-23-v1`: `Ready`, imported from URL in Git and used by self-service tenant VMs.
   - `VirtualDisk/golden-builder-root`: `WaitForFirstConsumer` with `k8nfs`; expected while `golden-builder-vm` is stopped.
   - `VirtualMachine/golden-builder-vm`: `Stopped`, `runPolicy: Manual`, minimal resources, IP lease `10.77.111.6`.
 
@@ -48,6 +49,7 @@ Namespace: `demo-prod`
 
 - `demo-prod/demo-app`: scaled to `4` replicas during scenario 02.
 - `customer-a`: tenant namespace exists with quota, limit range, RBAC and starter workload.
+- `dev-alice-001`: self-service example namespace exists; `demo-app` is available, ingress host is `dev-alice-001.example.local`, `dev-alice-001-vm` is `Running` with `1` core, `coreFraction: 5%`, `512Mi`, IP `10.77.111.7`.
 - `demo-os`: contains pod-only AWX/Argo demo nodes `ol-node-1` and `ol-node-2`.
 
 ## AWX State
@@ -96,9 +98,11 @@ Recent AWX result:
   - static web UI under `self-service-ui/`;
   - scenario `scenarios/09-self-service-environment-request.md`;
   - documentation `docs/self-service.ru.md`.
+- Fixed self-service DVP image handling by adding approved `ClusterVirtualImage/alpine-base-3-23-v1`.
+- Changed the self-service VM example to `runPolicy: AlwaysOn` with minimal resources and cloud-init installation of `qemu-guest-agent`.
 
 ## Pending Validation
 
 - Golden image scenario 08 first phase is live-validated: source image import is `Ready`, builder VM exists in `Manual`/`Stopped`.
 - Full golden image customization is not yet executed. Next validation requires starting `golden-builder-vm`, adding it to AWX inventory as `golden_builder`, running `prepare-golden-image.yml`, then `validate-golden-image.yml`.
-- Self-service scenario 09 artifacts have been added but not yet live-validated in DKP/DVP.
+- Self-service scenario 09 first live validation passed: Argo CD `demo-platform` is `Synced/Healthy`, app resources are ready, `ClusterVirtualImage` is `Ready`, `VirtualDisk/dev-alice-001-vm-root` is `Ready`, `VirtualMachine/dev-alice-001-vm` is `Running`.

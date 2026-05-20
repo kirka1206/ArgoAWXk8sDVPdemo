@@ -18,12 +18,13 @@
    - create/update VM bootstrap job template;
    - run bootstrap and validation jobs.
 4. Consider adding a backend for `self-service-ui` that creates Git branches and pull requests instead of only generating YAML and commands.
+5. Add an automation/controller that turns `gitops/self-service/requests/*.yaml` into `gitops/self-service/generated/<request>/` instead of keeping the generated example manually.
 
 ## Self-Service Scenario Draft
 
 Goal: demonstrate developer-facing self-service without bypassing GitOps governance.
 
-Status: initial catalog, request, generated example, static web UI and scenario documentation were added. Live validation is still needed.
+Status: initial catalog, request, generated example, static web UI and scenario documentation were added. Live validation passed in DKP/DVP for `dev-alice-001`: Argo CD is `Synced/Healthy`, app is available, `ClusterVirtualImage` is `Ready`, VM is `Running`.
 
 Proposed flow:
 
