@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/name: demo-app
     app.kubernetes.io/part-of: demo-platform
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: demo-app
