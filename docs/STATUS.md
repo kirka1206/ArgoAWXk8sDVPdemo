@@ -1,6 +1,6 @@
 # Current Status
 
-Updated: 2026-05-21 00:20 MSK
+Updated: 2026-05-21 00:25 MSK
 
 ## Repository Rule
 
@@ -39,6 +39,10 @@ Namespace: `demo-prod`
 - `VirtualDisk/postgres-vm-root`: `Ready`, `256Mi`
 - `VirtualMachine/postgres-vm`: `Running`, `1` core, `coreFraction: 5%`, `512Mi`, IP `10.77.111.5`
 - `qemu-guest-agent`: installed and started by AWX bootstrap; DVP reported `AgentReady=True` during last check.
+- Golden image source import:
+  - `VirtualImage/alpine-base-3-23-v1`: `Ready`, imported from URL in Git.
+  - `VirtualDisk/golden-builder-root`: `WaitForFirstConsumer` with `k8nfs`; expected while `golden-builder-vm` is stopped.
+  - `VirtualMachine/golden-builder-vm`: `Stopped`, `runPolicy: Manual`, minimal resources, IP lease `10.77.111.6`.
 
 ## Kubernetes Demo Resources
 
@@ -88,4 +92,5 @@ Recent AWX result:
 
 ## Pending Validation
 
-- Golden image scenario 08 artifacts have been added but not yet live-validated in DKP/DVP.
+- Golden image scenario 08 first phase is live-validated: source image import is `Ready`, builder VM exists in `Manual`/`Stopped`.
+- Full golden image customization is not yet executed. Next validation requires starting `golden-builder-vm`, adding it to AWX inventory as `golden_builder`, running `prepare-golden-image.yml`, then `validate-golden-image.yml`.

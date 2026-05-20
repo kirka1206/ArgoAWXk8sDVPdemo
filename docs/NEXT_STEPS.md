@@ -4,7 +4,7 @@
 
 1. Decide whether to revert scenario 02 scale back to `2` replicas or keep `demo-app` at `4` replicas for the next demo.
 2. Document AWX UI steps for creating `DVP VMs`, `postgres-vm`, `dvp-vm-ssh` and `Bootstrap DVP VM` in Russian docs.
-3. Validate scenario 08 live in DKP/DVP: imported source image, builder disk and builder VM status.
+3. Continue scenario 08 live validation: start `golden-builder-vm`, run AWX customization and validation, then decide whether to publish `alpine-golden-3-23-v1`.
 
 ## Architecture Improvements
 
@@ -21,7 +21,7 @@
 
 Goal: demonstrate production-like golden image management in DVP.
 
-Status: initial manifests, playbooks and scenario documentation were added. The live demo talk plan is in `scenarios/08-golden-image-management.md`. Live validation is still needed.
+Status: initial manifests, playbooks and scenario documentation were added. The live demo talk plan is in `scenarios/08-golden-image-management.md`. First-phase live validation passed: source image import is `Ready`, builder VM exists and is intentionally stopped in `Manual` mode. Full AWX customization and golden image publication are still pending.
 
 Proposed flow:
 
