@@ -61,6 +61,19 @@ flowchart LR
 | `scripts/` | Bootstrap, deploy, port-forward, run-demo-job, cleanup. |
 | `docs/` | Русские use cases, runbook и talk track. |
 
+## Правило ведения контекста
+
+Для этого репозитория архитектурные решения фиксируются в `README.md` и `README.ru.md`. Оперативный статус хранится в `docs/STATUS.md`, а ближайшие планы и открытые решения - в `docs/NEXT_STEPS.md`.
+
+Перед началом новой работы в репозитории сначала прочитайте:
+
+```text
+docs/STATUS.md
+docs/NEXT_STEPS.md
+```
+
+После значимых изменений обновляйте `docs/STATUS.md`. Если меняется архитектурная договорённость, обновляйте обе версии README.
+
 ## Требования
 
 - `kubectl`

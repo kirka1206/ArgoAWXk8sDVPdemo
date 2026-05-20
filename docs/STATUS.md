@@ -1,0 +1,81 @@
+# Current Status
+
+Updated: 2026-05-20 23:57 MSK
+
+## Repository Rule
+
+Before starting new work in this repository, read this file and `docs/NEXT_STEPS.md` first. Keep architectural decisions in both `README.md` and `README.ru.md`. Update this file after meaningful changes.
+
+## Repository
+
+- Local path: `/Users/kir/code/ArgoAWXk8sDVPdemo`
+- GitHub: `git@github.com:kirka1206/ArgoAWXk8sDVPdemo.git`
+- DKP Gitea: `http://gitea-awx.d8.kir.lab/codex/demo.git`
+- Current branch: `main`
+
+## Cluster
+
+- Kubernetes context: `codex-api.d8.kir.lab`
+- DKP/DVP cluster: `d8.kir.lab`
+- Ingress address: `10.77.77.208`
+- Master node `dmaster` is schedulable; the control-plane `NoSchedule` taint was removed for demo capacity.
+
+## UI Endpoints
+
+- Gitea: `http://gitea-awx.d8.kir.lab`
+- Argo CD: `http://argocd-awx.d8.kir.lab`
+- AWX: `http://awx-demo.d8.kir.lab`
+
+## Argo CD Applications
+
+- `ansible-os-pods`: synced and healthy during last check.
+- `demo-platform`: synced and healthy during last check.
+
+## DVP Resources
+
+Namespace: `demo-prod`
+
+- `VirtualImage/demo-alpine-cloud`: `Ready`
+- `VirtualDisk/postgres-vm-root`: `Ready`, `256Mi`
+- `VirtualMachine/postgres-vm`: `Running`, `1` core, `coreFraction: 5%`, `512Mi`, IP `10.77.111.5`
+- `qemu-guest-agent`: installed and started by AWX bootstrap; DVP reported `AgentReady=True` during last check.
+
+## Kubernetes Demo Resources
+
+- `demo-prod/demo-app`: scaled to `4` replicas during scenario 02.
+- `customer-a`: tenant namespace exists with quota, limit range, RBAC and starter workload.
+- `demo-os`: contains pod-only AWX/Argo demo nodes `ol-node-1` and `ol-node-2`.
+
+## AWX State
+
+Existing useful objects:
+
+- Project: `Gitea demo repo`
+- Job Template: `Configure OS pods`
+- Inventory: `Demo OS pods`
+- Job Template: `Bootstrap DVP VM`
+- Inventory: `DVP VMs`
+- Host: `postgres-vm`, `ansible_host: 10.77.111.5`
+- Credential: `dvp-vm-ssh`
+
+Recent AWX result:
+
+- `Bootstrap DVP VM` succeeded after playbook fixes for Alpine/OpenRC.
+
+## Important Implementation Notes
+
+- `demo-platform` currently uses plain YAML/Kustomize. Some scenarios require changing both `values.yaml` and the actual manifest because `values.yaml` is not yet wired into templating.
+- For scenario 02 scale, both `gitops/environments/prod/values.yaml` and `gitops/environments/prod/demo-app.yaml` must be kept aligned.
+- For scenario 04 VM resize, both `gitops/environments/prod/values.yaml` and `gitops/environments/prod/dvp-postgres-vm.yaml` must be kept aligned.
+- Argo CD in the cluster reads from Gitea, not GitHub. For live demos, push to `dkp-gitea` as well as `origin`.
+- Avoid force-push to Gitea unless explicitly approved. Gitea may contain UI commits from live demos.
+
+## Recent Fixes
+
+- Added real minimal DVP VM manifest.
+- Added `demo-platform` Application.
+- Refreshed Russian documentation.
+- Added AWX VM bootstrap inventory/template and validated SSH from AWX to VM.
+- Added `qemu-guest-agent` installation and service startup for Alpine/OpenRC VM bootstrap.
+- Added `docs/STATUS.md` and `docs/NEXT_STEPS.md` as lightweight repo context files.
+- Documented the context-maintenance rule in both README files.
