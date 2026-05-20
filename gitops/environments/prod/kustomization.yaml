@@ -8,3 +8,4 @@ resources:
   - demo-app.yaml
   - monitoring.yaml
   - tenants/customer-a
+  - ../../self-service/generated

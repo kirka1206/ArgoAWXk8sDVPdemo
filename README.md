@@ -53,6 +53,8 @@ flowchart LR
 | `gitops/environments/prod/dvp-postgres-vm.yaml` | Реальный минимальный DVP manifest для `postgres-vm`. |
 | `gitops/environments/prod/golden-images/` | Сценарий импорта исходного образа из URL, builder VM и публикации golden image. |
 | `gitops/environments/prod/tenants/customer-a/` | Пример self-service tenant. |
+| `gitops/self-service/` | Catalog, request и generated manifests для controlled self-service стендов. |
+| `self-service-ui/` | Одностраничный web UI для генерации GitOps self-service request. |
 | `gitops/awx/` | AWX playbooks, PostSync hook и пример Secret без реальных токенов. |
 | `gitops/infrastructure/dvp/` | Reference template для DVP VM. |
 | `scenarios/` | Подробные демонстрационные сценарии. |
@@ -167,6 +169,17 @@ VM специально минимальная, чтобы стенд не по�
 | [06. Broken Release And Rollback](scenarios/06-broken-release-and-rollback.md) | Ошибка image tag и rollback через Git. |
 | [07. Self-Service Tenant](scenarios/07-self-service-tenant.md) | Tenant onboarding через каталог в Git. |
 | [08. Golden Image Management](scenarios/08-golden-image-management.md) | Импорт исходного image из URL, builder VM, AWX customization и публикация golden image. |
+| [09. Self-Service Environment Request](scenarios/09-self-service-environment-request.md) | Разработчик выбирает профиль стенда через Git/request или web UI, Argo CD и AWX создают окружение. |
+
+## Self-service UI
+
+Для демонстрации developer-facing UX есть статическое web-приложение:
+
+```bash
+open self-service-ui/index.html
+```
+
+UI не создаёт ресурсы напрямую. Он генерирует `EnvironmentRequest` YAML и Git-команды. Дальше request проходит через Git, review/merge, Argo CD sync и AWX post-configuration.
 
 ## Что делает bootstrap
 

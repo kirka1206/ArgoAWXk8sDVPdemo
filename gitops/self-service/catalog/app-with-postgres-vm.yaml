@@ -1,0 +1,35 @@
+apiVersion: demo.platform/v1
+kind: EnvironmentProfile
+metadata:
+  name: app-with-postgres-vm
+spec:
+  description: "Demo app plus minimal DVP VM intended for PostgreSQL post-configuration."
+  ttlMax: 24h
+  quota:
+    requestsCpu: "1"
+    requestsMemory: 1536Mi
+    limitsCpu: "2"
+    limitsMemory: 3Gi
+    pods: "16"
+  workload:
+    app: true
+    ingress: true
+    vm: true
+    awxPostConfig: true
+  vm:
+    cpu: 1
+    coreFraction: 5%
+    memory: 512Mi
+    diskSize: 256Mi
+    allowedImages:
+      - alpine-base-3-23-v1
+      - alpine-golden-3-23-v1
+  software:
+    postgresVersions:
+      - "15"
+      - "16"
+  awx:
+    postConfig:
+      - gitops/awx/playbooks/bootstrap-vm.yml
+      - gitops/awx/playbooks/postgresql-tuning.yml
+      - gitops/awx/playbooks/validate-vm.yml

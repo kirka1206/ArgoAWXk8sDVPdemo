@@ -150,6 +150,20 @@ kubectl get deploy,svc,ingress -n customer-a
 
 ## 8. Финал
 
+Если аудитория спрашивает про self-service для разработчиков, покажите:
+
+```text
+self-service-ui/index.html
+gitops/self-service/catalog/
+gitops/self-service/requests/dev-alice-001.yaml
+gitops/self-service/generated/dev-alice-001/
+scenarios/09-self-service-environment-request.md
+```
+
+Что сказать:
+
+> Разработчик не получает прямой доступ к кластеру. Он выбирает approved profile в web UI или YAML request. UI генерирует GitOps request, дальше работают review, Argo CD и AWX. Это self-service без обхода governance.
+
 Если аудитория спрашивает про golden image, покажите:
 
 ```text

@@ -1,6 +1,6 @@
 # Current Status
 
-Updated: 2026-05-21 00:25 MSK
+Updated: 2026-05-21 00:45 MSK
 
 ## Repository Rule
 
@@ -89,8 +89,16 @@ Recent AWX result:
   - AWX playbooks `prepare-golden-image.yml` and `validate-golden-image.yml`;
   - scenario `scenarios/08-golden-image-management.md`.
 - Added a live demo talk plan to `scenarios/08-golden-image-management.md` and a short golden image talk track to `docs/demo-talk-track.ru.md`.
+- Added self-service environment request scenario artifacts:
+  - approved profiles under `gitops/self-service/catalog/`;
+  - example request `gitops/self-service/requests/dev-alice-001.yaml`;
+  - generated example `gitops/self-service/generated/dev-alice-001/`;
+  - static web UI under `self-service-ui/`;
+  - scenario `scenarios/09-self-service-environment-request.md`;
+  - documentation `docs/self-service.ru.md`.
 
 ## Pending Validation
 
 - Golden image scenario 08 first phase is live-validated: source image import is `Ready`, builder VM exists in `Manual`/`Stopped`.
 - Full golden image customization is not yet executed. Next validation requires starting `golden-builder-vm`, adding it to AWX inventory as `golden_builder`, running `prepare-golden-image.yml`, then `validate-golden-image.yml`.
+- Self-service scenario 09 artifacts have been added but not yet live-validated in DKP/DVP.

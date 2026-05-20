@@ -5,6 +5,7 @@
 1. Decide whether to revert scenario 02 scale back to `2` replicas or keep `demo-app` at `4` replicas for the next demo.
 2. Document AWX UI steps for creating `DVP VMs`, `postgres-vm`, `dvp-vm-ssh` and `Bootstrap DVP VM` in Russian docs.
 3. Continue scenario 08 live validation: start `golden-builder-vm`, run AWX customization and validation, then decide whether to publish `alpine-golden-3-23-v1`.
+4. Validate scenario 09 live in DKP/DVP: generated `dev-alice-001` namespace, app and optional VM resources.
 
 ## Architecture Improvements
 
@@ -16,6 +17,24 @@
    - create/update DVP VM inventory;
    - create/update VM bootstrap job template;
    - run bootstrap and validation jobs.
+4. Consider adding a backend for `self-service-ui` that creates Git branches and pull requests instead of only generating YAML and commands.
+
+## Self-Service Scenario Draft
+
+Goal: demonstrate developer-facing self-service without bypassing GitOps governance.
+
+Status: initial catalog, request, generated example, static web UI and scenario documentation were added. Live validation is still needed.
+
+Proposed flow:
+
+1. Developer opens `self-service-ui/index.html`.
+2. Developer selects an approved profile and TTL.
+3. UI generates an `EnvironmentRequest`.
+4. Request is committed to Git and reviewed.
+5. Platform automation renders manifests into `gitops/self-service/generated/<request>/`.
+6. Argo CD applies namespace, quota, RBAC, app, ingress and optional DVP VM.
+7. AWX performs post-configuration for profiles with VM.
+8. Developer receives namespace, endpoint and credential retrieval instructions.
 
 ## Golden Image Scenario Draft
 

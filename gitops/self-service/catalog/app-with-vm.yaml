@@ -1,0 +1,30 @@
+apiVersion: demo.platform/v1
+kind: EnvironmentProfile
+metadata:
+  name: app-with-vm
+spec:
+  description: "Demo app plus one minimal DVP VM from an approved golden image."
+  ttlMax: 8h
+  quota:
+    requestsCpu: "1"
+    requestsMemory: 1Gi
+    limitsCpu: "2"
+    limitsMemory: 2Gi
+    pods: "12"
+  workload:
+    app: true
+    ingress: true
+    vm: true
+    awxPostConfig: true
+  vm:
+    cpu: 1
+    coreFraction: 5%
+    memory: 512Mi
+    diskSize: 256Mi
+    allowedImages:
+      - alpine-base-3-23-v1
+      - alpine-golden-3-23-v1
+  awx:
+    postConfig:
+      - gitops/awx/playbooks/bootstrap-vm.yml
+      - gitops/awx/playbooks/validate-vm.yml

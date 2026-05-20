@@ -134,6 +134,24 @@ Argo CD применяет `VirtualImage`, DVP импортирует образ
 
 Ценность: golden image становится воспроизводимым артефактом с историей изменений, а не ручной загрузкой через UI.
 
+## 9. Self-service создание временного стенда
+
+Разработчик выбирает профиль стенда из approved catalog и создаёт Git request. Это можно сделать YAML-файлом или через web UI:
+
+```bash
+open self-service-ui/index.html
+```
+
+Профили:
+
+- `app-only`;
+- `app-with-vm`;
+- `app-with-postgres-vm`.
+
+После merge Argo CD создаёт generated manifests, а AWX выполняет post-configuration для профилей с VM.
+
+Ценность: разработчик получает быстрый путь к стенду, а platform team сохраняет контроль через catalog, Git review, quotas, TTL и allow-list образов.
+
 ## Демонстрационный сценарий
 
 ### Подготовка
