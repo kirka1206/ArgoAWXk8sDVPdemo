@@ -10,6 +10,7 @@
       - jq
       - tar
       - vim
+      - qemu-guest-agent
     node_exporter_enabled: true
   tasks:
     - name: Set hostname
