@@ -150,6 +150,26 @@ kubectl get deploy,svc,ingress -n customer-a
 
 ## 8. Финал
 
+Если аудитория спрашивает про golden image, покажите:
+
+```text
+gitops/environments/prod/golden-images/source-image.yaml
+scenarios/08-golden-image-management.md
+```
+
+Что сказать:
+
+> В production часто нужно управлять золотыми образами. В этом стенде администратор задаёт URL исходного image в Git. Argo CD создаёт DVP `VirtualImage`, DVP импортирует образ, AWX готовит builder VM, а новая версия golden image публикуется как отдельный immutable artifact.
+
+Короткий порядок показа:
+
+1. Gitea: `gitops/environments/prod/golden-images/source-image.yaml` — URL исходного image.
+2. Argo CD: `demo-platform` — `VirtualImage`, `VirtualDisk`, `VirtualMachine`.
+3. Terminal: `kubectl get vi,vd,vm -n demo-prod -o wide`.
+4. AWX: `prepare-golden-image.yml` и `validate-golden-image.yml`.
+5. Gitea: `publish-golden-image.example.yaml` — публикация версии после validation.
+6. Объяснить rollback: переключение обратно на предыдущий image reference через Git.
+
 Финальная формулировка:
 
 > Argo CD отвечает за декларативное состояние платформы. AWX отвечает за операционную настройку ОС. DVP VM, Kubernetes workload'ы и tenant'ы управляются из Git, а post-configuration и validation выполняются через AWX.

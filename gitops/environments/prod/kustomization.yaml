@@ -4,6 +4,7 @@ resources:
   - namespace.yaml
   - rbac.yaml
   - dvp-postgres-vm.yaml
+  - golden-images
   - demo-app.yaml
   - monitoring.yaml
   - tenants/customer-a

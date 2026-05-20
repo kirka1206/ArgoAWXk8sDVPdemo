@@ -1,0 +1,70 @@
+- name: Prepare golden image builder VM
+  hosts: golden_builder
+  gather_facts: true
+  become: true
+  vars:
+    golden_packages:
+      - qemu-guest-agent
+      - chrony
+      - curl
+      - jq
+      - vim
+    demo_config_path: /etc/golden-image-demo.conf
+  tasks:
+    - name: Install golden image packages on Alpine
+      ansible.builtin.command: "apk add --no-cache {{ golden_packages | join(' ') }}"
+      register: apk_result
+      changed_when: "'OK:' in apk_result.stdout or 'OK:' in apk_result.stderr"
+      when: ansible_pkg_mgr == "apk"
+
+    - name: Install golden image packages on non-Alpine systems
+      ansible.builtin.package:
+        name: "{{ golden_packages }}"
+        state: present
+      when: ansible_pkg_mgr != "apk"
+
+    - name: Enable qemu guest agent on OpenRC
+      ansible.builtin.service:
+        name: qemu-guest-agent
+        state: started
+        enabled: true
+      when: ansible_service_mgr == "openrc"
+
+    - name: Enable qemu guest agent on systemd
+      ansible.builtin.service:
+        name: qemu-guest-agent
+        state: started
+        enabled: true
+      when: ansible_service_mgr == "systemd"
+
+    - name: Write demo golden image config
+      ansible.builtin.copy:
+        dest: "{{ demo_config_path }}"
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          managed_by=AWX
+          purpose=golden-image-builder
+          source_image={{ inventory_hostname }}
+
+    - name: Clean package manager cache on Alpine
+      ansible.builtin.command: rm -rf /var/cache/apk/*
+      changed_when: false
+      when: ansible_pkg_mgr == "apk"
+
+    - name: Clean logs
+      ansible.builtin.shell: |
+        find /var/log -type f -exec sh -c ': > "$1"' _ {} \;
+      changed_when: false
+
+    - name: Reset machine-id if present
+      ansible.builtin.shell: |
+        rm -f /etc/machine-id
+        touch /etc/machine-id
+      changed_when: true
+      when: ansible_facts['distribution'] != "Alpine"
+
+    - name: Remove SSH host keys for regeneration on first boot
+      ansible.builtin.shell: rm -f /etc/ssh/ssh_host_*
+      changed_when: true

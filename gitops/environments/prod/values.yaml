@@ -25,3 +25,23 @@ postgresql:
 
 monitoring:
   enabled: true
+
+goldenImage:
+  source:
+    type: HTTP
+    url: https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/cloud/generic_alpine-3.23.3-x86_64-bios-cloudinit-r0.qcow2
+  importedImage:
+    kind: VirtualImage
+    name: alpine-base-3-23-v1
+    namespace: demo-prod
+  builderVm:
+    name: golden-builder-vm
+    cpu: 1
+    coreFraction: 5%
+    memory: 512Mi
+    diskSize: 256Mi
+    runPolicy: Manual
+  outputImage:
+    kind: VirtualImage
+    name: alpine-golden-3-23-v1
+    namespace: demo-prod

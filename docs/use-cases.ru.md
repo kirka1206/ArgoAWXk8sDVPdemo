@@ -122,6 +122,18 @@ Argo CD показывает sync status и drift. AWX показывает ис
 
 Ценность: можно объяснить, что изменилось, каким инструментом и на каком уровне.
 
+## 8. Управление golden image
+
+Администратор указывает в Git URL исходного cloud image:
+
+```text
+gitops/environments/prod/golden-images/source-image.yaml
+```
+
+Argo CD применяет `VirtualImage`, DVP импортирует образ в кластер, затем создаётся builder disk и builder VM. AWX выполняет customization и validation, после чего публикуется новая версия golden image.
+
+Ценность: golden image становится воспроизводимым артефактом с историей изменений, а не ручной загрузкой через UI.
+
 ## Демонстрационный сценарий
 
 ### Подготовка

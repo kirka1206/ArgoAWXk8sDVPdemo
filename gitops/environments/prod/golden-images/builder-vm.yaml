@@ -1,0 +1,65 @@
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualDisk
+metadata:
+  name: golden-builder-root
+  namespace: demo-prod
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  labels:
+    app.kubernetes.io/name: golden-builder-vm
+    app.kubernetes.io/part-of: demo-platform
+    golden-image.demo/role: builder-disk
+spec:
+  dataSource:
+    type: ObjectRef
+    objectRef:
+      kind: VirtualImage
+      name: alpine-base-3-23-v1
+  persistentVolumeClaim:
+    size: 256Mi
+    storageClassName: k8nfs
+---
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualMachine
+metadata:
+  name: golden-builder-vm
+  namespace: demo-prod
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  labels:
+    app.kubernetes.io/name: golden-builder-vm
+    app.kubernetes.io/part-of: demo-platform
+    golden-image.demo/role: builder-vm
+spec:
+  virtualMachineClassName: generic
+  runPolicy: Manual
+  osType: Generic
+  bootloader: BIOS
+  cpu:
+    cores: 1
+    coreFraction: 5%
+  memory:
+    size: 512Mi
+  blockDeviceRefs:
+    - kind: VirtualDisk
+      name: golden-builder-root
+  provisioning:
+    type: UserData
+    userData: |
+      #cloud-config
+      hostname: golden-builder-vm
+      users:
+        - name: ansible
+          lock_passwd: false
+          passwd: $1$demoans$ZvqsQCamGDBaHD6nqXyqT/
+          sudo: ALL=(ALL) NOPASSWD:ALL
+          shell: /bin/sh
+      ssh_pwauth: true
+      package_update: false
+      packages:
+        - openssh
+        - python3
+        - sudo
+      runcmd:
+        - rc-update add sshd default || true
+        - service sshd start || true

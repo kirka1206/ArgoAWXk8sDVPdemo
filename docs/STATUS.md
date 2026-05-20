@@ -1,6 +1,6 @@
 # Current Status
 
-Updated: 2026-05-20 23:57 MSK
+Updated: 2026-05-21 00:20 MSK
 
 ## Repository Rule
 
@@ -79,3 +79,13 @@ Recent AWX result:
 - Added `qemu-guest-agent` installation and service startup for Alpine/OpenRC VM bootstrap.
 - Added `docs/STATUS.md` and `docs/NEXT_STEPS.md` as lightweight repo context files.
 - Documented the context-maintenance rule in both README files.
+- Added golden image management scenario artifacts:
+  - source `VirtualImage` imported from an external URL in Git;
+  - builder `VirtualDisk` and manual `golden-builder-vm`;
+  - AWX playbooks `prepare-golden-image.yml` and `validate-golden-image.yml`;
+  - scenario `scenarios/08-golden-image-management.md`.
+- Added a live demo talk plan to `scenarios/08-golden-image-management.md` and a short golden image talk track to `docs/demo-talk-track.ru.md`.
+
+## Pending Validation
+
+- Golden image scenario 08 artifacts have been added but not yet live-validated in DKP/DVP.

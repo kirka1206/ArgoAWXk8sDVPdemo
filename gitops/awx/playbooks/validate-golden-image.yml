@@ -1,0 +1,25 @@
+- name: Validate golden image builder VM
+  hosts: golden_builder
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Check SSH and Python access
+      ansible.builtin.ping:
+
+    - name: Check qemu guest agent package
+      ansible.builtin.command: qemu-ga --version
+      register: qemu_ga_version
+      changed_when: false
+
+    - name: Check demo config
+      ansible.builtin.command: cat /etc/golden-image-demo.conf
+      register: golden_config
+      changed_when: false
+
+    - name: Print validation summary
+      ansible.builtin.debug:
+        msg:
+          host: "{{ inventory_hostname }}"
+          kernel: "{{ ansible_kernel }}"
+          qemu_guest_agent: "{{ qemu_ga_version.stdout }}"
+          config: "{{ golden_config.stdout_lines }}"

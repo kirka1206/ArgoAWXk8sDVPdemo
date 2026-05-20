@@ -1,0 +1,20 @@
+# Apply this manifest only after the builder VM has been customized and validated.
+# It publishes a new image version from the prepared builder disk.
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualImage
+metadata:
+  name: alpine-golden-3-23-v1
+  namespace: demo-prod
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+  labels:
+    app.kubernetes.io/name: golden-image
+    app.kubernetes.io/part-of: demo-platform
+    golden-image.demo/source: builder-disk
+spec:
+  storage: ContainerRegistry
+  dataSource:
+    type: ObjectRef
+    objectRef:
+      kind: VirtualDisk
+      name: golden-builder-root

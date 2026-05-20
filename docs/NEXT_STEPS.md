@@ -4,7 +4,7 @@
 
 1. Decide whether to revert scenario 02 scale back to `2` replicas or keep `demo-app` at `4` replicas for the next demo.
 2. Document AWX UI steps for creating `DVP VMs`, `postgres-vm`, `dvp-vm-ssh` and `Bootstrap DVP VM` in Russian docs.
-3. Add scenario 08 for golden image management.
+3. Validate scenario 08 live in DKP/DVP: imported source image, builder disk and builder VM status.
 
 ## Architecture Improvements
 
@@ -20,6 +20,8 @@
 ## Golden Image Scenario Draft
 
 Goal: demonstrate production-like golden image management in DVP.
+
+Status: initial manifests, playbooks and scenario documentation were added. The live demo talk plan is in `scenarios/08-golden-image-management.md`. Live validation is still needed.
 
 Proposed flow:
 
