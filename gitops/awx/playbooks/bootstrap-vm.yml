@@ -18,10 +18,9 @@
         name: "{{ demo_hostname }}"
 
     - name: Install base packages on Alpine
-      community.general.apk:
-        name: "{{ base_packages }}"
-        state: present
-        update_cache: true
+      ansible.builtin.command: "apk add --no-cache {{ base_packages | join(' ') }}"
+      register: apk_result
+      changed_when: "'OK:' in apk_result.stdout or 'OK:' in apk_result.stderr"
       when: ansible_pkg_mgr == "apk"
 
     - name: Install base packages on non-Alpine systems
