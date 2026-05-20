@@ -80,7 +80,8 @@ function buildRequest() {
   const team = slug(el("team").value || "platform");
   const profile = profiles[selectedProfile];
   const vmImage = el("vmImage").value;
-  const vmBlock = selectedProfile === "app-only" ? "" : `  vm:\n    image: ${vmImage}\n`;
+  const vmBlock =
+    selectedProfile === "app-only" ? "" : `  vm:\n    image: ${vmImage}\n    imageKind: ClusterVirtualImage\n`;
 
   return `apiVersion: demo.platform/v1
 kind: EnvironmentRequest

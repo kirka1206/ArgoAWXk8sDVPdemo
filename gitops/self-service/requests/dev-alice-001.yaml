@@ -14,3 +14,4 @@ spec:
     appImage: nginx:1.27
   vm:
     image: alpine-base-3-23-v1
+    imageKind: ClusterVirtualImage

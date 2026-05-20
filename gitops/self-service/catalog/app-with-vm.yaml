@@ -24,6 +24,7 @@ spec:
     allowedImages:
       - alpine-base-3-23-v1
       - alpine-golden-3-23-v1
+    imageKind: ClusterVirtualImage
   awx:
     postConfig:
       - gitops/awx/playbooks/bootstrap-vm.yml

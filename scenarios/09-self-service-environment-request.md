@@ -54,6 +54,7 @@ spec:
     appImage: nginx:1.27
   vm:
     image: alpine-base-3-23-v1
+    imageKind: ClusterVirtualImage
 ```
 
 ## Профили
@@ -124,6 +125,7 @@ open self-service-ui/index.html
 - TTL: `8h`;
 - app image: `nginx:1.27`;
 - VM image: `alpine-base-3-23-v1`.
+- VM image kind: `ClusterVirtualImage`, чтобы tenant namespace мог использовать утверждённый платформенный образ.
 
 Скопируйте YAML.
 

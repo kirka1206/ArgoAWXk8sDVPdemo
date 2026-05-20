@@ -9,7 +9,7 @@ spec:
   dataSource:
     type: ObjectRef
     objectRef:
-      kind: VirtualImage
+      kind: ClusterVirtualImage
       name: alpine-base-3-23-v1
   persistentVolumeClaim:
     size: 256Mi

@@ -16,6 +16,7 @@ gitops/self-service/requests/<request-name>.yaml
 
 - разработчик выбирает только разрешённый profile;
 - CPU/RAM/image/TTL ограничены catalog'ом;
+- DVP VM создаётся из утверждённого `ClusterVirtualImage`, доступного tenant namespace;
 - все изменения проходят через Git;
 - rollback и cleanup делаются через Git;
 - реальные credentials не хранятся в Git.
