@@ -29,6 +29,13 @@
         enabled: true
       when: ansible_service_mgr == "systemd"
 
+    - name: Ensure qemu guest agent is enabled
+      ansible.builtin.service:
+        name: qemu-guest-agent
+        state: started
+        enabled: true
+      when: ansible_service_mgr == "systemd"
+
     - name: Create node exporter user
       ansible.builtin.user:
         name: node_exporter
