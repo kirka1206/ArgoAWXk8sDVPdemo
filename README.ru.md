@@ -102,6 +102,22 @@ cd ArgoAWXk8sDVPdemo
 ./scripts/run-demo-job.sh
 ```
 
+## Запуск в DKP-кластере d8.kir.lab
+
+Для переноса стенда в DKP-кластер используется отдельный профиль:
+
+```bash
+./scripts/deploy-dkp.sh
+```
+
+Скрипт ожидает kube-context `codex-api.d8.kir.lab`, устанавливает базовый стенд и добавляет Ingress'ы:
+
+- Gitea: `http://gitea-awx.d8.kir.lab`
+- Argo CD: `http://argocd-awx.d8.kir.lab`
+- AWX: `http://awx-demo.d8.kir.lab`
+
+Локальные port-forward'ы также остаются доступными как fallback на портах `3100`, `3101`, `3102`.
+
 ## Что делает bootstrap
 
 1. Устанавливает Argo CD.
@@ -156,4 +172,3 @@ kernel=...
 
 - Argo CD хранит и применяет долгоживущее декларативное состояние платформы;
 - AWX/Ansible выполняет операционные действия внутри гостевой ОС.
-

@@ -96,6 +96,20 @@ Run the Ansible part of the demo:
 ./scripts/run-demo-job.sh
 ```
 
+## DKP deployment
+
+For the `d8.kir.lab` DKP cluster, use:
+
+```bash
+./scripts/deploy-dkp.sh
+```
+
+The script expects kube-context `codex-api.d8.kir.lab` and creates DKP ingress resources:
+
+- Gitea: `http://gitea-awx.d8.kir.lab`
+- Argo CD: `http://argocd-awx.d8.kir.lab`
+- AWX: `http://awx-demo.d8.kir.lab`
+
 ## What the bootstrap script does
 
 1. Installs Argo CD.
