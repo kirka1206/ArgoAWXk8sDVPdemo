@@ -1,0 +1,30 @@
+- name: Tune PostgreSQL parameters
+  hosts: postgres_vm
+  gather_facts: false
+  become: true
+  vars:
+    postgresql_config_path: /var/lib/pgsql/data/postgresql.conf
+    postgresql_service: postgresql
+    postgresql_shared_buffers: 1GB
+    postgresql_work_mem: 16MB
+  handlers:
+    - name: Restart PostgreSQL
+      ansible.builtin.service:
+        name: "{{ postgresql_service }}"
+        state: restarted
+  tasks:
+    - name: Set shared_buffers
+      ansible.builtin.lineinfile:
+        path: "{{ postgresql_config_path }}"
+        regexp: "^#?shared_buffers\\s*="
+        line: "shared_buffers = '{{ postgresql_shared_buffers }}'"
+        create: false
+      notify: Restart PostgreSQL
+
+    - name: Set work_mem
+      ansible.builtin.lineinfile:
+        path: "{{ postgresql_config_path }}"
+        regexp: "^#?work_mem\\s*="
+        line: "work_mem = '{{ postgresql_work_mem }}'"
+        create: false
+      notify: Restart PostgreSQL

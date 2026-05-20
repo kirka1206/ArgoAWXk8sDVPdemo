@@ -1,0 +1,25 @@
+environmentSize: medium
+
+app:
+  name: demo-app
+  replicas: 2
+  image: nginx:1.27
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+vm:
+  name: postgres-vm
+  cpu: 2
+  memory: 4Gi
+
+postgresql:
+  shared_buffers: 1GB
+  work_mem: 16MB
+
+monitoring:
+  enabled: true

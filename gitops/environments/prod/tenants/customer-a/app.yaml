@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-a-demo-app
+  namespace: customer-a
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  labels:
+    app: customer-a-demo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: customer-a-demo-app
+  template:
+    metadata:
+      labels:
+        app: customer-a-demo-app
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27
+          ports:
+            - name: http
+              containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-a-demo-app
+  namespace: customer-a
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  selector:
+    app: customer-a-demo-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: customer-a-demo-app
+  namespace: customer-a
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  rules:
+    - host: customer-a.example.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: customer-a-demo-app
+                port:
+                  name: http

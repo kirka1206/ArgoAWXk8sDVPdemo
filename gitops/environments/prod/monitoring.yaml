@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-monitoring-rules
+  namespace: demo-prod
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  labels:
+    app.kubernetes.io/name: demo-monitoring
+    app.kubernetes.io/part-of: demo-platform
+data:
+  README: |
+    Demo placeholder for monitoring objects.
+    Replace this ConfigMap with ServiceMonitor, PrometheusRule or DKP monitoring resources used in the target cluster.

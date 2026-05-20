@@ -1,0 +1,13 @@
+# Adapt this file to the actual DVP VM CRD before including it in a live Application.
+apiVersion: virtualization.example.local/v1alpha1
+kind: VirtualMachine
+metadata:
+  name: customer-a-vm
+  namespace: customer-a
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  running: true
+  resources:
+    cpu: 1
+    memory: 2Gi

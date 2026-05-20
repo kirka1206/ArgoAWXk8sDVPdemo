@@ -1,0 +1,18 @@
+# Adapt this example before applying it.
+# The current repository does not contain the exact DVP CRD schema for VM objects.
+# Replace apiVersion, kind and spec fields with the actual Deckhouse Virtualization Platform CRD from your cluster.
+apiVersion: virtualization.example.local/v1alpha1
+kind: VirtualMachine
+metadata:
+  name: postgres-vm
+  namespace: demo-prod
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  running: true
+  resources:
+    cpu: 2
+    memory: 4Gi
+  image: postgres-vm-base
+  network:
+    sshServiceName: postgres-vm-ssh

@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ansible-os-pods
+  name: demo-platform
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: http://gitea-http.gitea.svc.cluster.local:3000/codex/demo.git
     targetRevision: main
-    path: gitops/demo-manifests
+    path: gitops/environments/prod
   destination:
     server: https://kubernetes.default.svc
-    namespace: demo-os
+    namespace: demo-prod
   syncPolicy:
     automated:
       prune: true

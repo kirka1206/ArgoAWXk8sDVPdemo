@@ -1,0 +1,43 @@
+- name: Validate VM after provisioning
+  hosts: postgres_vm
+  gather_facts: true
+  become: false
+  vars:
+    required_services:
+      - chronyd
+      - postgresql
+    required_ports:
+      - 22
+      - 5432
+  tasks:
+    - name: Check host is reachable
+      ansible.builtin.ping:
+
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+
+    - name: Validate required services
+      ansible.builtin.assert:
+        that:
+          - "item + '.service' in ansible_facts.services"
+          - "ansible_facts.services[item + '.service'].state in ['running', 'started']"
+        fail_msg: "Service {{ item }} is not running"
+        success_msg: "Service {{ item }} is running"
+      loop: "{{ required_services }}"
+
+    - name: Check required TCP ports
+      ansible.builtin.wait_for:
+        host: "{{ inventory_hostname }}"
+        port: "{{ item }}"
+        timeout: 5
+      loop: "{{ required_ports }}"
+      delegate_to: localhost
+
+    - name: Print validation summary
+      ansible.builtin.debug:
+        msg:
+          host: "{{ inventory_hostname }}"
+          status: validated
+          kernel: "{{ ansible_kernel }}"
+          services: "{{ required_services }}"
+          ports: "{{ required_ports }}"

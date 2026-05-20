@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: customer-a
+  labels:
+    demo.platform/tenant: customer-a
+    app.kubernetes.io/part-of: demo-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"

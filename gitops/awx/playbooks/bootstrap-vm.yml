@@ -1,0 +1,48 @@
+- name: Bootstrap VM operating system
+  hosts: postgres_vm
+  gather_facts: true
+  become: true
+  vars:
+    demo_hostname: postgres-vm
+    base_packages:
+      - chrony
+      - curl
+      - jq
+      - tar
+      - vim
+    node_exporter_enabled: true
+  tasks:
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: "{{ demo_hostname }}"
+
+    - name: Install base packages
+      ansible.builtin.package:
+        name: "{{ base_packages }}"
+        state: present
+
+    - name: Ensure chrony is enabled
+      ansible.builtin.service:
+        name: chronyd
+        state: started
+        enabled: true
+      when: ansible_service_mgr == "systemd"
+
+    - name: Create node exporter user
+      ansible.builtin.user:
+        name: node_exporter
+        system: true
+        shell: /sbin/nologin
+        create_home: false
+      when: node_exporter_enabled
+
+    - name: Write demo node exporter marker
+      ansible.builtin.copy:
+        dest: /etc/demo-node-exporter-installed
+        content: |
+          node_exporter_enabled={{ node_exporter_enabled }}
+          managed_by=AWX
+        owner: root
+        group: root
+        mode: "0644"
+      when: node_exporter_enabled
