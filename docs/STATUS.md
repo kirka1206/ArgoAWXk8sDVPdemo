@@ -1,6 +1,6 @@
 # Current Status
 
-Updated: 2026-05-21 11:12 MSK
+Updated: 2026-05-21 11:25 MSK
 
 ## Repository Rule
 
@@ -127,6 +127,10 @@ Recent AWX result:
   - backend now falls back to OIDC JWT claims from the `Authorization` header when `X-Auth-Request-Groups` is not passed through;
   - frontend handles zero-profile responses without throwing `Cannot read properties of undefined`;
   - deployment pod template has a code-version annotation so ConfigMap code updates trigger rollout.
+- Improved self-service portal UX:
+  - profile selector now shows detailed Russian descriptions, resource composition, quotas, app limits and VM specs;
+  - purpose selector now explains `feature`, `bugfix`, `loadtest` and `demo`;
+  - create/status output now includes namespace name/phase, owner, profile, purpose, TTL, quotas, deployment replicas, service, ingress, VM/disk details and GitOps artifact paths.
 
 ## Pending Validation
 
@@ -134,3 +138,4 @@ Recent AWX result:
 - Full golden image customization is not yet executed. Next validation requires starting `golden-builder-vm`, adding it to AWX inventory as `golden_builder`, running `prepare-golden-image.yml`, then `validate-golden-image.yml`.
 - Self-service scenario 09 first live validation passed: Argo CD `demo-platform` is `Synced/Healthy`, app resources are ready, `ClusterVirtualImage` is `Ready`, `VirtualDisk/dev-alice-001-vm-root` is `Ready`, `VirtualMachine/dev-alice-001-vm` is `Running`.
 - Self-service portal scenario 10 infrastructure is live-validated: Argo CD `demo-platform` is `Synced/Healthy`, certificate is `Ready`, DexAuthenticator redirects unauthenticated HTTPS traffic to `/dex-authenticator/sign_in`, portal pod is ready, backend can create an app-only environment in Gitea. Logs show successful browser authentication for `alice.koroleva@demo.local` after the TLS fix. API fallback test with an OIDC-style JWT returns `app-only` and `app-with-vm` profiles for `payments-devs`.
+- Latest portal UX update is syntax-checked and server-side dry-run validated; rollout pending/next live check should verify the browser rendering after hard refresh.

@@ -13,7 +13,7 @@ spec:
   template:
     metadata:
       annotations:
-        self-service.demo/code-version: "2026-05-21-1108"
+        self-service.demo/code-version: "2026-05-21-1125"
       labels:
         app: self-service-portal
     spec:

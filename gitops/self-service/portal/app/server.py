@@ -27,36 +27,49 @@ K8S_CA_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 PROFILES = {
     "app-only": {
         "title": "App only",
-        "description": "Namespace, RBAC, quota, demo app and ingress.",
+        "description": "Лёгкий стенд только с контейнерным приложением. Подходит для проверки UI/API, демо nginx и быстрых smoke-тестов без VM.",
+        "resources": ["Namespace", "ResourceQuota", "LimitRange", "RBAC", "Deployment demo-app", "Service", "Ingress"],
         "groups": ["payments-devs", "analytics-devs", "qa-devs"],
         "ttl": ["2h", "4h", "8h"],
         "vm": False,
         "postgres": False,
         "quota": {"cpu": "1", "memory": "1Gi", "pods": "8"},
+        "app": {"replicas": 1, "requests": "50m CPU / 64Mi RAM", "limits": "200m CPU / 256Mi RAM"},
     },
     "app-with-vm": {
         "title": "App + DVP VM",
-        "description": "Application and one minimal DVP VM from approved ClusterVirtualImage.",
+        "description": "Контейнерное приложение и минимальная DVP VM из утверждённого ClusterVirtualImage. Подходит для проверки связки Kubernetes + VM + AWX post-config.",
+        "resources": ["Namespace", "ResourceQuota", "LimitRange", "RBAC", "Deployment demo-app", "Service", "Ingress", "VirtualDisk 256Mi", "VirtualMachine 1 core / 5% / 512Mi"],
         "groups": ["payments-devs", "qa-devs"],
         "ttl": ["2h", "4h", "8h"],
         "vm": True,
         "postgres": False,
         "quota": {"cpu": "2", "memory": "2Gi", "pods": "12"},
+        "app": {"replicas": 1, "requests": "50m CPU / 64Mi RAM", "limits": "200m CPU / 256Mi RAM"},
+        "vmSpec": {"cpu": "1 core", "coreFraction": "5%", "memory": "512Mi", "disk": "256Mi", "imageKind": "ClusterVirtualImage"},
     },
     "app-with-postgres-vm": {
         "title": "App + PostgreSQL VM",
-        "description": "Application, minimal DVP VM and AWX-ready PostgreSQL post-configuration target.",
+        "description": "Контейнерное приложение и минимальная DVP VM как цель для настройки PostgreSQL через AWX. Подходит для демо post-configuration и validation.",
+        "resources": ["Namespace", "ResourceQuota", "LimitRange", "RBAC", "Deployment demo-app", "Service", "Ingress", "VirtualDisk 256Mi", "VirtualMachine 1 core / 5% / 512Mi", "AWX-ready PostgreSQL post-config target"],
         "groups": ["analytics-devs", "qa-devs"],
         "ttl": ["4h", "8h", "24h"],
         "vm": True,
         "postgres": True,
         "quota": {"cpu": "2", "memory": "3Gi", "pods": "16"},
+        "app": {"replicas": 1, "requests": "50m CPU / 64Mi RAM", "limits": "200m CPU / 256Mi RAM"},
+        "vmSpec": {"cpu": "1 core", "coreFraction": "5%", "memory": "512Mi", "disk": "256Mi", "imageKind": "ClusterVirtualImage"},
     },
 }
 
 APP_IMAGES = ["nginx:1.27", "nginx:1.26"]
 VM_IMAGES = ["alpine-base-3-23-v1"]
-PURPOSES = ["feature", "bugfix", "loadtest", "demo"]
+PURPOSES = {
+    "feature": "Разработка или проверка новой функциональности в изолированном namespace.",
+    "bugfix": "Воспроизведение и проверка исправления дефекта без влияния на общие окружения.",
+    "loadtest": "Короткий нагрузочный или ресурсный тест в рамках квот выбранного профиля.",
+    "demo": "Демонстрационный стенд для показа заказчику, команде или архитектурной аудитории.",
+}
 
 
 def slug(value, default="env"):
@@ -112,6 +125,25 @@ def allowed_profiles(groups):
         for name, profile in PROFILES.items()
         if sorted(set(groups).intersection(profile["groups"]))
     ]
+
+
+def profile_summary(profile, ttl, app_image, vm_image=None):
+    spec = PROFILES[profile]
+    summary = {
+        "name": profile,
+        "title": spec["title"],
+        "description": spec["description"],
+        "ttl": ttl,
+        "quota": spec["quota"],
+        "resources": spec["resources"],
+        "app": {"image": app_image, **spec["app"]},
+        "vm": None,
+        "awx": "Не требуется для app-only профиля.",
+    }
+    if spec["vm"]:
+        summary["vm"] = {"nameSuffix": "-vm", "image": vm_image, **spec["vmSpec"]}
+        summary["awx"] = "После создания VM можно запустить AWX post-configuration/validation."
+    return summary
 
 
 def response(handler, status, payload):
@@ -517,7 +549,20 @@ def create_environment(user, payload):
     for path, content in files.items():
         put_file(path, content, message)
     ensure_generated_root(name)
-    return {"name": name, "namespace": name, "profile": profile, "url": f"http://{name}.{BASE_DOMAIN}"}
+    return {
+        "name": name,
+        "namespace": name,
+        "profile": profile,
+        "purpose": purpose,
+        "purposeDescription": PURPOSES[purpose],
+        "ttl": ttl,
+        "url": f"http://{name}.{BASE_DOMAIN}",
+        "git": {
+            "request": f"gitops/self-service/requests/{name}.yaml",
+            "generated": f"gitops/self-service/generated/{name}/",
+        },
+        "summary": profile_summary(profile, ttl, app_image, vm_image),
+    }
 
 
 def k8s_get(path):
@@ -542,14 +587,22 @@ def k8s_get(path):
 def environment_status(name):
     ns = k8s_get(f"/api/v1/namespaces/{name}")
     deployment = k8s_get(f"/apis/apps/v1/namespaces/{name}/deployments/demo-app")
+    service = k8s_get(f"/api/v1/namespaces/{name}/services/demo-app")
     ingress = k8s_get(f"/apis/networking.k8s.io/v1/namespaces/{name}/ingresses/demo-app")
+    vd = k8s_get(f"/apis/virtualization.deckhouse.io/v1alpha2/namespaces/{name}/virtualdisks/{name}-vm-root")
     vm = k8s_get(f"/apis/virtualization.deckhouse.io/v1alpha2/namespaces/{name}/virtualmachines/{name}-vm")
+    ns_meta = ns.get("metadata", {}) if ns else {}
+    deploy_status = deployment.get("status", {}) if deployment else {}
+    deploy_spec = deployment.get("spec", {}) if deployment else {}
+    vm_status = vm.get("status", {}) if vm else {}
+    vm_spec = vm.get("spec", {}) if vm else {}
     return {
-        "namespace": "Ready" if ns else "Pending",
-        "app": deployment.get("status", {}).get("availableReplicas", 0) if deployment else 0,
+        "namespace": {"name": name, "phase": ns.get("status", {}).get("phase") if ns else "Pending", "ttl": ns_meta.get("annotations", {}).get("self-service.demo/ttl"), "owner": ns_meta.get("labels", {}).get("self-service.demo/owner"), "profile": ns_meta.get("labels", {}).get("self-service.demo/profile")},
+        "app": {"name": "demo-app", "replicas": deploy_spec.get("replicas", 0), "availableReplicas": deploy_status.get("availableReplicas", 0), "readyReplicas": deploy_status.get("readyReplicas", 0)},
+        "service": {"name": "demo-app", "clusterIP": service.get("spec", {}).get("clusterIP") if service else None, "port": service.get("spec", {}).get("ports", [{}])[0].get("port") if service else None},
         "ingress": ingress.get("spec", {}).get("rules", [{}])[0].get("host") if ingress else None,
-        "vmPhase": vm.get("status", {}).get("phase") if vm else None,
-        "vmIp": vm.get("status", {}).get("ipAddress") if vm else None,
+        "virtualDisk": {"name": f"{name}-vm-root", "phase": vd.get("status", {}).get("phase") if vd else None, "capacity": vd.get("status", {}).get("capacity") if vd else None},
+        "vm": {"name": f"{name}-vm", "phase": vm_status.get("phase"), "ip": vm_status.get("ipAddress"), "node": vm_status.get("node"), "cpu": vm_spec.get("cpu", {}), "memory": vm_spec.get("memory", {}).get("size")},
     }
 
 
@@ -573,7 +626,9 @@ HTML = """<!doctype html>
     <section class="layout">
       <form id="requestForm">
         <label>Профиль стенда<select id="profile"></select></label>
+        <div id="profileDetails" class="hint"></div>
         <label>Назначение<select id="purpose"></select></label>
+        <div id="purposeDetails" class="hint"></div>
         <label>TTL<select id="ttl"></select></label>
         <label>Образ приложения<select id="appImage"></select></label>
         <label id="vmImageWrap">Образ VM<select id="vmImage"></select></label>
@@ -610,6 +665,9 @@ label { display: grid; gap: 8px; margin-bottom: 16px; font-weight: 650; }
 select { width: 100%; min-height: 42px; border: 1px solid #b9c5cf; border-radius: 6px; padding: 8px 10px; font: inherit; background: #fff; }
 button { min-height: 44px; border: 0; border-radius: 6px; background: #1f6feb; color: #fff; padding: 0 18px; font-weight: 750; cursor: pointer; }
 button:disabled { background: #8795a1; cursor: progress; }
+.hint { margin: -8px 0 16px; padding: 12px; border: 1px solid #d9e0e6; border-radius: 6px; background: #f8fafb; color: #34424d; font-size: 14px; line-height: 1.45; }
+.hint strong { display: block; margin-bottom: 6px; color: #172026; }
+.hint ul { margin: 8px 0 0; padding-left: 18px; }
 ol { padding-left: 22px; }
 li { margin: 10px 0; }
 .result { margin-top: 20px; white-space: pre-wrap; }
@@ -622,6 +680,12 @@ JS = """
 let me = null;
 let profiles = [];
 const el = (id) => document.getElementById(id);
+const purposeDescriptions = {
+  feature: "Разработка или проверка новой функциональности в изолированном namespace.",
+  bugfix: "Воспроизведение и проверка исправления дефекта без влияния на общие окружения.",
+  loadtest: "Короткий нагрузочный или ресурсный тест в рамках квот выбранного профиля.",
+  demo: "Демонстрационный стенд для показа заказчику, команде или архитектурной аудитории.",
+};
 
 async function api(path, options = {}) {
   const response = await fetch(path, { headers: { "Content-Type": "application/json" }, ...options });
@@ -642,6 +706,66 @@ function currentProfile() {
   return profiles.find((profile) => profile.name === el("profile").value);
 }
 
+function renderProfileDetails(profile) {
+  if (!profile) {
+    el("profileDetails").textContent = "";
+    return;
+  }
+  const resources = (profile.resources || []).map((resource) => `<li>${resource}</li>`).join("");
+  const vm = profile.vmSpec
+    ? `<br><strong>VM:</strong> ${profile.vmSpec.cpu}, coreFraction ${profile.vmSpec.coreFraction}, RAM ${profile.vmSpec.memory}, disk ${profile.vmSpec.disk}, image ${profile.vmSpec.imageKind}.`
+    : "";
+  el("profileDetails").innerHTML = `<strong>${profile.title}</strong>${profile.description}<br><strong>Квоты:</strong> CPU ${profile.quota.cpu}, RAM ${profile.quota.memory}, pods ${profile.quota.pods}.<br><strong>Приложение:</strong> 1 replica, requests ${profile.app.requests}, limits ${profile.app.limits}.${vm}<br><strong>Будет создано:</strong><ul>${resources}</ul>`;
+}
+
+function renderPurposeDetails() {
+  const purpose = el("purpose").value;
+  el("purposeDetails").innerHTML = `<strong>${purpose}</strong>${purposeDescriptions[purpose] || ""}`;
+}
+
+function formatCreated(created) {
+  const summary = created.summary;
+  const vm = summary.vm
+    ? `\\nVM: будет создана ${created.namespace}-vm (${summary.vm.cpu}, coreFraction ${summary.vm.coreFraction}, RAM ${summary.vm.memory}, disk ${summary.vm.disk}, image ${summary.vm.image})`
+    : "\\nVM: не создаётся для выбранного профиля";
+  return `Заявка создана: ${created.name}
+Namespace: ${created.namespace}
+Профиль: ${summary.title} (${created.profile})
+Назначение: ${created.purpose} - ${created.purposeDescription}
+TTL: ${created.ttl}
+Квоты namespace: CPU ${summary.quota.cpu}, RAM ${summary.quota.memory}, pods ${summary.quota.pods}
+Приложение: demo-app, image ${summary.app.image}, replicas ${summary.app.replicas}, requests ${summary.app.requests}, limits ${summary.app.limits}${vm}
+Git request: ${created.git.request}
+Generated manifests: ${created.git.generated}
+URL приложения: ${created.url}
+
+Ожидаю Argo CD sync...`;
+}
+
+function formatStatus(created, status) {
+  const ns = status.namespace || {};
+  const app = status.app || {};
+  const svc = status.service || {};
+  const disk = status.virtualDisk || {};
+  const vm = status.vm || {};
+  const vmLine = vm.phase
+    ? `\\nVM: ${vm.name}, phase ${vm.phase}, IP ${vm.ip || "-"}, node ${vm.node || "-"}, CPU ${vm.cpu?.cores || "-"} core / ${vm.cpu?.coreFraction || "-"}, RAM ${vm.memory || "-"}\\nVirtualDisk: ${disk.name}, phase ${disk.phase || "-"}, capacity ${disk.capacity || "-"}`
+    : "\\nVM: не создаётся для выбранного профиля";
+  return `Заявка создана: ${created.name}
+Namespace: ${ns.name} (${ns.phase || "Pending"})
+Owner: ${ns.owner || me.user}
+Профиль: ${created.summary.title} (${created.profile})
+Назначение: ${created.purpose}
+TTL: ${ns.ttl || created.ttl}
+Квоты namespace: CPU ${created.summary.quota.cpu}, RAM ${created.summary.quota.memory}, pods ${created.summary.quota.pods}
+Deployment: demo-app, replicas ${app.availableReplicas || 0}/${app.replicas || 0} available
+Service: ${svc.name || "demo-app"}, ClusterIP ${svc.clusterIP || "-"}, port ${svc.port || "-"}
+Ingress: ${status.ingress || "-"}${vmLine}
+Git request: ${created.git.request}
+Generated manifests: ${created.git.generated}
+URL приложения: ${created.url}`;
+}
+
 function syncProfile() {
   const profile = currentProfile();
   if (!profile) {
@@ -652,6 +776,7 @@ function syncProfile() {
     return;
   }
   fill(el("ttl"), profile.ttl);
+  renderProfileDetails(profile);
   el("vmImageWrap").style.display = profile.vm ? "grid" : "none";
   if (!el("result").textContent) el("result").className = "result";
 }
@@ -661,20 +786,23 @@ async function init() {
   profiles = await api("/api/profiles");
   el("user").textContent = `${me.user} / ${me.email || "no-email"} / ${me.groups.join(", ") || "no-groups"}`;
   if (!profiles.length) {
-    fill(el("purpose"), ["feature", "bugfix", "loadtest", "demo"]);
+    fill(el("purpose"), Object.keys(purposeDescriptions));
     fill(el("appImage"), ["nginx:1.27", "nginx:1.26"]);
     fill(el("vmImage"), ["alpine-base-3-23-v1"]);
+    renderPurposeDetails();
     syncProfile();
     return;
   }
   fill(el("profile"), profiles, "title");
-  fill(el("purpose"), ["feature", "bugfix", "loadtest", "demo"]);
+  fill(el("purpose"), Object.keys(purposeDescriptions));
   fill(el("appImage"), ["nginx:1.27", "nginx:1.26"]);
   fill(el("vmImage"), ["alpine-base-3-23-v1"]);
+  renderPurposeDetails();
   syncProfile();
 }
 
 el("profile").addEventListener("change", syncProfile);
+el("purpose").addEventListener("change", renderPurposeDetails);
 el("requestForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   const button = event.target.querySelector("button");
@@ -693,13 +821,13 @@ el("requestForm").addEventListener("submit", async (event) => {
       }),
     });
     el("result").className = "result ok";
-    el("result").textContent = `Заявка создана: ${created.name}\\nNamespace: ${created.namespace}\\nURL: ${created.url}\\n\\nОжидаю Argo CD sync...`;
+    el("result").textContent = formatCreated(created);
     let tries = 0;
     const timer = setInterval(async () => {
       tries += 1;
       const status = await api(`/api/status/${created.name}`);
-      el("result").textContent = `Заявка создана: ${created.name}\\nNamespace: ${status.namespace}\\nApp replicas: ${status.app}\\nIngress: ${status.ingress || "-"}\\nVM phase: ${status.vmPhase || "-"}\\nVM IP: ${status.vmIp || "-"}\\nURL: ${created.url}`;
-      if ((status.vmPhase === "Running" || status.vmPhase === null) && status.app > 0 || tries > 60) clearInterval(timer);
+      el("result").textContent = formatStatus(created, status);
+      if (((status.vm?.phase === "Running" || status.vm?.phase === null) && (status.app?.availableReplicas || 0) > 0) || tries > 60) clearInterval(timer);
     }, 5000);
   } catch (error) {
     el("result").className = "result err";

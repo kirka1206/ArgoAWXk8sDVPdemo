@@ -24,6 +24,20 @@
 5. Нажимает `Создать стенд`.
 6. Ждёт статуса на странице.
 
+## Что объяснить на форме
+
+Профиль стенда — это не свободная форма заказа ресурсов, а заранее утверждённый шаблон платформенной команды.
+
+- `app-only`: создаёт только namespace, RBAC, квоты, demo-app, service и ingress.
+- `app-with-vm`: добавляет минимальную DVP VM из утверждённого `ClusterVirtualImage`.
+- `app-with-postgres-vm`: добавляет VM как цель для PostgreSQL post-configuration через AWX.
+
+Purpose нужен не Kubernetes, а людям и процессу:
+
+- помогает аудиторам понять, зачем создан стенд;
+- попадает в GitOps request и labels/annotations;
+- может использоваться будущей cleanup/policy automation.
+
 ## Что делает система
 
 Portal не создаёт Kubernetes-ресурсы напрямую. Он создаёт Git artifacts в Gitea:
@@ -70,7 +84,7 @@ kubectl get deploy,svc,ingress,vd,vm -n <generated-namespace>
 - Имя стенда генерируется автоматически.
 - В Gitea появляется request и generated manifests.
 - Argo CD создаёт Kubernetes/DVP ресурсы.
-- Portal показывает namespace, ingress и VM status.
+- Portal показывает namespace, профиль, purpose, TTL, квоты, app параметры, service, ingress, VM/disk параметры и Git paths.
 
 ## Rollback
 

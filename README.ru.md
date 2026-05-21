@@ -195,6 +195,8 @@ https://selfservice-awx.d8.kir.lab
 
 Доступ закрыт через DKP `DexAuthenticator`. Пользователь логинится через Dex, выбирает разрешённый профиль стенда, нажимает `Создать стенд`, после чего backend создаёт GitOps request и generated manifests в Gitea. Argo CD применяет изменения, а portal показывает статус namespace, приложения, ingress и DVP VM.
 
+UI подробно объясняет профиль стенда, purpose, квоты и состав ресурсов. После создания заявки он показывает namespace, профиль, TTL, параметры приложения, service/ingress, VM/disk параметры и пути GitOps artifacts.
+
 Для локального DNS добавьте:
 
 ```text
