@@ -66,13 +66,37 @@ def slug(value, default="env"):
     return (value or default)[:40]
 
 
+def decode_jwt_payload(headers):
+    authorization = headers.get("Authorization") or ""
+    if not authorization.startswith("Bearer "):
+        return {}
+    parts = authorization.split(" ", 1)[1].split(".")
+    if len(parts) < 2:
+        return {}
+    payload = parts[1]
+    payload += "=" * (-len(payload) % 4)
+    try:
+        return json.loads(base64.urlsafe_b64decode(payload.encode("ascii")).decode("utf-8"))
+    except Exception:
+        return {}
+
+
+def normalize_groups(value):
+    if isinstance(value, list):
+        return [str(group).strip() for group in value if str(group).strip()]
+    return [group.strip() for group in str(value or "").replace(";", ",").split(",") if group.strip()]
+
+
 def user_from_headers(headers):
+    jwt_payload = decode_jwt_payload(headers)
     email = headers.get("X-Auth-Request-Email") or headers.get("X-Forwarded-Email") or ""
+    email = email or jwt_payload.get("email", "")
     user = headers.get("X-Auth-Request-User") or headers.get("X-Forwarded-User") or email or "demo-user"
+    user = jwt_payload.get("preferred_username") or jwt_payload.get("name") or user
     groups = headers.get("X-Auth-Request-Groups") or headers.get("X-Forwarded-Groups") or ""
-    group_list = [g.strip() for g in groups.split(",") if g.strip()]
+    group_list = normalize_groups(groups) or normalize_groups(jwt_payload.get("groups"))
     if not group_list and os.environ.get("DEMO_AUTH_GROUPS"):
-        group_list = [g.strip() for g in os.environ["DEMO_AUTH_GROUPS"].split(",") if g.strip()]
+        group_list = normalize_groups(os.environ["DEMO_AUTH_GROUPS"])
     return {
         "user": slug(user.split("@")[0], "developer"),
         "email": email,
@@ -620,14 +644,29 @@ function currentProfile() {
 
 function syncProfile() {
   const profile = currentProfile();
+  if (!profile) {
+    el("ttl").innerHTML = "";
+    el("vmImageWrap").style.display = "none";
+    el("result").className = "result err";
+    el("result").textContent = "Для пользователя не найдено доступных профилей. Проверьте группы Dex и claims, переданные в портал.";
+    return;
+  }
   fill(el("ttl"), profile.ttl);
   el("vmImageWrap").style.display = profile.vm ? "grid" : "none";
+  if (!el("result").textContent) el("result").className = "result";
 }
 
 async function init() {
   me = await api("/api/me");
   profiles = await api("/api/profiles");
   el("user").textContent = `${me.user} / ${me.email || "no-email"} / ${me.groups.join(", ") || "no-groups"}`;
+  if (!profiles.length) {
+    fill(el("purpose"), ["feature", "bugfix", "loadtest", "demo"]);
+    fill(el("appImage"), ["nginx:1.27", "nginx:1.26"]);
+    fill(el("vmImage"), ["alpine-base-3-23-v1"]);
+    syncProfile();
+    return;
+  }
   fill(el("profile"), profiles, "title");
   fill(el("purpose"), ["feature", "bugfix", "loadtest", "demo"]);
   fill(el("appImage"), ["nginx:1.27", "nginx:1.26"]);
