@@ -9,3 +9,4 @@ resources:
   - monitoring.yaml
   - tenants/customer-a
   - ../../self-service/generated
+  - ../../self-service/portal

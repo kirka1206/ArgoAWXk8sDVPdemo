@@ -1,3 +1,4 @@
 .run/
+local/
 *.log
 .DS_Store

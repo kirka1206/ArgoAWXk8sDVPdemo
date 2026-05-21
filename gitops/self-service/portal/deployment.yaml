@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: self-service-portal
+  namespace: self-service-portal
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: self-service-portal
+  template:
+    metadata:
+      labels:
+        app: self-service-portal
+    spec:
+      serviceAccountName: self-service-portal
+      containers:
+        - name: portal
+          image: python:3.12-alpine
+          imagePullPolicy: IfNotPresent
+          command: ["python", "/app/server.py"]
+          env:
+            - name: GITEA_URL
+              value: http://gitea-http.gitea.svc.cluster.local:3000
+            - name: GITEA_OWNER
+              value: codex
+            - name: GITEA_REPO
+              value: demo
+            - name: GITEA_BRANCH
+              value: main
+            - name: BASE_DOMAIN
+              value: d8.kir.lab
+            - name: INGRESS_CLASS
+              value: nginx
+            - name: STORAGE_CLASS
+              value: k8nfs
+            - name: GITEA_USER
+              valueFrom:
+                secretKeyRef:
+                  name: self-service-portal-gitea
+                  key: username
+            - name: GITEA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: self-service-portal-gitea
+                  key: password
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          volumeMounts:
+            - name: app
+              mountPath: /app
+              readOnly: true
+      volumes:
+        - name: app
+          configMap:
+            name: self-service-portal-app

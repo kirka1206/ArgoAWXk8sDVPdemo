@@ -1,0 +1,24 @@
+apiVersion: deckhouse.io/v1
+kind: DexAuthenticator
+metadata:
+  name: self-service-portal
+  namespace: self-service-portal
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  applicationDomain: selfservice-awx.d8.kir.lab
+  applicationIngressClassName: nginx
+  allowedGroups:
+    - payments-devs
+    - analytics-devs
+    - qa-devs
+  sendAuthorizationHeader: true
+  signOutURL: /logout
+  keepUsersLoggedInFor: 8h
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi

@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: self-service-portal
+  namespace: self-service-portal
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+    nginx.ingress.kubernetes.io/auth-signin: http://$host/dex-authenticator/sign_in
+    nginx.ingress.kubernetes.io/auth-url: https://self-service-portal-dex-authenticator.self-service-portal.svc.cluster.local/dex-authenticator/auth
+    nginx.ingress.kubernetes.io/auth-response-headers: Authorization, X-Auth-Request-User, X-Auth-Request-Email, X-Auth-Request-Groups
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 32k
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: selfservice-awx.d8.kir.lab
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: self-service-portal
+                port:
+                  name: http

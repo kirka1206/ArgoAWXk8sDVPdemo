@@ -1,0 +1,53 @@
+apiVersion: deckhouse.io/v1
+kind: User
+metadata:
+  name: alice-koroleva
+spec:
+  email: alice.koroleva@demo.local
+  password: replace-with-bcrypt-hash
+---
+apiVersion: deckhouse.io/v1
+kind: User
+metadata:
+  name: boris-smirnov
+spec:
+  email: boris.smirnov@demo.local
+  password: replace-with-bcrypt-hash
+---
+apiVersion: deckhouse.io/v1
+kind: User
+metadata:
+  name: marina-volkova
+spec:
+  email: marina.volkova@demo.local
+  password: replace-with-bcrypt-hash
+---
+apiVersion: deckhouse.io/v1alpha1
+kind: Group
+metadata:
+  name: payments-devs
+spec:
+  name: payments-devs
+  members:
+    - kind: User
+      name: alice-koroleva
+---
+apiVersion: deckhouse.io/v1alpha1
+kind: Group
+metadata:
+  name: analytics-devs
+spec:
+  name: analytics-devs
+  members:
+    - kind: User
+      name: boris-smirnov
+---
+apiVersion: deckhouse.io/v1alpha1
+kind: Group
+metadata:
+  name: qa-devs
+spec:
+  name: qa-devs
+  members:
+    - kind: User
+      name: marina-volkova
