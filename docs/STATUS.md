@@ -1,6 +1,6 @@
 # Current Status
 
-Updated: 2026-05-21 10:59 MSK
+Updated: 2026-05-21 11:12 MSK
 
 ## Repository Rule
 
@@ -123,10 +123,14 @@ Recent AWX result:
   - enabled TLS on portal ingress;
   - set `applicationIngressCertificateSecretName` on `DexAuthenticator`;
   - changed portal URL documentation from HTTP to HTTPS.
+- Fixed empty profile list in portal UI:
+  - backend now falls back to OIDC JWT claims from the `Authorization` header when `X-Auth-Request-Groups` is not passed through;
+  - frontend handles zero-profile responses without throwing `Cannot read properties of undefined`;
+  - deployment pod template has a code-version annotation so ConfigMap code updates trigger rollout.
 
 ## Pending Validation
 
 - Golden image scenario 08 first phase is live-validated: source image import is `Ready`, builder VM exists in `Manual`/`Stopped`.
 - Full golden image customization is not yet executed. Next validation requires starting `golden-builder-vm`, adding it to AWX inventory as `golden_builder`, running `prepare-golden-image.yml`, then `validate-golden-image.yml`.
 - Self-service scenario 09 first live validation passed: Argo CD `demo-platform` is `Synced/Healthy`, app resources are ready, `ClusterVirtualImage` is `Ready`, `VirtualDisk/dev-alice-001-vm-root` is `Ready`, `VirtualMachine/dev-alice-001-vm` is `Running`.
-- Self-service portal scenario 10 infrastructure is live-validated: Argo CD `demo-platform` is `Synced/Healthy`, certificate is `Ready`, DexAuthenticator redirects unauthenticated HTTPS traffic to `/dex-authenticator/sign_in`, portal pod is ready, backend can create an app-only environment in Gitea. Logs show successful browser authentication for `alice.koroleva@demo.local` after the TLS fix.
+- Self-service portal scenario 10 infrastructure is live-validated: Argo CD `demo-platform` is `Synced/Healthy`, certificate is `Ready`, DexAuthenticator redirects unauthenticated HTTPS traffic to `/dex-authenticator/sign_in`, portal pod is ready, backend can create an app-only environment in Gitea. Logs show successful browser authentication for `alice.koroleva@demo.local` after the TLS fix. API fallback test with an OIDC-style JWT returns `app-only` and `app-with-vm` profiles for `payments-devs`.
