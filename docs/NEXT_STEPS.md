@@ -5,7 +5,7 @@
 1. Decide whether to revert scenario 02 scale back to `2` replicas or keep `demo-app` at `4` replicas for the next demo.
 2. Document AWX UI steps for creating `DVP VMs`, `postgres-vm`, `dvp-vm-ssh` and `Bootstrap DVP VM` in Russian docs.
 3. Continue scenario 08 live validation: start `golden-builder-vm`, run AWX customization and validation, then decide whether to publish `alpine-golden-3-23-v1`.
-4. Validate scenario 09 live in DKP/DVP: generated `dev-alice-001` namespace, app and optional VM resources.
+4. Manually check scenario 10 in a browser after adding `10.77.77.208 selfservice-awx.d8.kir.lab` to `/etc/hosts`.
 
 ## Architecture Improvements
 
@@ -17,8 +17,9 @@
    - create/update DVP VM inventory;
    - create/update VM bootstrap job template;
    - run bootstrap and validation jobs.
-4. Consider adding a backend for `self-service-ui` that creates Git branches and pull requests instead of only generating YAML and commands.
-5. Add an automation/controller that turns `gitops/self-service/requests/*.yaml` into `gitops/self-service/generated/<request>/` instead of keeping the generated example manually.
+4. Convert the self-service portal backend from direct commits to branch/PR workflow.
+5. Add policy validation for `EnvironmentRequest` before merge.
+6. Add AWX launch automation after VM profile creation.
 
 ## Self-Service Scenario Draft
 

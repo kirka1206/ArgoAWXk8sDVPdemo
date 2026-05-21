@@ -1,6 +1,6 @@
 # Current Status
 
-Updated: 2026-05-21 01:10 MSK
+Updated: 2026-05-21 10:35 MSK
 
 ## Repository Rule
 
@@ -25,6 +25,7 @@ Before starting new work in this repository, read this file and `docs/NEXT_STEPS
 - Gitea: `http://gitea-awx.d8.kir.lab`
 - Argo CD: `http://argocd-awx.d8.kir.lab`
 - AWX: `http://awx-demo.d8.kir.lab`
+- Self-service portal: `http://selfservice-awx.d8.kir.lab`
 
 ## Argo CD Applications
 
@@ -50,7 +51,17 @@ Namespace: `demo-prod`
 - `demo-prod/demo-app`: scaled to `4` replicas during scenario 02.
 - `customer-a`: tenant namespace exists with quota, limit range, RBAC and starter workload.
 - `dev-alice-001`: self-service example namespace exists; `demo-app` is available, ingress host is `dev-alice-001.example.local`, `dev-alice-001-vm` is `Running` with `1` core, `coreFraction: 5%`, `512Mi`, IP `10.77.111.7`.
+- `dev-alice-koroleva-demo-7266`: created through the self-service portal backend test; app-only profile is available with ingress `dev-alice-koroleva-demo-7266.d8.kir.lab`.
+- `self-service-portal`: portal namespace exists; `self-service-portal` and `self-service-portal-dex-authenticator` deployments are `1/1`.
 - `demo-os`: contains pod-only AWX/Argo demo nodes `ol-node-1` and `ol-node-2`.
+
+## Dex Demo Users
+
+- `alice-koroleva`, `alice.koroleva@demo.local`, group `payments-devs`
+- `boris-smirnov`, `boris.smirnov@demo.local`, group `analytics-devs`
+- `marina-volkova`, `marina.volkova@demo.local`, group `qa-devs`
+
+Passwords are stored locally in `local/self-service-demo-users.md` and are not committed to Git.
 
 ## AWX State
 
@@ -100,9 +111,17 @@ Recent AWX result:
   - documentation `docs/self-service.ru.md`.
 - Fixed self-service DVP image handling by adding approved `ClusterVirtualImage/alpine-base-3-23-v1`.
 - Changed the self-service VM example to `runPolicy: AlwaysOn` with minimal resources and cloud-init installation of `qemu-guest-agent`.
+- Added Dex-protected self-service portal:
+  - `gitops/self-service/portal/` with backend, Deployment, Service, Ingress, DexAuthenticator and RBAC;
+  - `docs/self-service-portal.ru.md`;
+  - `scenarios/10-self-service-portal.md`;
+  - three live Dex demo users and groups;
+  - live Kubernetes Secret `self-service-portal-gitea` for Gitea API access.
+- Portal backend direct-header test passed and created `dev-alice-koroleva-demo-7266`; Gitea commits were pulled back locally and pushed to GitHub.
 
 ## Pending Validation
 
 - Golden image scenario 08 first phase is live-validated: source image import is `Ready`, builder VM exists in `Manual`/`Stopped`.
 - Full golden image customization is not yet executed. Next validation requires starting `golden-builder-vm`, adding it to AWX inventory as `golden_builder`, running `prepare-golden-image.yml`, then `validate-golden-image.yml`.
 - Self-service scenario 09 first live validation passed: Argo CD `demo-platform` is `Synced/Healthy`, app resources are ready, `ClusterVirtualImage` is `Ready`, `VirtualDisk/dev-alice-001-vm-root` is `Ready`, `VirtualMachine/dev-alice-001-vm` is `Running`.
+- Self-service portal scenario 10 infrastructure is live-validated: Argo CD `demo-platform` is `Synced/Healthy`, DexAuthenticator redirects unauthenticated HTTP traffic to `/dex-authenticator/sign_in`, portal pod is ready, backend can create an app-only environment in Gitea. Browser login flow still needs a manual check after adding `selfservice-awx.d8.kir.lab` to `/etc/hosts`.
