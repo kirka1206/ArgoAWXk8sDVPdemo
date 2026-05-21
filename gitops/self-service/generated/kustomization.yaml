@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - dev-alice-001
   - dev-alice-koroleva-demo-7266
+  - dev-alice-koroleva-feature-993e
