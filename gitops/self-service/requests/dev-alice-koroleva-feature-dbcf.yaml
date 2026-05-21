@@ -1,0 +1,17 @@
+apiVersion: demo.platform/v1
+kind: EnvironmentRequest
+metadata:
+  name: dev-alice-koroleva-feature-dbcf
+spec:
+  owner: alice-koroleva
+  email: alice.koroleva@demo.local
+  groups:
+    - payments-devs
+  profile: app-only
+  purpose: feature
+  ttl: 2h
+  access:
+    exposeIngress: true
+    sshToVm: false
+  software:
+    appImage: nginx:1.27
