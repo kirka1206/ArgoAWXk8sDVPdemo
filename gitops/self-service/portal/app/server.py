@@ -579,7 +579,7 @@ def k8s_get(path):
         with urllib.request.urlopen(req, context=ctx, timeout=5) as resp:
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
-        if exc.code == 404:
+        if exc.code in (403, 404):
             return None
         raise
 

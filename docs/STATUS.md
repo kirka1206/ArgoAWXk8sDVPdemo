@@ -131,6 +131,7 @@ Recent AWX result:
   - profile selector now shows detailed Russian descriptions, resource composition, quotas, app limits and VM specs;
   - purpose selector now explains `feature`, `bugfix`, `loadtest` and `demo`;
   - create/status output now includes namespace name/phase, owner, profile, purpose, TTL, quotas, deployment replicas, service, ingress, VM/disk details and GitOps artifact paths.
+- Fixed portal status RBAC for `services` and made Kubernetes status reads tolerant to missing/forbidden optional resources.
 
 ## Pending Validation
 
