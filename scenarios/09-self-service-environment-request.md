@@ -197,6 +197,135 @@ gitops/self-service/generated/dev-alice-001/ACCESS.md
 
 В текущем демо это можно показать как следующий автоматизируемый шаг через AWX API или Job Template.
 
+## Альтернативный путь: GitOps/YAML без web UI
+
+Этот вариант показывает, что web portal не является обязательной точкой входа. Разработчик может создать такую же заявку обычным YAML-файлом в Git.
+
+### 1. Получить репозиторий
+
+```bash
+git clone https://github.com/kirka1206/ArgoAWXk8sDVPdemo.git
+cd ArgoAWXk8sDVPdemo
+git remote add dkp-gitea http://gitea-awx.d8.kir.lab/codex/demo.git || true
+```
+
+Что сказать:
+
+> Для live-стенда важно пушить в Gitea, потому что Argo CD читает именно `http://gitea-awx.d8.kir.lab/codex/demo.git`.
+
+### 2. Показать approved catalog
+
+```bash
+ls gitops/self-service/catalog
+```
+
+Ожидаемо:
+
+```text
+app-only.yaml
+app-with-vm.yaml
+app-with-postgres-vm.yaml
+```
+
+Что сказать:
+
+> YAML-заявка не даёт разработчику произвольные ресурсы. Он всё равно выбирает approved profile.
+
+### 3. Создать request YAML
+
+```bash
+cat > gitops/self-service/requests/dev-alice-yaml-demo.yaml <<'EOF'
+apiVersion: demo.platform/v1
+kind: EnvironmentRequest
+metadata:
+  name: dev-alice-yaml-demo
+spec:
+  owner: alice-koroleva
+  email: alice.koroleva@demo.local
+  groups:
+    - payments-devs
+  profile: app-with-vm
+  purpose: demo
+  ttl: 2h
+  access:
+    exposeIngress: true
+    sshToVm: false
+  software:
+    appImage: nginx:1.27
+  vm:
+    image: alpine-base-3-23-v1
+    imageKind: ClusterVirtualImage
+EOF
+```
+
+Что объяснить:
+
+- `metadata.name` станет именем заявки и будущего namespace;
+- `owner`, `email`, `groups` фиксируют автора;
+- `profile` выбирает approved template;
+- `purpose` нужен для аудита и будущего cleanup/policy automation;
+- `ttl` задаёт срок жизни;
+- `appImage` и `vm.image` берутся из разрешённого набора.
+
+### 4. Проверить diff и отправить в Git
+
+```bash
+git diff
+git add gitops/self-service/requests/dev-alice-yaml-demo.yaml
+git commit -m "Request self-service environment dev-alice-yaml-demo"
+git push origin main
+git push dkp-gitea main
+```
+
+Что сказать:
+
+> В production вместо прямого push в `main` должен быть branch/PR, policy validation и approve/merge. Для демо допустим прямой push, чтобы быстро показать цепочку.
+
+### 5. Generated manifests
+
+Production-like automation должна создать:
+
+```text
+gitops/self-service/generated/dev-alice-yaml-demo/
+```
+
+В текущем стенде generated manifests создаёт portal/backend или демонстратор готовит их заранее.
+
+Что сказать:
+
+> Request - это входной объект. Argo CD применяет конкретные Kubernetes/DVP manifests из `generated/`. Следующий архитектурный шаг проекта - controller/CI, который автоматически превращает request в generated manifests.
+
+### 6. Проверить Argo CD и ресурсы
+
+```bash
+kubectl get application -n argocd demo-platform
+NS=dev-alice-yaml-demo
+kubectl get ns $NS
+kubectl get deploy,svc,ingress -n $NS
+kubectl get vd,vm -n $NS
+```
+
+Ожидаемый результат для `app-with-vm`:
+
+- `demo-platform` в состоянии `Synced/Healthy`;
+- namespace `dev-alice-yaml-demo` создан;
+- `demo-app` доступен;
+- ingress создан;
+- DVP `VirtualDisk` и `VirtualMachine` созданы.
+
+### 7. Rollback
+
+```bash
+git rm gitops/self-service/requests/dev-alice-yaml-demo.yaml
+git rm -r gitops/self-service/generated/dev-alice-yaml-demo
+git commit -m "Remove self-service environment dev-alice-yaml-demo"
+git push dkp-gitea main
+```
+
+Что сказать:
+
+> Rollback и cleanup тоже проходят через Git. Это сохраняет историю и делает удаление таким же контролируемым, как создание.
+
 ## Что показывать в Argo CD
 
 - Новый namespace `dev-alice-001`.

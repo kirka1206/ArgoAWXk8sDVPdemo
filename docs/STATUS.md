@@ -1,6 +1,6 @@
 # Current Status
 
-Updated: 2026-05-21 11:25 MSK
+Updated: 2026-05-21 12:05 MSK
 
 ## Repository Rule
 
@@ -132,6 +132,11 @@ Recent AWX result:
   - purpose selector now explains `feature`, `bugfix`, `loadtest` and `demo`;
   - create/status output now includes namespace name/phase, owner, profile, purpose, TTL, quotas, deployment replicas, service, ingress, VM/disk details and GitOps artifact paths.
 - Fixed portal status RBAC for `services` and made Kubernetes status reads tolerant to missing/forbidden optional resources.
+- Documented the GitOps/YAML entry point for self-service:
+  - request file under `gitops/self-service/requests/`;
+  - approved profile selection from `gitops/self-service/catalog/`;
+  - generated manifests under `gitops/self-service/generated/`;
+  - Argo CD/kubectl verification and Git rollback flow.
 
 ## Pending Validation
 
@@ -139,4 +144,4 @@ Recent AWX result:
 - Full golden image customization is not yet executed. Next validation requires starting `golden-builder-vm`, adding it to AWX inventory as `golden_builder`, running `prepare-golden-image.yml`, then `validate-golden-image.yml`.
 - Self-service scenario 09 first live validation passed: Argo CD `demo-platform` is `Synced/Healthy`, app resources are ready, `ClusterVirtualImage` is `Ready`, `VirtualDisk/dev-alice-001-vm-root` is `Ready`, `VirtualMachine/dev-alice-001-vm` is `Running`.
 - Self-service portal scenario 10 infrastructure is live-validated: Argo CD `demo-platform` is `Synced/Healthy`, certificate is `Ready`, DexAuthenticator redirects unauthenticated HTTPS traffic to `/dex-authenticator/sign_in`, portal pod is ready, backend can create an app-only environment in Gitea. Logs show successful browser authentication for `alice.koroleva@demo.local` after the TLS fix. API fallback test with an OIDC-style JWT returns `app-only` and `app-with-vm` profiles for `payments-devs`.
-- Latest portal UX update is syntax-checked and server-side dry-run validated; rollout pending/next live check should verify the browser rendering after hard refresh.
+- Latest portal UX update is syntax-checked, server-side dry-run validated and rolled out. Browser users should hard refresh to pick up updated JS. GitOps/YAML documentation was updated after the walkthrough.
