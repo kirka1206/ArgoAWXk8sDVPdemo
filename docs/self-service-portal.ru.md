@@ -5,7 +5,7 @@
 ## Адрес
 
 ```text
-http://selfservice-awx.d8.kir.lab
+https://selfservice-awx.d8.kir.lab
 ```
 
 Если DNS не настроен, добавьте на рабочей машине:
@@ -72,6 +72,7 @@ Production-like вариант должен создавать branch/PR, зап
 
 ```bash
 kubectl get dexauthenticator -n self-service-portal
+kubectl get certificate -n self-service-portal self-service-portal
 kubectl get deploy,svc,ingress -n self-service-portal
 kubectl get users.deckhouse.io alice-koroleva boris-smirnov marina-volkova
 kubectl get groups.deckhouse.io payments-devs analytics-devs qa-devs

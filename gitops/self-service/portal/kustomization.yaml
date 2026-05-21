@@ -4,6 +4,7 @@ namespace: self-service-portal
 resources:
   - namespace.yaml
   - rbac.yaml
+  - certificate.yaml
   - deployment.yaml
   - service.yaml
   - ingress.yaml

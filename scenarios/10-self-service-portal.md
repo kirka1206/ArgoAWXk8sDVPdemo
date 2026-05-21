@@ -6,7 +6,7 @@
 
 ## Исходное состояние
 
-- Portal доступен по `http://selfservice-awx.d8.kir.lab`.
+- Portal доступен по `https://selfservice-awx.d8.kir.lab`.
 - Доступ закрыт через DKP `DexAuthenticator`.
 - В Dex созданы demo-пользователи и группы.
 - Backend имеет Kubernetes Secret с учёткой Gitea.
@@ -14,7 +14,7 @@
 
 ## Что делает пользователь
 
-1. Открывает `http://selfservice-awx.d8.kir.lab`.
+1. Открывает `https://selfservice-awx.d8.kir.lab`.
 2. Логинится через Dex.
 3. Выбирает профиль стенда:
    - `app-only`;
@@ -58,6 +58,7 @@ gitops/self-service/generated/<name>/
 ```bash
 kubectl get deploy,svc,ingress -n self-service-portal
 kubectl get dexauthenticator -n self-service-portal
+kubectl get certificate -n self-service-portal self-service-portal
 kubectl get application -n argocd demo-platform
 kubectl get ns | grep dev-
 kubectl get deploy,svc,ingress,vd,vm -n <generated-namespace>

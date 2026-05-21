@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: self-service-portal
+  namespace: self-service-portal
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  secretName: self-service-portal-ingress-tls
+  dnsNames:
+    - selfservice-awx.d8.kir.lab
+  issuerRef:
+    name: selfsigned
+    kind: ClusterIssuer
