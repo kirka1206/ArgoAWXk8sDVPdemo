@@ -2,7 +2,7 @@ environmentSize: medium
 
 app:
   name: demo-app
-  replicas: 4
+  replicas: 2
   image: nginx:1.27
   resources:
     requests:
