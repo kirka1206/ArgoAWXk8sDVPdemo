@@ -15,7 +15,7 @@ app:
 vm:
   name: postgres-vm
   cpu: 1
-  coreFraction: 5%
+  coreFraction: 10%
   memory: 512Mi
   diskSize: 256Mi
 
