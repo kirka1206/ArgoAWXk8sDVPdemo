@@ -52,7 +52,7 @@ spec:
   bootloader: BIOS
   cpu:
     cores: 1
-    coreFraction: 10%
+    coreFraction: 5%
   memory:
     size: 512Mi
   blockDeviceRefs:
