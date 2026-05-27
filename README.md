@@ -254,6 +254,8 @@ kubectl describe application -n argocd demo-platform
 kubectl get events -n demo-prod --sort-by=.lastTimestamp
 ```
 
+If the message says `data source cannot be changed if the VirtualDisk has already been provisioned`, Argo CD is trying to patch an immutable DVP `VirtualDisk` source after restore/provisioning. The `demo-platform` Application intentionally ignores `/spec/dataSource` and `/spec/persistentVolumeClaim` only for `demo-prod/postgres-vm-root` and uses `RespectIgnoreDifferences=true`. To change the base image of an already provisioned VM, create a new disk or use a controlled restore/recreate flow instead of patching `dataSource` in place.
+
 ### DVP disk долго в `Provisioning`
 
 Проверить disk и events:

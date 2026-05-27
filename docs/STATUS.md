@@ -1,6 +1,6 @@
 # Current Status
 
-Updated: 2026-05-21 12:05 MSK
+Updated: 2026-05-27 19:05 MSK
 
 ## Repository Rule
 
@@ -30,7 +30,7 @@ Before starting new work in this repository, read this file and `docs/NEXT_STEPS
 ## Argo CD Applications
 
 - `ansible-os-pods`: synced and healthy during last check.
-- `demo-platform`: synced and healthy during last check.
+- `demo-platform`: synced and healthy during last check after fixing DVP `VirtualDisk` immutable-field drift.
 
 ## DVP Resources
 
@@ -89,6 +89,10 @@ Recent AWX result:
 
 ## Recent Fixes
 
+- Fixed `demo-platform` OutOfSync caused by DVP rejecting a patch to an already provisioned `VirtualDisk`:
+  - live `demo-prod/postgres-vm-root` had been restored/provisioned from `VirtualDiskSnapshot`, while Git still described the original `VirtualImage` source;
+  - added `RespectIgnoreDifferences=true` and a scoped `ignoreDifferences` entry for `demo-prod/postgres-vm-root` `/spec/dataSource` and `/spec/persistentVolumeClaim`;
+  - applied the Application and verified `demo-platform` returned to `Synced/Healthy`.
 - Added real minimal DVP VM manifest.
 - Added `demo-platform` Application.
 - Refreshed Russian documentation.

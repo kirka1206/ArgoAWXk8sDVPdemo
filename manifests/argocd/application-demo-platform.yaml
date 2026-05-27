@@ -20,3 +20,12 @@ spec:
       limit: 5
     syncOptions:
       - CreateNamespace=true
+      - RespectIgnoreDifferences=true
+  ignoreDifferences:
+    - group: virtualization.deckhouse.io
+      kind: VirtualDisk
+      name: postgres-vm-root
+      namespace: demo-prod
+      jsonPointers:
+        - /spec/dataSource
+        - /spec/persistentVolumeClaim
