@@ -1,6 +1,6 @@
 # Current Status
 
-Updated: 2026-05-27 19:05 MSK
+Updated: 2026-05-28 12:56 MSK
 
 ## Repository Rule
 
@@ -89,6 +89,9 @@ Recent AWX result:
 
 ## Recent Fixes
 
+- Fixed manifest generation after deleting all generated Alice self-service environments:
+  - `gitops/self-service/generated/kustomization.yaml` cannot have an empty `resources:` key;
+  - changed it to `resources: []` so parent Kustomize can include an empty generated directory.
 - Fixed `demo-platform` OutOfSync caused by DVP rejecting a patch to an already provisioned `VirtualDisk`:
   - live `demo-prod/postgres-vm-root` had been restored/provisioned from `VirtualDiskSnapshot`, while Git still described the original `VirtualImage` source;
   - added `RespectIgnoreDifferences=true` and a scoped `ignoreDifferences` entry for `demo-prod/postgres-vm-root` `/spec/dataSource` and `/spec/persistentVolumeClaim`;
