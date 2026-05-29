@@ -1,0 +1,20 @@
+apiVersion: demo.platform/v1
+kind: EnvironmentRequest
+metadata:
+  name: dev-alice-koroleva-demo-c3aa
+spec:
+  owner: alice-koroleva
+  email: alice.koroleva@demo.local
+  groups:
+    - payments-devs
+  profile: app-with-vm
+  purpose: demo
+  ttl: 8h
+  access:
+    exposeIngress: true
+    sshToVm: false
+  software:
+    appImage: nginx:1.26
+  vm:
+    image: alpine-base-3-23-v1
+    imageKind: ClusterVirtualImage
