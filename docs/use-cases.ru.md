@@ -148,7 +148,7 @@ open self-service-ui/index.html
 - `app-with-vm`;
 - `app-with-postgres-vm`.
 
-После merge Argo CD создаёт generated manifests, а AWX выполняет post-configuration для профилей с VM.
+После merge или отправки заявки через portal backend generated manifests появляются в Git. Argo CD применяет их в Kubernetes/DVP, а AWX выполняет post-configuration для профилей с VM.
 
 Ценность: разработчик получает быстрый путь к стенду, а platform team сохраняет контроль через catalog, Git review, quotas, TTL и allow-list образов.
 

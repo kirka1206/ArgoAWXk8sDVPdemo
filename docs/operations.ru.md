@@ -7,6 +7,11 @@
 - `ansible-os-pods`: локальный pod-only сценарий для Docker Desktop и базовой демонстрации Argo CD + AWX.
 - `demo-platform`: расширенный DKP/DVP сценарий с `demo-app`, tenant `customer-a` и минимальной DVP VM `postgres-vm`.
 
+Для переноса на другой DKP/DVP стенд используйте:
+
+- [Пререквизиты стенда](prerequisites.ru.md);
+- [Детальный план переноса](migration-plan.ru.md).
+
 ## Запуск локального стенда
 
 ```bash
@@ -37,6 +42,16 @@ kubectl config current-context
 
 ```text
 codex-api.d8.kir.lab
+```
+
+Для нового стенда передайте параметры:
+
+```bash
+CONTEXT=<target-context> \
+GITEA_HOST=gitea-awx.<target-domain> \
+ARGOCD_HOST=argocd-awx.<target-domain> \
+AWX_HOST=awx-demo.<target-domain> \
+./scripts/deploy-dkp.sh
 ```
 
 Проверить Ingress:
@@ -189,6 +204,20 @@ kubectl describe application -n argocd ansible-os-pods
 - указан неверный path;
 - CRD DVP ещё не готов;
 - namespace или StorageClass недоступны.
+- `gitops/self-service/generated/kustomization.yaml` содержит невалидную комбинацию `resources: []` и вложенных `- <name>`.
+
+Валидный пустой вариант:
+
+```yaml
+resources: []
+```
+
+Валидный вариант со стендами:
+
+```yaml
+resources:
+  - dev-example
+```
 
 ## Master node scheduling
 

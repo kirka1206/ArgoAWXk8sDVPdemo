@@ -10,7 +10,7 @@ Web UI и YAML request не создают ресурсы напрямую. Он
 gitops/self-service/requests/<request-name>.yaml
 ```
 
-После review/merge automation генерирует manifests, Argo CD применяет их, AWX выполняет post-configuration.
+После review/merge automation или portal backend генерирует manifests, Argo CD применяет их, AWX выполняет post-configuration для VM-профилей.
 
 ## Почему это безопаснее прямого UI в кластер
 
@@ -76,7 +76,22 @@ spec:
 gitops/self-service/generated/<request-name>/
 ```
 
-В текущем демо generated manifests могут быть подготовлены заранее или созданы portal/backend'ом. Production-like следующий шаг - отдельный controller/CI, который валидирует `EnvironmentRequest` и генерирует manifests автоматически.
+В текущем live-демо portal backend пишет сразу в Gitea `main`: создаёт request, generated manifests и обновляет `gitops/self-service/generated/kustomization.yaml`. Production-like следующий шаг - branch/PR flow или отдельный controller/CI, который валидирует `EnvironmentRequest` и генерирует manifests автоматически.
+
+Важно: если generated-стендов нет, top-level файл должен быть валидным пустым Kustomization:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: []
+```
+
+Если стенды есть, используйте многострочный список:
+
+```yaml
+resources:
+  - dev-alice-koroleva-demo-c3aa
+```
 
 Проверка:
 

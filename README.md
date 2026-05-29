@@ -63,7 +63,7 @@ flowchart LR
 | `manifests/argocd/` | Argo CD Application manifests. |
 | `manifests/dkp/` | Ingress'ы для DKP-кластера. |
 | `scripts/` | Bootstrap, deploy, port-forward, run-demo-job, cleanup. |
-| `docs/` | Русские use cases, runbook и talk track. |
+| `docs/` | Русские use cases, runbook, talk track, пререквизиты и план переноса. |
 
 ## Правило ведения контекста
 
@@ -87,7 +87,11 @@ docs/NEXT_STEPS.md
 - Kubernetes-кластер с default StorageClass
 - Для DVP-сценария: DKP/DVP с CRD `virtualization.deckhouse.io`
 
-Для локального сценария достаточно Docker Desktop Kubernetes. Для DVP-сценария используется кластер `d8.kir.lab`.
+Для локального сценария достаточно Docker Desktop Kubernetes. Для DKP/DVP сценария нужны IngressClass, StorageClass, DVP, Dex/OIDC и доступ к внешним образам или их внутренние зеркала.
+
+Подробный список требований к новому стенду: [docs/prerequisites.ru.md](docs/prerequisites.ru.md).
+
+Детальный план переноса на другой DKP/DVP стенд: [docs/migration-plan.ru.md](docs/migration-plan.ru.md).
 
 ## Быстрый локальный запуск
 
@@ -105,13 +109,23 @@ cd ArgoAWXk8sDVPdemo
 ./scripts/run-demo-job.sh
 ```
 
-## Запуск в DKP/DVP d8.kir.lab
+## Запуск в DKP/DVP
 
 ```bash
 ./scripts/deploy-dkp.sh
 ```
 
-Скрипт ожидает kube-context `codex-api.d8.kir.lab` и создаёт Ingress'ы:
+По умолчанию скрипт настроен на текущий demo-стенд `d8.kir.lab`. Для другого стенда передайте параметры окружения:
+
+```bash
+CONTEXT=<target-context> \
+GITEA_HOST=gitea-awx.<target-domain> \
+ARGOCD_HOST=argocd-awx.<target-domain> \
+AWX_HOST=awx-demo.<target-domain> \
+./scripts/deploy-dkp.sh
+```
+
+На текущем стенде используются Ingress'ы:
 
 - Gitea: `http://gitea-awx.d8.kir.lab`
 - Argo CD: `http://argocd-awx.d8.kir.lab`
@@ -254,7 +268,20 @@ kubectl describe application -n argocd demo-platform
 kubectl get events -n demo-prod --sort-by=.lastTimestamp
 ```
 
-If the message says `data source cannot be changed if the VirtualDisk has already been provisioned`, Argo CD is trying to patch an immutable DVP `VirtualDisk` source after restore/provisioning. The `demo-platform` Application intentionally ignores `/spec/dataSource` and `/spec/persistentVolumeClaim` only for `demo-prod/postgres-vm-root` and uses `RespectIgnoreDifferences=true`. To change the base image of an already provisioned VM, create a new disk or use a controlled restore/recreate flow instead of patching `dataSource` in place.
+Если в ошибке есть `data source cannot be changed if the VirtualDisk has already been provisioned`, Argo CD пытается изменить immutable-источник уже подготовленного DVP `VirtualDisk`. Для `demo-prod/postgres-vm-root` в Application `demo-platform` специально настроен ignore `/spec/dataSource` и `/spec/persistentVolumeClaim` вместе с `RespectIgnoreDifferences=true`. Если нужно сменить базовый образ уже созданной VM, используйте новый диск или controlled restore/recreate flow, а не patch `dataSource` на существующем диске.
+
+Если ошибка связана с `gitops/self-service/generated/kustomization.yaml`, проверьте, что файл содержит либо:
+
+```yaml
+resources: []
+```
+
+либо многострочный список:
+
+```yaml
+resources:
+  - dev-example
+```
 
 ### DVP disk долго в `Provisioning`
 

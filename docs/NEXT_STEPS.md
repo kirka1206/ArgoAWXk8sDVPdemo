@@ -2,10 +2,10 @@
 
 ## Immediate
 
-1. Decide whether to revert scenario 02 scale back to `2` replicas or keep `demo-app` at `4` replicas for the next demo.
-2. Document AWX UI steps for creating `DVP VMs`, `postgres-vm`, `dvp-vm-ssh` and `Bootstrap DVP VM` in Russian docs.
-3. Continue scenario 08 live validation: start `golden-builder-vm`, run AWX customization and validation, then decide whether to publish `alpine-golden-3-23-v1`.
-4. Manually check scenario 10 in a browser after adding `10.77.77.208 selfservice-awx.d8.kir.lab` to `/etc/hosts`.
+1. Before moving to a new DKP/DVP stand, fill the parameter table in `docs/migration-plan.ru.md`: target context, base domain, ingress IP, StorageClass, VM class and Git owner/repo.
+2. Decide whether to carry current generated self-service environments to the new stand or clean `gitops/self-service/requests/` and `gitops/self-service/generated/` before migration.
+3. Document AWX UI steps for creating `DVP VMs`, `postgres-vm`, `dvp-vm-ssh` and `Bootstrap DVP VM` in Russian docs.
+4. Continue scenario 08 live validation: start `golden-builder-vm`, run AWX customization and validation, then decide whether to publish `alpine-golden-3-23-v1`.
 
 ## Architecture Improvements
 
@@ -13,19 +13,24 @@
    - Preferred direction: convert `demo-platform` to Helm or another templating approach where `values.yaml` is the only admin-facing input.
    - Alternative: use Kustomize patches/replacements and make the scenario explicitly edit only one live source file.
 2. Keep architecture decisions synchronized in `README.md` and `README.ru.md`.
-3. Consider adding repeatable scripts for AWX VM objects:
+3. Parameterize currently hardcoded stand-specific values:
+   - base domain in manifests and generated self-service artifacts;
+   - StorageClass `k8nfs`;
+   - VM class `generic`;
+   - Gitea owner/repo and Argo CD repoURL.
+4. Consider adding repeatable scripts for AWX VM objects:
    - create/update DVP VM inventory;
    - create/update VM bootstrap job template;
    - run bootstrap and validation jobs.
-4. Convert the self-service portal backend from direct commits to branch/PR workflow.
-5. Add policy validation for `EnvironmentRequest` before merge.
-6. Add AWX launch automation after VM profile creation.
+5. Convert the self-service portal backend from direct commits to branch/PR workflow.
+6. Add policy validation for `EnvironmentRequest` before merge.
+7. Add AWX launch automation after VM profile creation.
 
 ## Self-Service Scenario Draft
 
 Goal: demonstrate developer-facing self-service without bypassing GitOps governance.
 
-Status: initial catalog, request, generated example, static web UI and scenario documentation were added. Live validation passed in DKP/DVP for `dev-alice-001`: Argo CD is `Synced/Healthy`, app is available, `ClusterVirtualImage` is `Ready`, VM is `Running`.
+Status: catalog, generated examples, portal backend and scenario documentation are live. Current generated environments include `dev-alice-koroleva-demo-c3aa`, `dev-alice-koroleva-feature-f72b` and `dev-alice-koroleva-feature-8c3e`; Argo CD is `Synced/Healthy`, app resources are available, `ClusterVirtualImage` is `Ready`, and VM profiles run minimal DVP VMs.
 
 Proposed flow:
 
@@ -70,6 +75,7 @@ kubectl get application -n argocd
 kubectl get vi,vd,vm -n demo-prod -o wide
 kubectl get deploy demo-app -n demo-prod
 kubectl get ns customer-a
+kubectl get ns | grep '^dev-'
 ```
 
 For AWX API work:

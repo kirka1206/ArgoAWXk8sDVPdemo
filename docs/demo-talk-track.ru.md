@@ -155,8 +155,8 @@ kubectl get deploy,svc,ingress -n customer-a
 ```text
 self-service-ui/index.html
 gitops/self-service/catalog/
-gitops/self-service/requests/dev-alice-001.yaml
-gitops/self-service/generated/dev-alice-001/
+gitops/self-service/requests/<request-name>.yaml
+gitops/self-service/generated/<request-name>/
 scenarios/09-self-service-environment-request.md
 ```
 

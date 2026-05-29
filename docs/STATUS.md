@@ -1,6 +1,6 @@
 # Current Status
 
-Updated: 2026-05-29 12:00 MSK
+Updated: 2026-05-29 16:48 MSK
 
 ## Repository Rule
 
@@ -30,15 +30,15 @@ Before starting new work in this repository, read this file and `docs/NEXT_STEPS
 ## Argo CD Applications
 
 - `ansible-os-pods`: synced and healthy during last check.
-- `demo-platform`: synced and healthy during last check after fixing DVP `VirtualDisk` immutable-field drift.
+- `demo-platform`: synced and healthy during last check.
 
 ## DVP Resources
 
 Namespace: `demo-prod`
 
 - `VirtualImage/demo-alpine-cloud`: `Ready`
-- `VirtualDisk/postgres-vm-root`: `Ready`, `256Mi`
-- `VirtualMachine/postgres-vm`: `Running`, `1` core, `coreFraction: 5%`, `512Mi`, IP `10.77.111.5`
+- `VirtualDisk/postgres-vm-root`: `Ready`, live disk was restored/provisioned from snapshot and is protected by Argo CD scoped `ignoreDifferences`.
+- `VirtualMachine/postgres-vm`: `Running`, `1` core, `coreFraction: 5%`, `512Mi`, IP `10.77.111.8`
 - `qemu-guest-agent`: installed and started by AWX bootstrap; DVP reported `AgentReady=True` during last check.
 - Golden image source import:
   - `VirtualImage/alpine-base-3-23-v1`: `Ready`, imported from URL in Git.
@@ -48,10 +48,12 @@ Namespace: `demo-prod`
 
 ## Kubernetes Demo Resources
 
-- `demo-prod/demo-app`: scaled to `4` replicas during scenario 02.
+- `demo-prod/demo-app`: running with `2` replicas.
 - `customer-a`: tenant namespace exists with quota, limit range, RBAC and starter workload.
-- `dev-alice-001`: self-service example namespace exists; `demo-app` is available, ingress host is `dev-alice-001.example.local`, `dev-alice-001-vm` is `Running` with `1` core, `coreFraction: 5%`, `512Mi`, IP `10.77.111.7`.
-- `dev-alice-koroleva-demo-7266`: created through the self-service portal backend test; app-only profile is available with ingress `dev-alice-koroleva-demo-7266.d8.kir.lab`.
+- Active self-service generated environments:
+  - `dev-alice-koroleva-demo-c3aa`: profile `app-with-vm`, app `1/1`, DVP VM `Running`, IP `10.77.111.2`, ingress `dev-alice-koroleva-demo-c3aa.d8.kir.lab`.
+  - `dev-alice-koroleva-feature-8c3e`: profile `app-with-vm`, app `1/1`, DVP VM `Running`, IP `10.77.111.4`, ingress `dev-alice-koroleva-feature-8c3e.d8.kir.lab`.
+  - `dev-alice-koroleva-feature-f72b`: profile `app-only`, app `1/1`, ingress `dev-alice-koroleva-feature-f72b.d8.kir.lab`.
 - `self-service-portal`: portal namespace exists; `self-service-portal` and `self-service-portal-dex-authenticator` deployments are `1/1`; certificate `self-service-portal` is `Ready`; portal and DexAuthenticator ingresses expose ports `80,443`.
 - `demo-os`: contains pod-only AWX/Argo demo nodes `ol-node-1` and `ol-node-2`.
 
@@ -89,6 +91,10 @@ Recent AWX result:
 
 ## Recent Fixes
 
+- Added up-to-date migration documentation for transferring the demo to another DKP/DVP stand:
+  - `docs/prerequisites.ru.md`;
+  - `docs/migration-plan.ru.md`;
+  - README and operations links to the new documents.
 - Fixed self-service portal registration after new requests were created on top of an empty generated kustomization:
   - `resources: []` plus appended `- <request>` entries produced invalid YAML;
   - normalized `gitops/self-service/generated/kustomization.yaml` back to a multiline `resources:` list;
@@ -115,8 +121,8 @@ Recent AWX result:
 - Added a live demo talk plan to `scenarios/08-golden-image-management.md` and a short golden image talk track to `docs/demo-talk-track.ru.md`.
 - Added self-service environment request scenario artifacts:
   - approved profiles under `gitops/self-service/catalog/`;
-  - example request `gitops/self-service/requests/dev-alice-001.yaml`;
-  - generated example `gitops/self-service/generated/dev-alice-001/`;
+  - request examples under `gitops/self-service/requests/`;
+  - generated examples under `gitops/self-service/generated/`;
   - static web UI under `self-service-ui/`;
   - scenario `scenarios/09-self-service-environment-request.md`;
   - documentation `docs/self-service.ru.md`.
@@ -128,7 +134,7 @@ Recent AWX result:
   - `scenarios/10-self-service-portal.md`;
   - three live Dex demo users and groups;
   - live Kubernetes Secret `self-service-portal-gitea` for Gitea API access.
-- Portal backend direct-header test passed and created `dev-alice-koroleva-demo-7266`; Gitea commits were pulled back locally and pushed to GitHub.
+- Portal backend direct-header test passed; generated self-service commits are pulled back locally and pushed to GitHub when needed.
 - Fixed portal browser login 403 caused by DexAuthenticator CSRF cookie loss on callback:
   - added `cert-manager.io/Certificate` for `selfservice-awx.d8.kir.lab`;
   - enabled TLS on portal ingress;
@@ -153,6 +159,5 @@ Recent AWX result:
 
 - Golden image scenario 08 first phase is live-validated: source image import is `Ready`, builder VM exists in `Manual`/`Stopped`.
 - Full golden image customization is not yet executed. Next validation requires starting `golden-builder-vm`, adding it to AWX inventory as `golden_builder`, running `prepare-golden-image.yml`, then `validate-golden-image.yml`.
-- Self-service scenario 09 first live validation passed: Argo CD `demo-platform` is `Synced/Healthy`, app resources are ready, `ClusterVirtualImage` is `Ready`, `VirtualDisk/dev-alice-001-vm-root` is `Ready`, `VirtualMachine/dev-alice-001-vm` is `Running`.
-- Self-service portal scenario 10 infrastructure is live-validated: Argo CD `demo-platform` is `Synced/Healthy`, certificate is `Ready`, DexAuthenticator redirects unauthenticated HTTPS traffic to `/dex-authenticator/sign_in`, portal pod is ready, backend can create an app-only environment in Gitea. Logs show successful browser authentication for `alice.koroleva@demo.local` after the TLS fix. API fallback test with an OIDC-style JWT returns `app-only` and `app-with-vm` profiles for `payments-devs`.
+- Self-service scenario 09/10 live validation passed on current generated environments: Argo CD `demo-platform` is `Synced/Healthy`, `ClusterVirtualImage/alpine-base-3-23-v1` is `Ready`, app-only and app-with-vm generated environments are active, and portal backend can write requests/generated manifests to Gitea.
 - Latest portal UX update is syntax-checked, server-side dry-run validated and rolled out. Browser users should hard refresh to pick up updated JS. GitOps/YAML documentation was updated after the walkthrough.
