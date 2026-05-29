@@ -502,6 +502,7 @@ stringData:
 def ensure_generated_root(name):
     path = "gitops/self-service/generated/kustomization.yaml"
     current = get_text_file(path, "apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\nresources:\n")
+    current = current.replace("resources: []", "resources:")
     line = f"  - {name}\n"
     if line not in current:
         if not current.endswith("\n"):

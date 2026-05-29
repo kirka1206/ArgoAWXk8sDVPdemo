@@ -1,6 +1,6 @@
 # Current Status
 
-Updated: 2026-05-28 12:56 MSK
+Updated: 2026-05-29 12:00 MSK
 
 ## Repository Rule
 
@@ -89,6 +89,10 @@ Recent AWX result:
 
 ## Recent Fixes
 
+- Fixed self-service portal registration after new requests were created on top of an empty generated kustomization:
+  - `resources: []` plus appended `- <request>` entries produced invalid YAML;
+  - normalized `gitops/self-service/generated/kustomization.yaml` back to a multiline `resources:` list;
+  - updated portal backend to convert `resources: []` to `resources:` before appending future generated environments.
 - Fixed manifest generation after deleting all generated Alice self-service environments:
   - `gitops/self-service/generated/kustomization.yaml` cannot have an empty `resources:` key;
   - changed it to `resources: []` so parent Kustomize can include an empty generated directory.
