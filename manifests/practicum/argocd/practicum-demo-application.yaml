@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: practicum-demo
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+spec:
+  description: "4 practicum GitOps and DVP demo"
+  sourceRepos:
+    - http://practicum-gitea-http.practicum-tks.svc.cluster.local:3000/practicum/practicum-demo.git
+  destinations:
+    - namespace: practicum-tks
+      server: https://kubernetes.default.svc
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: practicum-demo
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+spec:
+  project: practicum-demo
+  source:
+    repoURL: http://practicum-gitea-http.practicum-tks.svc.cluster.local:3000/practicum/practicum-demo.git
+    targetRevision: main
+    path: gitops/environments/practicum
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: practicum-tks
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+    syncOptions:
+      - CreateNamespace=false
+      - PruneLast=true

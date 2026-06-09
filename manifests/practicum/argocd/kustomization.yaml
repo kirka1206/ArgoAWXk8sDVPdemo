@@ -4,6 +4,7 @@ namespace: practicum-tks
 resources:
   - https://raw.githubusercontent.com/argoproj/argo-cd/v3.4.2/manifests/namespace-install.yaml
   - workload-rbac.yaml
+  - practicum-demo-application.yaml
 commonAnnotations:
   demo.deckhouse.io/description: "4 practicum"
 images:

@@ -1,0 +1,18 @@
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualImage
+metadata:
+  name: practicum-alpine-base-3-23-v1
+  namespace: practicum-tks
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    demo.deckhouse.io/description: "4 practicum"
+  labels:
+    app.kubernetes.io/part-of: practicum-demo
+    demo.practicum/scenario: golden-image
+    demo.practicum/image-role: source
+spec:
+  storage: ContainerRegistry
+  dataSource:
+    type: HTTP
+    http:
+      url: https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/cloud/generic_alpine-3.23.3-x86_64-bios-cloudinit-r0.qcow2

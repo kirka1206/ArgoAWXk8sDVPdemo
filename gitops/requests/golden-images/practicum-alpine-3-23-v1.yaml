@@ -1,0 +1,24 @@
+apiVersion: demo.platform/v1
+kind: GoldenImageBuild
+metadata:
+  name: practicum-alpine-3-23-v1
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+spec:
+  source:
+    url: https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/cloud/generic_alpine-3.23.3-x86_64-bios-cloudinit-r0.qcow2
+  targetImage: practicum-alpine-golden-3-23-v1
+  packages:
+    - qemu-guest-agent
+    - chrony
+    - curl
+    - jq
+    - vim
+  configVersion: v1
+  builder:
+    cpuCores: 1
+    coreFraction: 5%
+    memory: 512Mi
+    disk: 512Mi
+    storageClass: replicated
+    virtualMachineClass: generic
