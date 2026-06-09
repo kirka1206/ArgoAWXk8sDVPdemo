@@ -37,6 +37,8 @@ kubectl create secret generic argocd-practicum-cluster \
   --dry-run=client -o yaml |
   kubectl label --local -f - \
     argocd.argoproj.io/secret-type=cluster \
+    -o yaml |
+  kubectl annotate --local -f - \
     demo.deckhouse.io/description="4 practicum" \
     -o yaml |
   kubectl apply -f -
