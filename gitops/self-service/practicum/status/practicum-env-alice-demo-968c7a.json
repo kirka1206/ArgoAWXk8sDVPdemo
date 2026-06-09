@@ -1,35 +1,7 @@
 {
   "environmentId": "practicum-env-alice-demo-968c7a",
   "namespace": "practicum-tks",
-  "state": "Provisioning",
-  "owner": "alice-koroleva-practicum",
-  "profile": "app-with-vm",
-  "purpose": "demo",
-  "createdAt": "2026-06-09T11:13:22Z",
-  "expiresAt": "2026-06-09T13:13:22Z",
-  "gitCommit": null,
-  "awxJob": 26,
-  "awxStatus": "failed",
-  "argoCD": {
-    "sync": "Synced",
-    "health": "Healthy"
-  },
-  "application": {
-    "name": "practicum-env-alice-demo-968c7a",
-    "replicas": 1,
-    "readyReplicas": 1,
-    "url": "https://practicum-env-alice-demo-968c7a.d8case.ru",
-    "ingressReady": true
-  },
-  "virtualMachine": {
-    "name": "practicum-env-alice-demo-968c7a-vm",
-    "phase": "Running",
-    "ip": "10.66.0.32",
-    "agentReady": true,
-    "cpu": "1 core, 5%",
-    "memory": "512Mi",
-    "disk": "768Mi",
-    "image": "practicum-alpine-golden-3-23-v1"
-  },
-  "updatedAt": "2026-06-09T11:43:33Z"
+  "state": "Error",
+  "reason": "Gitea PUT /contents/gitops/self-service/practicum/status/practicum-env-alice-demo-968c7a.json: 422 {\"message\":\"sha does not match [given: 532abc1c8a8b7c88d72f726534054368d9753ad2, expected: eef17bdd132a00018893dc43fd31dbb2282eef19]\",\"url\":\"http://gitea-practicum.d8case.ru/api/swagger\"}\n",
+  "updatedAt": "2026-06-09T11:43:38Z"
 }
