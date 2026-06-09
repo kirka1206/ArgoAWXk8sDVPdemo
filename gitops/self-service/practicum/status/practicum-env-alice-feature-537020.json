@@ -4,8 +4,34 @@
   "state": "Provisioning",
   "owner": "alice-koroleva-practicum",
   "profile": "app-with-vm",
+  "purpose": "feature",
   "createdAt": "2026-06-09T21:58:33Z",
   "expiresAt": "2026-06-09T23:58:33Z",
   "gitCommit": null,
-  "updatedAt": "2026-06-09T21:59:02Z"
+  "awxJob": null,
+  "awxStatus": null,
+  "awxAttempts": 0,
+  "argoCD": {
+    "sync": "Synced",
+    "health": "Healthy"
+  },
+  "application": {
+    "name": "practicum-env-alice-feature-537020",
+    "replicas": 1,
+    "readyReplicas": 0,
+    "url": "https://practicum-env-alice-feature-537020.d8case.ru",
+    "ingressReady": false
+  },
+  "virtualMachine": {
+    "name": "practicum-env-alice-feature-537020-vm",
+    "phase": "Pending",
+    "ip": null,
+    "agentReady": false,
+    "guestReady": false,
+    "cpu": "1 core, 5%",
+    "memory": "512Mi",
+    "disk": "768Mi",
+    "image": null
+  },
+  "updatedAt": "2026-06-09T21:59:28Z"
 }
