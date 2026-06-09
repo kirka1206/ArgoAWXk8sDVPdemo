@@ -219,25 +219,40 @@ main{max-width:1080px;margin:0 auto;padding:24px;display:grid;grid-template-colu
 section{background:white;border:1px solid #d6dde2;border-radius:8px;padding:20px}h2{font-size:18px;margin:0 0 18px}
 label{display:grid;gap:7px;font-weight:650;margin-bottom:16px}select,button{min-height:42px;border-radius:6px;font:inherit}
 select{border:1px solid #aebac3;background:white;padding:8px}button{border:0;background:#176b54;color:white;font-weight:750;cursor:pointer}
+button:disabled{background:#80938d;cursor:wait}
 .profile{border-left:4px solid #3c8c74;background:#f5faf8;padding:12px;margin:-4px 0 16px;line-height:1.45}
+.status-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.state{display:inline-flex;align-items:center;gap:9px;font-size:18px;font-weight:800}
+.state-dot{width:11px;height:11px;border-radius:50%;background:#74818a;flex:none}
+.state.working .state-dot{background:#c17b17;animation:pulse 1.4s ease-in-out infinite}
+.state.ready .state-dot{background:#16805d}.state.failed .state-dot{background:#b33232}
+.progress{height:5px;background:#e3e8eb;overflow:hidden;margin:0 0 16px}
+.progress span{display:block;width:36%;height:100%;background:#c17b17;animation:progress 1.6s ease-in-out infinite}
+.progress[hidden]{display:none}.activity{margin:0 0 16px;font-weight:650;line-height:1.45}
 .status{white-space:pre-wrap;line-height:1.5}.muted{color:#65737d}.error{color:#a12828}
+.poll-meta{font-size:13px;color:#65737d;text-align:right}
+@keyframes pulse{50%{opacity:.35;transform:scale(.8)}}@keyframes progress{0%{transform:translateX(-110%)}100%{transform:translateX(320%)}}
 dl{display:grid;grid-template-columns:170px 1fr;gap:8px;margin:0}dt{color:#65737d}dd{margin:0;font-weight:600}
-@media(max-width:760px){header{align-items:flex-start}main{grid-template-columns:1fr}.logout{min-width:88px}}
+@media(max-width:760px){header{align-items:flex-start}main{grid-template-columns:1fr}.logout{min-width:88px}.status-head{align-items:flex-start;flex-direction:column}.poll-meta{text-align:left}}
 </style></head><body>
 <header><div><h1>Practicum Self-Service</h1><p>Заказ временных стендов через единый GitOps-процесс</p></div><a class="logout" href="/logout">Выйти</a></header>
 <main><section><h2>Новая заявка</h2><div id="user" class="muted"></div>
 <form id="form"><label>Профиль стенда<select id="profile"></select></label><div id="details" class="profile"></div>
 <label>Назначение<select id="purpose"><option value="feature">Разработка функции</option><option value="bugfix">Проверка исправления</option><option value="demo">Демонстрация</option><option value="loadtest">Нагрузочный тест</option></select></label>
-<label>Время жизни<select id="ttl"></select></label><button>Отправить заявку</button></form></section>
-<section><h2>Результат</h2><div id="result" class="status muted">После отправки здесь появятся Git commit, Argo CD, ресурсы, AWX job и TTL.</div></section></main>
+<label>Время жизни<select id="ttl"></select></label><button id="submit">Отправить заявку</button></form></section>
+<section><h2>Результат</h2><div class="status-head"><div id="state" class="state"><span class="state-dot"></span><span>Ожидание</span></div><div id="pollMeta" class="poll-meta"></div></div>
+<div id="progress" class="progress" hidden><span></span></div><p id="activity" class="activity muted">После отправки здесь появятся текущий этап, Git commit, Argo CD, ресурсы, AWX job и TTL.</p>
+<div id="result" class="status muted"></div></section></main>
 <script>
-let profiles=[],last=null;const $=id=>document.getElementById(id);
+let profiles=[],last=null,pollCount=0,startedAt=null,pollTimer=null;const $=id=>document.getElementById(id);
 async function api(path,opts={}){const r=await fetch(path,{headers:{"Content-Type":"application/json"},...opts});const p=await r.json();if(!r.ok)throw Error(p.error||"Ошибка");return p}
 function profile(){return profiles.find(p=>p.name===$("profile").value)}
 function renderProfile(){const p=profile();$("details").innerHTML=`<b>${p.title}</b><br>${p.description}<br><br><b>Ресурсы:</b> приложение 1 replica, 25m CPU / 32Mi RAM${p.vm?`, VM ${p.vm.cpu}, RAM ${p.vm.memory}, диск ${p.vm.disk}`:"; VM не создаётся"}.<br><b>Namespace:</b> practicum-tks`; $("ttl").innerHTML=p.ttl.map(v=>`<option>${v}</option>`).join("")}
-function render(s){$("result").className="status";$("result").textContent=`Environment ID: ${s.environmentId}
+function viewState(s){const state=s.state||s.status||"Submitted";if(["Rejected","Error"].includes(state))return{label:"Ошибка",kind:"failed",working:false};if(state==="Ready")return{label:"Готово",kind:"ready",working:false};if(state==="Cleaned")return{label:"Удалено по TTL",kind:"ready",working:false};if(state==="Expired")return{label:"Срок истёк",kind:"ready",working:false};if(state==="Queued")return{label:"В очереди",kind:"working",working:true};return{label:"В работе",kind:"working",working:true}}
+function activity(s){const state=s.state||s.status||"Submitted";if(state==="Submitted")return"Заявка записана в Git. Ожидаем, когда request controller начнёт обработку.";if(state==="Queued")return"Заявка проверена и ждёт свободной квоты платформы.";if(["Rejected","Error"].includes(state))return s.reason?`Обработка остановлена: ${s.reason}`:"Обработка остановлена. Проверьте причину ниже.";if(state==="Ready")return"Стенд готов к использованию. Все обязательные проверки завершены.";if(state==="Cleaned")return"Время жизни завершилось, ресурсы заявки удалены через GitOps.";if(state==="Expired")return"Время жизни завершилось. Выполняется GitOps-очистка ресурсов.";if(state==="Provisioning"){if(!s.application)return"Argo CD применяет манифесты приложения и инфраструктуры.";if((s.application.readyReplicas??0)<(s.application.replicas??1))return"Kubernetes запускает контейнерное приложение.";if(!s.virtualMachine&&s.profile!=="app-only")return"Приложение запущено. DVP создаёт диск и виртуальную машину.";if(!s.virtualMachine)return"Приложение запущено. Завершаются проверки готовности стенда.";if(s.virtualMachine.phase!=="Running")return`DVP создаёт и запускает виртуальную машину. Текущая фаза: ${s.virtualMachine.phase||"ожидание"}.`;if(!s.virtualMachine.guestReady)return"Виртуальная машина запущена. Ожидаем готовность гостевой ОС и qemu-guest-agent.";if(!s.awxJob)return"Гостевая ОС готова. Request controller запускает AWX post-configuration.";if(!["successful","failed","error","canceled"].includes(s.awxStatus))return`AWX выполняет настройку и проверку ОС. Job ${s.awxJob}, статус ${s.awxStatus||"pending"}.`;return"AWX завершил работу. Controller выполняет итоговую проверку стенда."}return"Система обрабатывает заявку."}
+function render(s){const v=viewState(s);$("state").className=`state ${v.kind}`;$("state").querySelector("span:last-child").textContent=v.label;$("progress").hidden=!v.working;$("activity").className=`activity ${v.kind==="failed"?"error":"muted"}`;$("activity").textContent=activity(s);const elapsed=startedAt?Math.max(0,Math.floor((Date.now()-startedAt)/1000)):0;$("pollMeta").textContent=v.working?`Проверка каждые 5 секунд · ${pollCount} · прошло ${elapsed} сек.`:`Обновлено ${new Date().toLocaleTimeString("ru-RU")}`;$("result").className=`status ${v.kind==="failed"?"error":""}`;$("result").textContent=`Environment ID: ${s.environmentId}
 Namespace: ${s.namespace}
-Статус: ${s.state||s.status}
+Технический статус: ${s.state||s.status}
 Причина: ${s.reason||"-"}
 Владелец: ${s.owner||"-"}
 Профиль: ${s.profile||"-"}
@@ -250,9 +265,9 @@ VM: ${s.virtualMachine?.name||"не требуется"}
 VM phase/IP: ${s.virtualMachine?.phase||"-"} / ${s.virtualMachine?.ip||"-"}
 VM: ${s.virtualMachine?`${s.virtualMachine.cpu}, RAM ${s.virtualMachine.memory}, disk ${s.virtualMachine.disk}, image ${s.virtualMachine.image}`:"-"}
 AWX job/status: ${s.awxJob||"-"} / ${s.awxStatus||"-"}`;}
-async function poll(){if(!last)return;try{const s=await api(`/api/status/${last}`);render(s);if(["Ready","Rejected","Error","Cleaned"].includes(s.state))return}catch(e){}setTimeout(poll,5000)}
+async function poll(){if(!last)return;pollCount++;try{const s=await api(`/api/status/${last}`);render(s);if(["Ready","Rejected","Error","Cleaned"].includes(s.state)){$("submit").disabled=false;return}}catch(e){$("state").className="state failed";$("state").querySelector("span:last-child").textContent="Ошибка связи";$("activity").className="activity error";$("activity").textContent=`Не удалось получить статус: ${e.message}. Повторим через 5 секунд.`}pollTimer=setTimeout(poll,5000)}
 async function init(){const me=await api("/api/me");profiles=me.profiles;$("user").textContent=`${me.email||me.name} · ${me.groups.join(", ")}`;$("profile").innerHTML=profiles.map(p=>`<option value="${p.name}">${p.title}</option>`).join("");if(!profiles.length){$("form").hidden=true;$("result").textContent="Для групп пользователя нет доступных профилей.";return}$("profile").onchange=renderProfile;renderProfile()}
-$("form").onsubmit=async e=>{e.preventDefault();try{const r=await api("/api/requests",{method:"POST",body:JSON.stringify({profile:$("profile").value,purpose:$("purpose").value,ttl:$("ttl").value})});last=r.environmentId;render(r);poll()}catch(err){$("result").className="status error";$("result").textContent=err.message}};
+$("form").onsubmit=async e=>{e.preventDefault();clearTimeout(pollTimer);$("submit").disabled=true;$("state").className="state working";$("state").querySelector("span:last-child").textContent="Отправка";$("progress").hidden=false;$("activity").className="activity muted";$("activity").textContent="Создаём EnvironmentRequest в Git...";$("result").textContent="";$("pollMeta").textContent="";try{const r=await api("/api/requests",{method:"POST",body:JSON.stringify({profile:$("profile").value,purpose:$("purpose").value,ttl:$("ttl").value})});last=r.environmentId;pollCount=0;startedAt=Date.now();render(r);poll()}catch(err){$("submit").disabled=false;$("progress").hidden=true;$("state").className="state failed";$("state").querySelector("span:last-child").textContent="Ошибка";$("activity").className="activity error";$("activity").textContent="Заявку не удалось отправить.";$("result").className="status error";$("result").textContent=err.message}};
 init().catch(e=>{$("result").textContent=e.message});
 </script></body></html>"""
 
