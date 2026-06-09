@@ -147,7 +147,9 @@ ensure_job_template() {
     --argjson ask_limit "$ask_limit" \
     '{name:$name,description:"4 practicum",job_type:"run",inventory:$inventory,
       project:$project,playbook:$playbook,execution_environment:$ee,
-      ask_limit_on_launch:$ask_limit,become_enabled:false,verbosity:0}')"
+      ask_limit_on_launch:$ask_limit,
+      ask_variables_on_launch:($name == "Practicum Environment Post-Config"),
+      become_enabled:false,verbosity:0}')"
   id="$(ensure_named job_templates "$name" "$payload")"
   api POST "/api/v2/job_templates/${id}/credentials/" \
     "$(jq -cn --argjson id "$credential_id" '{id:$id}')" >/dev/null

@@ -1,0 +1,134 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: practicum-self-service-status-reader
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+rules:
+  - apiGroups: ["", "apps", "networking.k8s.io", "virtualization.deckhouse.io"]
+    resources:
+      - configmaps
+      - pods
+      - services
+      - deployments
+      - ingresses
+      - virtualmachines
+      - virtualdisks
+      - virtualimages
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["argoproj.io"]
+    resources: ["applications"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: practicum-request-controller-status-reader
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+subjects:
+  - kind: ServiceAccount
+    name: practicum-request-controller
+    namespace: practicum-tks
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: practicum-self-service-status-reader
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: practicum-portal-status-reader
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+subjects:
+  - kind: ServiceAccount
+    name: practicum-self-service-portal
+    namespace: practicum-tks
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: practicum-self-service-status-reader
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: practicum-request-controller
+  namespace: practicum-tks
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+    demo.deckhouse.io/description: "4 practicum"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: practicum-request-controller
+  template:
+    metadata:
+      labels:
+        app: practicum-request-controller
+        app.kubernetes.io/part-of: practicum-demo
+    spec:
+      serviceAccountName: practicum-request-controller
+      containers:
+        - name: controller
+          image: python:3.12-alpine
+          imagePullPolicy: IfNotPresent
+          command: ["python", "/app/controller.py"]
+          env:
+            - name: GITEA_URL
+              value: http://practicum-gitea-http.practicum-tks.svc.cluster.local:3000
+            - name: GITEA_OWNER
+              value: practicum
+            - name: GITEA_REPO
+              value: practicum-demo
+            - name: GITEA_BRANCH
+              value: main
+            - name: BASE_DOMAIN
+              value: d8case.ru
+            - name: NAMESPACE
+              value: practicum-tks
+            - name: STORAGE_CLASS
+              value: replicated
+            - name: VM_CLASS
+              value: generic
+            - name: AWX_URL
+              value: http://practicum-awx-service.practicum-tks.svc.cluster.local
+            - name: GITEA_USER
+              valueFrom:
+                secretKeyRef:
+                  name: practicum-self-service-runtime
+                  key: giteaUsername
+            - name: GITEA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: practicum-self-service-runtime
+                  key: giteaPassword
+            - name: AWX_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: practicum-awx-automation-token
+                  key: token
+            - name: AWX_SSH_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: practicum-self-service-runtime
+                  key: sshPublicKey
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 192Mi
+          volumeMounts:
+            - name: code
+              mountPath: /app
+              readOnly: true
+      volumes:
+        - name: code
+          configMap:
+            name: practicum-request-controller-code

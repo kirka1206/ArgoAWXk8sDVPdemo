@@ -1,10 +1,24 @@
+- name: Register the requested practicum VM
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Add requested VM to the runtime inventory
+      ansible.builtin.add_host:
+        name: "{{ target_name }}"
+        groups: practicum_target
+        ansible_host: "{{ target_host }}"
+        ansible_user: ansible
+        ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
 - name: Configure a practicum self-service VM
   hosts: practicum_target
   gather_facts: true
   become: true
   tasks:
     - name: Install practicum base packages on Alpine
-      ansible.builtin.command: apk add --no-cache qemu-guest-agent curl jq
+      ansible.builtin.command: >-
+        apk add --no-cache qemu-guest-agent curl jq
+        {{ 'postgresql15' if install_postgresql | default(false) | bool else '' }}
       register: apk_result
       changed_when: "'OK:' in apk_result.stdout or 'OK:' in apk_result.stderr"
       when: ansible_pkg_mgr == "apk"
