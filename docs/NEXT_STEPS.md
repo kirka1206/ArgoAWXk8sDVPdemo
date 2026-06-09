@@ -30,6 +30,9 @@
 
 ## Приоритет 3. Усилить Git workflow
 
+Repository webhook Gitea -> Argo CD настроен для немедленного refresh после
+push. Периодический polling остаётся резервным механизмом.
+
 1. Перевести automation с прямых commit в `main` на branch/PR.
 2. Объединить generated-файлы и kustomization в один Git commit через Git tree
    API или отдельный Git worker.

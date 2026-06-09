@@ -156,6 +156,24 @@ def load_json(path, default=None):
     return json.loads(text) if text else default
 
 
+def latest_commit(path):
+    commits = gitea(
+        "GET",
+        f"/commits?sha={urllib.parse.quote(GITEA_BRANCH)}"
+        f"&path={content_path(path)}&limit=1",
+    )
+    if not commits:
+        return None
+    return commits[0].get("sha")
+
+
+def commit_sha(result):
+    if not isinstance(result, dict):
+        return None
+    commit = result.get("commit") or {}
+    return commit.get("sha") or commit.get("id") or result.get("sha")
+
+
 def write_status(environment, state, **fields):
     payload = {
         "environmentId": environment,
@@ -193,7 +211,7 @@ def write_root(environments, message):
     unique = sorted(set(environments))
     resources = "resources: []\n" if not unique else "resources:\n" + "".join(f"  - {name}\n" for name in unique)
     content = "apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\n" + resources
-    put_text(GENERATED_KUSTOMIZATION, content, message)
+    return put_text(GENERATED_KUSTOMIZATION, content, message)
 
 
 def active_image():
@@ -516,7 +534,7 @@ def reconcile_existing(request, request_path):
         purpose=request["purpose"],
         createdAt=request["createdAt"],
         expiresAt=request["expiresAt"],
-        gitCommit=current.get("gitCommit"),
+        gitCommit=current.get("gitCommit") or latest_commit(request_path),
         awxJob=awx_job,
         awxStatus=awx_status,
         awxAttempts=awx_attempts,
@@ -574,7 +592,7 @@ def reconcile():
                 profile=request["profile"],
                 createdAt=request["createdAt"],
                 expiresAt=request["expiresAt"],
-                gitCommit=(result or {}).get("commit", {}).get("sha") if isinstance(result, dict) else None,
+                gitCommit=commit_sha(result) or latest_commit(path),
             )
         except Exception as exc:
             environment = slug(item["name"].rsplit(".", 1)[0])

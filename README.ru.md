@@ -315,6 +315,10 @@ Argo CD, приложение, DVP VM, фактический golden image, AWX 
 Portal определяет канонического владельца по проверенному Dex e-mail и
 пересечению с разрешённой группой. Техническое значение
 `X-Auth-Request-User` не используется в имени EnvironmentRequest.
+Repository webhook Gitea отправляет push events на внутренний endpoint
+`argocd-server.practicum-tks.svc.cluster.local/api/webhook`. В allowlist Gitea
+разрешён только этот host, поэтому Argo CD обновляет Application сразу после
+commit, не ожидая периодического Git polling.
 
 UI подробно объясняет профиль стенда, purpose, квоты и состав ресурсов. После создания заявки он показывает namespace, профиль, TTL, параметры приложения, service/ingress, VM/disk параметры и пути GitOps artifacts.
 

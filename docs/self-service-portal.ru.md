@@ -130,3 +130,34 @@ kubectl get deploy,svc,ingress,vd,vm -n practicum-tks \
   -l demo.practicum/environment=<environment-id>
 kubectl get application -n practicum-tks practicum-demo
 ```
+
+Если wildcard DNS для `*.d8case.ru` отсутствует, добавьте hostname приложения
+на рабочей машине:
+
+```text
+192.168.2.31 <environment-id>.d8case.ru
+```
+
+После этого приложение открывается по URL, который показывает portal.
+
+IP виртуальной машины вида `10.66.x.x` относится к внутренней DVP-сети. Для SSH
+не нужен маршрут с ноутбука: DVP CLI проксирует соединение через Kubernetes API.
+
+```bash
+d8 v ssh ansible@<environment-id>-vm \
+  --namespace practicum-tks \
+  --identity-file local/practicum-ssh/id_ed25519 \
+  --local-ssh
+```
+
+Проверка без интерактивной сессии:
+
+```bash
+d8 v ssh ansible@<environment-id>-vm \
+  --namespace practicum-tks \
+  --identity-file local/practicum-ssh/id_ed25519 \
+  --local-ssh \
+  --command 'hostname; whoami; uname -a'
+```
+
+Публиковать SSH через `NodePort` или `LoadBalancer` для этого демо не нужно.
