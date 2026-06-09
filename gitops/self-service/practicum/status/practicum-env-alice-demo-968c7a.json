@@ -11,7 +11,7 @@
   "awxJob": 26,
   "awxStatus": "failed",
   "argoCD": {
-    "sync": "Synced",
+    "sync": "OutOfSync",
     "health": "Progressing"
   },
   "application": {
@@ -30,5 +30,5 @@
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v1"
   },
-  "updatedAt": "2026-06-09T11:32:40Z"
+  "updatedAt": "2026-06-09T11:33:06Z"
 }
