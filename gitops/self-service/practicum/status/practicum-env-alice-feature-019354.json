@@ -17,19 +17,19 @@
   "application": {
     "name": "practicum-env-alice-feature-019354",
     "replicas": 1,
-    "readyReplicas": 0,
+    "readyReplicas": 1,
     "url": "https://practicum-env-alice-feature-019354.d8case.ru",
-    "ingressReady": false
+    "ingressReady": true
   },
   "virtualMachine": {
     "name": "practicum-env-alice-feature-019354-vm",
     "phase": "Pending",
-    "ip": null,
+    "ip": "10.66.0.33",
     "agentReady": false,
     "cpu": "1 core, 5%",
     "memory": "512Mi",
     "disk": "768Mi",
-    "image": null
+    "image": "practicum-alpine-golden-3-23-v2"
   },
-  "updatedAt": "2026-06-09T11:45:23Z"
+  "updatedAt": "2026-06-09T11:45:51Z"
 }
