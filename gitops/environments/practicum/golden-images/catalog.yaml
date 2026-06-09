@@ -10,9 +10,13 @@ metadata:
     app.kubernetes.io/part-of: practicum-demo
     demo.practicum/scenario: golden-image
 data:
-  activeGoldenImage: practicum-alpine-golden-3-23-v1
+  activeGoldenImage: practicum-alpine-golden-3-23-v2
   availableGoldenImages: |
     - name: practicum-alpine-golden-3-23-v1
       source: practicum-alpine-base-3-23-v1
       status: validated
       awxWorkflowJob: "16"
+    - name: practicum-alpine-golden-3-23-v2
+      source: practicum-alpine-base-3-23-v1
+      status: validated
+      awxWorkflowJob: "40"
