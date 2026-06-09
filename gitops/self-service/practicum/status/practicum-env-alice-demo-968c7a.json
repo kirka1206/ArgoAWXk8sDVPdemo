@@ -12,8 +12,7 @@
   "awxStatus": "failed",
   "argoCD": {
     "sync": "Synced",
-    "health": "Healthy",
-    "revision": "70cfa04281d782a67acfeef9123969a7185d4524"
+    "health": "Healthy"
   },
   "application": {
     "name": "practicum-env-alice-demo-968c7a",
@@ -31,5 +30,5 @@
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v1"
   },
-  "updatedAt": "2026-06-09T11:28:45Z"
+  "updatedAt": "2026-06-09T11:28:51Z"
 }
