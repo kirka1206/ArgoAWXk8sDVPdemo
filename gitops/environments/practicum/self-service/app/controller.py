@@ -19,7 +19,6 @@ GITEA_USER = os.environ["GITEA_USER"]
 GITEA_PASSWORD = os.environ["GITEA_PASSWORD"]
 AWX_URL = os.environ["AWX_URL"].rstrip("/")
 AWX_TOKEN = os.environ["AWX_TOKEN"]
-AWX_SSH_PUBLIC_KEY = os.environ["AWX_SSH_PUBLIC_KEY"].strip()
 NAMESPACE = os.environ.get("NAMESPACE", "practicum-tks")
 BASE_DOMAIN = os.environ.get("BASE_DOMAIN", "d8case.ru")
 STORAGE_CLASS = os.environ.get("STORAGE_CLASS", "replicated")
@@ -325,7 +324,6 @@ def render_resources(request):
     size: 768Mi
     storageClassName: {STORAGE_CLASS}
 """)
-        packages = "qemu-guest-agent curl jq" + (" postgresql15" if request["postgres"] else "")
         metadata = object_metadata(("virtualization.deckhouse.io/v1alpha2", "VirtualMachine"), f"{env}-vm", request)
         documents.append(f"""{metadata}spec:
   virtualMachineClassName: {VM_CLASS}
@@ -341,27 +339,10 @@ def render_resources(request):
     - kind: VirtualDisk
       name: {env}-root
   provisioning:
-    type: UserData
-    userData: |
-      #cloud-config
-      hostname: {env}-vm
-      users:
-        - name: ansible
-          lock_passwd: true
-          sudo: ALL=(ALL) NOPASSWD:ALL
-          shell: /bin/sh
-          ssh_authorized_keys:
-            - {AWX_SSH_PUBLIC_KEY}
-      ssh_pwauth: false
-      package_update: false
-      packages:
-        - openssh
-        - python3
-        - sudo
-      runcmd:
-        - apk add --no-cache {packages}
-        - rc-update add sshd default || true
-        - service sshd start || true
+    type: UserDataRef
+    userDataRef:
+      kind: Secret
+      name: practicum-golden-builder-cloud-init
 """)
     return "---\n".join(documents)
 

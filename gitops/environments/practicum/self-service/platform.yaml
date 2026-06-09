@@ -112,11 +112,6 @@ spec:
                 secretKeyRef:
                   name: practicum-awx-automation-token
                   key: token
-            - name: AWX_SSH_PUBLIC_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: practicum-self-service-runtime
-                  key: sshPublicKey
           resources:
             requests:
               cpu: 25m
