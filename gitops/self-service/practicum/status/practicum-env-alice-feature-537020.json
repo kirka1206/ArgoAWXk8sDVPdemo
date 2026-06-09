@@ -12,14 +12,14 @@
   "awxStatus": "successful",
   "awxAttempts": 1,
   "argoCD": {
-    "sync": "OutOfSync",
+    "sync": "Synced",
     "health": "Healthy"
   },
   "application": {
     "name": "practicum-env-alice-feature-537020",
     "replicas": 1,
     "readyReplicas": 1,
-    "url": "http://practicum-env-alice-feature-537020.d8case.ru",
+    "url": "https://practicum-env-alice-feature-537020.d8case.ru",
     "ingressReady": true
   },
   "virtualMachine": {
@@ -33,5 +33,5 @@
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v2"
   },
-  "updatedAt": "2026-06-09T22:22:19Z"
+  "updatedAt": "2026-06-09T22:22:40Z"
 }
