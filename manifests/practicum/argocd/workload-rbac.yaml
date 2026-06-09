@@ -13,6 +13,16 @@ rules:
     resources: ["pods/exec", "pods/log"]
     verbs: ["get", "create"]
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argocd-practicum-manager-token
+  namespace: practicum-tks
+  annotations:
+    kubernetes.io/service-account.name: argocd-application-controller
+    demo.deckhouse.io/description: "4 practicum"
+type: kubernetes.io/service-account-token
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:

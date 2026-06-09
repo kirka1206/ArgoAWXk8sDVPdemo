@@ -30,7 +30,7 @@ spec:
     targetRevision: main
     path: gitops/environments/practicum
   destination:
-    server: https://kubernetes.default.svc
+    name: practicum-local
     namespace: practicum-tks
   syncPolicy:
     automated:
