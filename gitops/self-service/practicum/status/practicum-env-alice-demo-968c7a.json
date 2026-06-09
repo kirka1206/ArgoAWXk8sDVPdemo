@@ -8,10 +8,11 @@
   "createdAt": "2026-06-09T11:13:22Z",
   "expiresAt": "2026-06-09T13:13:22Z",
   "gitCommit": null,
-  "awxJob": 53,
+  "awxJob": 57,
   "awxStatus": "failed",
+  "awxAttempts": 1,
   "argoCD": {
-    "sync": "OutOfSync",
+    "sync": "Synced",
     "health": "Healthy"
   },
   "application": {
@@ -32,5 +33,5 @@
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v1"
   },
-  "updatedAt": "2026-06-09T11:56:47Z"
+  "updatedAt": "2026-06-09T11:57:37Z"
 }
