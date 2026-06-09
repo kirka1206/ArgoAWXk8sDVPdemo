@@ -4,8 +4,24 @@
   "state": "Provisioning",
   "owner": "alice-koroleva-practicum",
   "profile": "app-only",
+  "purpose": "feature",
   "createdAt": "2026-06-09T22:25:01Z",
   "expiresAt": "2026-06-10T00:25:01Z",
   "gitCommit": "4838fbf2cca8f88e144643485fd8928b0f5735c3",
-  "updatedAt": "2026-06-09T22:25:43Z"
+  "awxJob": null,
+  "awxStatus": null,
+  "awxAttempts": 0,
+  "argoCD": {
+    "sync": "Synced",
+    "health": "Progressing"
+  },
+  "application": {
+    "name": "practicum-env-alice-feature-fef235",
+    "replicas": 1,
+    "readyReplicas": 0,
+    "url": "http://practicum-env-alice-feature-fef235.d8case.ru",
+    "ingressReady": true
+  },
+  "virtualMachine": null,
+  "updatedAt": "2026-06-09T22:26:16Z"
 }
