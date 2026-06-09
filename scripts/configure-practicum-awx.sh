@@ -112,8 +112,9 @@ ssh_key="$(cat "$SSH_KEY_FILE")"
 credential_payload="$(jq -cn \
   --argjson organization "$organization_id" \
   --arg ssh_key "$ssh_key" \
+  --arg password "$GOLDEN_BUILDER_PASSWORD" \
   '{name:"practicum-dvp-ssh",description:"4 practicum",organization:$organization,
-    credential_type:1,inputs:{username:"ansible",ssh_key_data:$ssh_key}}')"
+    credential_type:1,inputs:{username:"ansible",password:$password,ssh_key_data:$ssh_key}}')"
 credential_id="$(ensure_named credentials practicum-dvp-ssh "$credential_payload")"
 
 builder_ip="$(kubectl get vm practicum-golden-builder-vm -n "$NAMESPACE" \
