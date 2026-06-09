@@ -50,22 +50,26 @@ ignored-файле `local/practicum-demo-users.env`.
 
 1. Пользователь входит через Dex.
 2. Portal получает `X-Auth-Request-User`, `X-Auth-Request-Email`, `X-Auth-Request-Groups`.
-3. Пользователь выбирает только разрешённый профиль, purpose, TTL и образ приложения.
-4. Имя стенда генерируется автоматически:
+3. Portal сопоставляет проверенный e-mail с allowlist пользователей и оставляет
+   только разрешённые для него группы. Технический идентификатор из
+   `X-Auth-Request-User` не используется как owner.
+4. Пользователь выбирает только разрешённый профиль, purpose и TTL.
+5. Имя стенда генерируется автоматически:
 
 ```text
 dev-<user>-<purpose>-<short-id>
 ```
 
-5. Backend создаёт в Gitea только `EnvironmentRequest`:
+6. Backend создаёт в Gitea только `EnvironmentRequest`:
 
 ```text
 gitops/self-service/practicum/requests/<name>.yaml
 ```
 
-6. Request controller валидирует заявку и создаёт generated manifests.
-7. Argo CD применяет generated manifests в namespace `practicum-tks`.
-8. Portal читает status-файл, сформированный controller.
+7. Request controller валидирует заявку и создаёт generated manifests.
+8. Argo CD применяет generated manifests в namespace `practicum-tks`.
+9. Portal читает status-файл, сформированный controller, включая причину
+   `Rejected` или `Error`.
 
 ## Что показывает UI
 

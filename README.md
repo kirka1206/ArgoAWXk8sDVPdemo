@@ -312,6 +312,9 @@ https://selfservice-practicum.d8case.ru
 Argo CD, приложение, DVP VM, фактический golden image, AWX job и TTL.
 Кнопка `Выйти` вызывает endpoint `/logout`, созданный `DexAuthenticator`, и
 завершает Dex-сессию перед входом под другим демонстрационным пользователем.
+Portal определяет канонического владельца по проверенному Dex e-mail и
+пересечению с разрешённой группой. Техническое значение
+`X-Auth-Request-User` не используется в имени EnvironmentRequest.
 
 UI подробно объясняет профиль стенда, purpose, квоты и состав ресурсов. После создания заявки он показывает namespace, профиль, TTL, параметры приложения, service/ingress, VM/disk параметры и пути GitOps artifacts.
 

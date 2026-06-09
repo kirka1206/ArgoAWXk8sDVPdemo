@@ -47,6 +47,21 @@ PROFILES = {
     },
 }
 
+APPROVED_USERS = {
+    "alice.koroleva.practicum@demo.local": {
+        "name": "alice-koroleva-practicum",
+        "groups": {"practicum-payments-devs"},
+    },
+    "boris.smirnov.practicum@demo.local": {
+        "name": "boris-smirnov-practicum",
+        "groups": {"practicum-analytics-devs"},
+    },
+    "marina.volkova.practicum@demo.local": {
+        "name": "marina-volkova-practicum",
+        "groups": {"practicum-qa-devs"},
+    },
+}
+
 
 def basic_auth():
     token = base64.b64encode(f"{GITEA_USER}:{GITEA_PASSWORD}".encode()).decode()
@@ -115,10 +130,26 @@ def groups(value):
 
 def current_user(headers):
     claims = decode_jwt(headers)
-    email = headers.get("X-Auth-Request-Email") or claims.get("email", "")
-    username = headers.get("X-Auth-Request-User") or claims.get("preferred_username") or email.split("@")[0]
-    user_groups = groups(headers.get("X-Auth-Request-Groups")) or groups(claims.get("groups"))
-    return {"name": username, "email": email, "groups": user_groups}
+    email = (headers.get("X-Auth-Request-Email") or claims.get("email", "")).strip().lower()
+    identity = APPROVED_USERS.get(email)
+    if not identity:
+        raise PermissionError("Пользователь не разрешён для practicum self-service")
+    asserted_groups = set(groups(headers.get("X-Auth-Request-Groups")) or groups(claims.get("groups")))
+    effective_groups = sorted(asserted_groups.intersection(identity["groups"]))
+    if not effective_groups:
+        raise PermissionError("Dex не передал разрешённую группу пользователя")
+    return {"name": identity["name"], "email": email, "groups": effective_groups}
+
+
+def slug(value):
+    return re.sub(r"-+", "-", re.sub(r"[^a-z0-9-]+", "-", str(value).lower())).strip("-")
+
+
+def commit_sha(result):
+    if not isinstance(result, dict):
+        return None
+    commit = result.get("commit") or {}
+    return commit.get("sha") or commit.get("id") or result.get("sha")
 
 
 def send(handler, status, payload, content_type="application/json; charset=utf-8"):
@@ -135,7 +166,7 @@ def send(handler, status, payload, content_type="application/json; charset=utf-8
 def create_request(user, payload):
     profile = payload.get("profile")
     ttl = payload.get("ttl")
-    purpose = re.sub(r"[^a-z0-9-]+", "-", payload.get("purpose", "demo").lower()).strip("-")
+    purpose = slug(payload.get("purpose", "demo"))
     if profile not in PROFILES:
         raise ValueError("Неизвестный профиль")
     if ttl not in PROFILES[profile]["ttl"]:
@@ -143,8 +174,6 @@ def create_request(user, payload):
     if not set(user["groups"]).intersection(PROFILES[profile]["groups"]):
         raise PermissionError("Группа пользователя не имеет доступа к профилю")
     owner = user["name"]
-    if not owner.endswith("-practicum"):
-        owner = owner.split("@")[0]
     suffix = hashlib.sha256(f"{owner}-{time.time_ns()}".encode()).hexdigest()[:6]
     short_owner = owner.replace("-practicum", "").split("-")[0]
     environment = f"practicum-env-{short_owner}-{purpose}-{suffix}"[:63]
@@ -173,7 +202,7 @@ def create_request(user, payload):
         "namespace": NAMESPACE,
         "profile": profile,
         "ttl": ttl,
-        "gitCommit": (result or {}).get("commit", {}).get("sha"),
+        "gitCommit": commit_sha(result),
         "status": "Submitted",
     }
 
@@ -209,6 +238,7 @@ function renderProfile(){const p=profile();$("details").innerHTML=`<b>${p.title}
 function render(s){$("result").className="status";$("result").textContent=`Environment ID: ${s.environmentId}
 Namespace: ${s.namespace}
 Статус: ${s.state||s.status}
+Причина: ${s.reason||"-"}
 Владелец: ${s.owner||"-"}
 Профиль: ${s.profile||"-"}
 TTL до: ${s.expiresAt||"-"}
@@ -220,7 +250,7 @@ VM: ${s.virtualMachine?.name||"не требуется"}
 VM phase/IP: ${s.virtualMachine?.phase||"-"} / ${s.virtualMachine?.ip||"-"}
 VM: ${s.virtualMachine?`${s.virtualMachine.cpu}, RAM ${s.virtualMachine.memory}, disk ${s.virtualMachine.disk}, image ${s.virtualMachine.image}`:"-"}
 AWX job/status: ${s.awxJob||"-"} / ${s.awxStatus||"-"}`;}
-async function poll(){if(!last)return;try{render(await api(`/api/status/${last}`))}catch(e){}setTimeout(poll,5000)}
+async function poll(){if(!last)return;try{const s=await api(`/api/status/${last}`);render(s);if(["Ready","Rejected","Error","Cleaned"].includes(s.state))return}catch(e){}setTimeout(poll,5000)}
 async function init(){const me=await api("/api/me");profiles=me.profiles;$("user").textContent=`${me.email||me.name} · ${me.groups.join(", ")}`;$("profile").innerHTML=profiles.map(p=>`<option value="${p.name}">${p.title}</option>`).join("");if(!profiles.length){$("form").hidden=true;$("result").textContent="Для групп пользователя нет доступных профилей.";return}$("profile").onchange=renderProfile;renderProfile()}
 $("form").onsubmit=async e=>{e.preventDefault();try{const r=await api("/api/requests",{method:"POST",body:JSON.stringify({profile:$("profile").value,purpose:$("purpose").value,ttl:$("ttl").value})});last=r.environmentId;render(r);poll()}catch(err){$("result").className="status error";$("result").textContent=err.message}};
 init().catch(e=>{$("result").textContent=e.message});
@@ -246,7 +276,7 @@ class Handler(BaseHTTPRequestHandler):
                 ]
                 return send(self, 200, {**user, "profiles": allowed, "namespace": NAMESPACE})
             if self.path.startswith("/api/status/"):
-                environment = self.path.rsplit("/", 1)[1]
+                environment = slug(urllib.parse.unquote(self.path.rsplit("/", 1)[1]))
                 status = get_text(f"{STATUS_ROOT}/{environment}.json")
                 return send(self, 200, json.loads(status) if status else {
                     "environmentId": environment, "namespace": NAMESPACE, "state": "Submitted"
