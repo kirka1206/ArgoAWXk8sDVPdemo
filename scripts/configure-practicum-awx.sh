@@ -118,9 +118,12 @@ credential_id="$(ensure_named credentials practicum-dvp-ssh "$credential_payload
 
 builder_ip="$(kubectl get vm practicum-golden-builder-vm -n "$NAMESPACE" \
   -o jsonpath='{.status.ipAddress}')"
+host_variables="$(jq -cn --arg host "$builder_ip" \
+  '{ansible_host:$host,ansible_user:"ansible",
+    ansible_ssh_common_args:"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"}')"
 host_payload="$(jq -cn \
   --argjson inventory "$inventory_id" \
-  --arg variables "ansible_host: ${builder_ip}\nansible_user: ansible\nansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'\n" \
+  --arg variables "$host_variables" \
   '{name:"practicum-golden-builder-vm",description:"4 practicum",
     inventory:$inventory,variables:$variables,enabled:true}')"
 host_id="$(ensure_named hosts practicum-golden-builder-vm "$host_payload")"
