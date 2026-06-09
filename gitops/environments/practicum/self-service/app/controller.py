@@ -85,13 +85,13 @@ def basic_auth():
     return f"Basic {token}"
 
 
-def request_json(method, url, payload=None, headers=None, timeout=20):
+def request_json(method, url, payload=None, headers=None, timeout=20, context=None):
     body = json.dumps(payload).encode() if payload is not None else None
     request_headers = {"Accept": "application/json", **(headers or {})}
     if payload is not None:
         request_headers["Content-Type"] = "application/json"
     request = urllib.request.Request(url, data=body, headers=request_headers, method=method)
-    with urllib.request.urlopen(request, timeout=timeout) as response:
+    with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
         raw = response.read()
         return json.loads(raw.decode()) if raw else {}
 
@@ -392,6 +392,7 @@ def k8s_get(path):
             f"https://kubernetes.default.svc{path}",
             headers={"Authorization": f"Bearer {token}"},
             timeout=5,
+            context=context,
         )
     except urllib.error.HTTPError as exc:
         if exc.code == 404:
@@ -563,7 +564,8 @@ def reconcile():
             )
         except Exception as exc:
             environment = slug(item["name"].rsplit(".", 1)[0])
-            write_status(environment, "Rejected", reason=str(exc))
+            state = "Error" if environment in active else "Rejected"
+            write_status(environment, state, reason=str(exc))
 
 
 if __name__ == "__main__":
