@@ -444,7 +444,7 @@ def cluster_status(request):
             "name": env,
             "replicas": (deployment or {}).get("spec", {}).get("replicas", 1),
             "readyReplicas": deployment_status.get("readyReplicas", 0),
-            "url": f"https://{env}.{BASE_DOMAIN}",
+            "url": f"http://{env}.{BASE_DOMAIN}",
             "ingressReady": bool(ingress),
         },
         "virtualMachine": None if not request["vm"] else {
