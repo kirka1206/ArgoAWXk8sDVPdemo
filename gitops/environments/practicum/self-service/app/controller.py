@@ -487,17 +487,20 @@ def reconcile_existing(request, request_path):
     runtime = cluster_status(request)
     awx_job = current.get("awxJob")
     awx_status = current.get("awxStatus")
+    awx_attempts = current.get("awxAttempts", 0)
     vm = runtime["virtualMachine"]
+    retry_awx = awx_status in {"failed", "error", "canceled"} and awx_attempts < 3
     if (
         request["vm"]
         and vm
         and vm.get("phase") == "Running"
         and vm.get("ip")
         and vm.get("guestReady")
-        and not awx_job
+        and (not awx_job or retry_awx)
     ):
         awx_job = launch_awx(request, vm["ip"])
         awx_status = "pending"
+        awx_attempts += 1
     elif awx_job and awx_status not in {"successful", "failed", "error", "canceled"}:
         job = awx("GET", f"/jobs/{awx_job}/")
         awx_status = job["status"]
@@ -516,6 +519,7 @@ def reconcile_existing(request, request_path):
         gitCommit=current.get("gitCommit"),
         awxJob=awx_job,
         awxStatus=awx_status,
+        awxAttempts=awx_attempts,
         **runtime,
     )
 
