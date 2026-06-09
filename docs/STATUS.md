@@ -1,197 +1,98 @@
-# Current Status
+# Текущий статус
 
-Updated: 2026-06-09 01:45 MSK
+Обновлено: 2026-06-09 15:05 MSK
 
-## Repository Rule
+## Правило работы
 
-Before starting new work in this repository, read this file and `docs/NEXT_STEPS.md` first. Keep architectural decisions in both `README.md` and `README.ru.md`. Update this file after meaningful changes.
+Перед изменениями читать `docs/STATUS.md` и `docs/NEXT_STEPS.md`. Архитектурные
+решения синхронно отражать в `README.md` и `README.ru.md`. После изменений
+обновлять этот файл.
 
-## Repository
+## Репозиторий
 
-- Local path: `/Users/kir/code/ArgoAWXk8sDVPdemo`
-- GitHub: `git@github.com:kirka1206/ArgoAWXk8sDVPdemo.git`
-- DKP Gitea: `http://gitea-awx.d8.kir.lab/codex/demo.git`
-- Current branch: `main`
+- локально: `/Users/kir/code/ArgoAWXk8sDVPdemo`;
+- GitHub: `kirka1206/ArgoAWXk8sDVPdemo`;
+- Gitea: `practicum/practicum-demo`;
+- remote `practicum-gitea` не содержит пароль в URL;
+- старые remote `dkp-gitea` и стенд `d8.kir.lab` не изменялись.
 
-## Cluster
+## Новый стенд
 
-- Kubernetes context: `codex-api.d8.kir.lab`
-- DKP/DVP cluster: `d8.kir.lab`
-- Ingress address: `10.77.77.208`
-- Master node `dmaster` is schedulable; the control-plane `NoSchedule` taint was removed for demo capacity.
+- context: `practicum-tks-api.d8case.ru`;
+- DKP Project и namespace: `practicum-tks`;
+- ingress IP: `192.168.2.31`;
+- StorageClass: `replicated`;
+- VirtualMachineClass: `generic`;
+- квота: `4 CPU`, `8Gi RAM`, `30Gi storage`.
 
-## Target Cluster Bootstrap
+Платформа Ready:
 
-- Target context: `practicum-tks-api.d8case.ru`
-- DKP Project and namespace: `practicum-tks`
-- Project administrator: `practicum-tks@demo.local`
-- IngressClass: `nginx`
-- Ingress address: `192.168.2.31`
-- Default StorageClass: `replicated`
-- Project quota: `4 CPU`, `8Gi` memory, `30Gi` storage
-- Current usage: `725m` CPU requests, `2464Mi` memory requests, `6Gi` storage
-- DNS names are not yet registered; `/etc/hosts` entries are required until DNS is configured.
+- Gitea `1.24.6`;
+- Argo CD `3.4.2`;
+- AWX Operator `2.19.1`;
+- AWX `24.6.1`;
+- Application `practicum-demo`: `Synced/Healthy`.
 
-Installed in `practicum-tks`:
+## Пользователи и RBAC
 
-- Gitea `1.24.6`: pod ready, PVC `2Gi` bound, API authentication checked.
-- Argo CD `3.4.2`: all seven workloads ready, API authentication for `practicum-admin` checked.
-- AWX Operator `2.19.1`: operator pod ready.
-- AWX `24.6.1`: web `3/3`, task `4/4`, PostgreSQL ready, migration Job complete, API authentication for `practicum-admin` checked.
-- Gitea repository `practicum/practicum-demo` exists with description `4 practicum`.
-- Ingresses respond with HTTP 200 through `192.168.2.31`.
-- Credentials are stored only in Kubernetes Secrets with `practicum` names.
-- No pre-existing stand objects were deleted during installation.
+- Alice: `practicum-payments-devs`, app-only и app-with-vm;
+- Boris: `practicum-analytics-devs`, app-only и app-with-postgres-vm;
+- Marina: `practicum-qa-devs`, все self-service профили;
+- Victor: `practicum-vm-operators`, ограниченное управление DVP VM/дисками;
+- Gitea bot: `practicum-portal-bot`;
+- AWX account: `practicum-automation`;
+- ServiceAccount: `practicum-self-service-portal`;
+- ServiceAccount: `practicum-request-controller`.
 
-## UI Endpoints
+Пароли хранятся только в ignored-файле `local/practicum-demo-users.env`.
 
-- Gitea: `http://gitea-awx.d8.kir.lab`
-- Argo CD: `http://argocd-awx.d8.kir.lab`
-- AWX: `http://awx-demo.d8.kir.lab`
-- Self-service portal: `https://selfservice-awx.d8.kir.lab`
+## Golden images
 
-## Argo CD Applications
+- source `practicum-alpine-base-3-23-v1`: Ready;
+- immutable `practicum-alpine-golden-3-23-v1`: Ready;
+- immutable `practicum-alpine-golden-3-23-v2`: Ready;
+- active image: v2;
+- AWX workflow job `40`: successful;
+- оба builder VM остановлены, ресурсы минимальные.
 
-- `ansible-os-pods`: synced and healthy during last check.
-- `demo-platform`: synced and healthy during last check.
+## Self-service
 
-## DVP Resources
+- portal: `https://selfservice-practicum.d8case.ru`;
+- Certificate: Ready;
+- DexAuthenticator: создан;
+- request controller: Ready;
+- один namespace для всех environments: `practicum-tks`;
+- лимиты: 3 активных environment, 2 VM;
+- controller не выполняет прямой `kubectl delete`;
+- AWX стартует после guest readiness, максимум 3 попытки.
 
-Namespace: `demo-prod`
+Проверенное окружение:
 
-- `VirtualImage/demo-alpine-cloud`: `Ready`
-- `VirtualDisk/postgres-vm-root`: `Ready`, live disk was restored/provisioned from snapshot and is protected by Argo CD scoped `ignoreDifferences`.
-- `VirtualMachine/postgres-vm`: `Running`, `1` core, `coreFraction: 5%`, `512Mi`, IP `10.77.111.8`
-- `qemu-guest-agent`: installed and started by AWX bootstrap; DVP reported `AgentReady=True` during last check.
-- Golden image source import:
-  - `VirtualImage/alpine-base-3-23-v1`: `Ready`, imported from URL in Git.
-  - `ClusterVirtualImage/alpine-base-3-23-v1`: `Ready`, imported from URL in Git and used by self-service tenant VMs.
-  - `VirtualDisk/golden-builder-root`: `WaitForFirstConsumer` with `k8nfs`; expected while `golden-builder-vm` is stopped.
-  - `VirtualMachine/golden-builder-vm`: `Stopped`, `runPolicy: Manual`, minimal resources, IP lease `10.77.111.6`.
+- ID: `practicum-env-alice-feature-019354`;
+- app: `1/1`;
+- VM: Running, `512Mi`, `1 core / 5%`, disk `768Mi`;
+- image: `practicum-alpine-golden-3-23-v2`;
+- DVP AgentReady: True;
+- AWX job `55`: successful.
 
-## Kubernetes Demo Resources
+TTL проверен на `practicum-env-alice-demo-968c7a`: request архивирован, status
+`Cleaned`, Argo CD prune удалил только app/ingress/VM/disk этой заявки.
 
-- `demo-prod/demo-app`: running with `2` replicas.
-- `customer-a`: tenant namespace exists with quota, limit range, RBAC and starter workload.
-- Active self-service generated environments:
-  - `dev-alice-koroleva-demo-c3aa`: profile `app-with-vm`, app `1/1`, DVP VM `Running`, IP `10.77.111.2`, ingress `dev-alice-koroleva-demo-c3aa.d8.kir.lab`.
-  - `dev-alice-koroleva-feature-8c3e`: profile `app-with-vm`, app `1/1`, DVP VM `Running`, IP `10.77.111.4`, ingress `dev-alice-koroleva-feature-8c3e.d8.kir.lab`.
-  - `dev-alice-koroleva-feature-f72b`: profile `app-only`, app `1/1`, ingress `dev-alice-koroleva-feature-f72b.d8.kir.lab`.
-- `self-service-portal`: portal namespace exists; `self-service-portal` and `self-service-portal-dex-authenticator` deployments are `1/1`; certificate `self-service-portal` is `Ready`; portal and DexAuthenticator ingresses expose ports `80,443`.
-- `demo-os`: contains pod-only AWX/Argo demo nodes `ol-node-1` and `ol-node-2`.
+## Проверки
 
-## Dex Demo Users
+- Python syntax: пройдена;
+- shell syntax: пройдена;
+- Kustomize build: пройдена;
+- server-side dry-run: пройден;
+- Argo CD: `Synced/Healthy`;
+- golden image Git -> Argo CD -> DVP -> AWX -> publish: пройден;
+- Web request -> Git -> controller -> Argo CD -> DVP -> AWX: пройден;
+- TTL cleanup: пройден.
 
-- `alice-koroleva`, `alice.koroleva@demo.local`, group `payments-devs`
-- `boris-smirnov`, `boris.smirnov@demo.local`, group `analytics-devs`
-- `marina-volkova`, `marina.volkova@demo.local`, group `qa-devs`
+## Известные особенности
 
-Passwords are stored locally in `local/self-service-demo-users.md` and are not committed to Git.
-
-## AWX State
-
-Existing useful objects:
-
-- Project: `Gitea demo repo`
-- Job Template: `Configure OS pods`
-- Inventory: `Demo OS pods`
-- Job Template: `Bootstrap DVP VM`
-- Inventory: `DVP VMs`
-- Host: `postgres-vm`, `ansible_host: 10.77.111.5`
-- Credential: `dvp-vm-ssh`
-
-Recent AWX result:
-
-- `Bootstrap DVP VM` succeeded after playbook fixes for Alpine/OpenRC.
-
-## Important Implementation Notes
-
-- `demo-platform` currently uses plain YAML/Kustomize. Some scenarios require changing both `values.yaml` and the actual manifest because `values.yaml` is not yet wired into templating.
-- For scenario 02 scale, both `gitops/environments/prod/values.yaml` and `gitops/environments/prod/demo-app.yaml` must be kept aligned.
-- For scenario 04 VM resize, both `gitops/environments/prod/values.yaml` and `gitops/environments/prod/dvp-postgres-vm.yaml` must be kept aligned.
-- Argo CD in the cluster reads from Gitea, not GitHub. For live demos, push to `dkp-gitea` as well as `origin`.
-- Avoid force-push to Gitea unless explicitly approved. Gitea may contain UI commits from live demos.
-
-## Recent Fixes
-
-- Added repeatable target-cluster bootstrap artifacts:
-  - `manifests/practicum/` for Gitea, Argo CD, AWX Operator, AWX, RBAC, Ingress and resource defaults;
-  - `scripts/install-practicum-platform.sh` with a strict kube-context guard and idempotent apply flow;
-  - names and descriptions use `practicum` and `4 practicum` where supported.
-- Added `LimitRange/practicum-default-container-resources` because the DKP project
-  policy requires CPU and memory requests, while the AWX Operator 2.19.1
-  migration Job does not declare them. Kubernetes now injects safe defaults
-  without disabling the project policy or modifying the operator.
-- Replaced the AWX task rollout-history check with an `Available` condition wait
-  so a recovered initial migration does not leave a false
-  `ProgressDeadlineExceeded` installation failure.
-- Added up-to-date migration documentation for transferring the demo to another DKP/DVP stand:
-  - `docs/prerequisites.ru.md`;
-  - `docs/migration-plan.ru.md`;
-  - README and operations links to the new documents.
-- Fixed self-service portal registration after new requests were created on top of an empty generated kustomization:
-  - `resources: []` plus appended `- <request>` entries produced invalid YAML;
-  - normalized `gitops/self-service/generated/kustomization.yaml` back to a multiline `resources:` list;
-  - updated portal backend to convert `resources: []` to `resources:` before appending future generated environments.
-- Fixed manifest generation after deleting all generated Alice self-service environments:
-  - `gitops/self-service/generated/kustomization.yaml` cannot have an empty `resources:` key;
-  - changed it to `resources: []` so parent Kustomize can include an empty generated directory.
-- Fixed `demo-platform` OutOfSync caused by DVP rejecting a patch to an already provisioned `VirtualDisk`:
-  - live `demo-prod/postgres-vm-root` had been restored/provisioned from `VirtualDiskSnapshot`, while Git still described the original `VirtualImage` source;
-  - added `RespectIgnoreDifferences=true` and a scoped `ignoreDifferences` entry for `demo-prod/postgres-vm-root` `/spec/dataSource` and `/spec/persistentVolumeClaim`;
-  - applied the Application and verified `demo-platform` returned to `Synced/Healthy`.
-- Added real minimal DVP VM manifest.
-- Added `demo-platform` Application.
-- Refreshed Russian documentation.
-- Added AWX VM bootstrap inventory/template and validated SSH from AWX to VM.
-- Added `qemu-guest-agent` installation and service startup for Alpine/OpenRC VM bootstrap.
-- Added `docs/STATUS.md` and `docs/NEXT_STEPS.md` as lightweight repo context files.
-- Documented the context-maintenance rule in both README files.
-- Added golden image management scenario artifacts:
-  - source `VirtualImage` imported from an external URL in Git;
-  - builder `VirtualDisk` and manual `golden-builder-vm`;
-  - AWX playbooks `prepare-golden-image.yml` and `validate-golden-image.yml`;
-  - scenario `scenarios/08-golden-image-management.md`.
-- Added a live demo talk plan to `scenarios/08-golden-image-management.md` and a short golden image talk track to `docs/demo-talk-track.ru.md`.
-- Added self-service environment request scenario artifacts:
-  - approved profiles under `gitops/self-service/catalog/`;
-  - request examples under `gitops/self-service/requests/`;
-  - generated examples under `gitops/self-service/generated/`;
-  - static web UI under `self-service-ui/`;
-  - scenario `scenarios/09-self-service-environment-request.md`;
-  - documentation `docs/self-service.ru.md`.
-- Fixed self-service DVP image handling by adding approved `ClusterVirtualImage/alpine-base-3-23-v1`.
-- Changed the self-service VM example to `runPolicy: AlwaysOn` with minimal resources and cloud-init installation of `qemu-guest-agent`.
-- Added Dex-protected self-service portal:
-  - `gitops/self-service/portal/` with backend, Deployment, Service, Ingress, DexAuthenticator and RBAC;
-  - `docs/self-service-portal.ru.md`;
-  - `scenarios/10-self-service-portal.md`;
-  - three live Dex demo users and groups;
-  - live Kubernetes Secret `self-service-portal-gitea` for Gitea API access.
-- Portal backend direct-header test passed; generated self-service commits are pulled back locally and pushed to GitHub when needed.
-- Fixed portal browser login 403 caused by DexAuthenticator CSRF cookie loss on callback:
-  - added `cert-manager.io/Certificate` for `selfservice-awx.d8.kir.lab`;
-  - enabled TLS on portal ingress;
-  - set `applicationIngressCertificateSecretName` on `DexAuthenticator`;
-  - changed portal URL documentation from HTTP to HTTPS.
-- Fixed empty profile list in portal UI:
-  - backend now falls back to OIDC JWT claims from the `Authorization` header when `X-Auth-Request-Groups` is not passed through;
-  - frontend handles zero-profile responses without throwing `Cannot read properties of undefined`;
-  - deployment pod template has a code-version annotation so ConfigMap code updates trigger rollout.
-- Improved self-service portal UX:
-  - profile selector now shows detailed Russian descriptions, resource composition, quotas, app limits and VM specs;
-  - purpose selector now explains `feature`, `bugfix`, `loadtest` and `demo`;
-  - create/status output now includes namespace name/phase, owner, profile, purpose, TTL, quotas, deployment replicas, service, ingress, VM/disk details and GitOps artifact paths.
-- Fixed portal status RBAC for `services` and made Kubernetes status reads tolerant to missing/forbidden optional resources.
-- Documented the GitOps/YAML entry point for self-service:
-  - request file under `gitops/self-service/requests/`;
-  - approved profile selection from `gitops/self-service/catalog/`;
-  - generated manifests under `gitops/self-service/generated/`;
-  - Argo CD/kubectl verification and Git rollback flow.
-
-## Pending Validation
-
-- Golden image scenario 08 first phase is live-validated: source image import is `Ready`, builder VM exists in `Manual`/`Stopped`.
-- Full golden image customization is not yet executed. Next validation requires starting `golden-builder-vm`, adding it to AWX inventory as `golden_builder`, running `prepare-golden-image.yml`, then `validate-golden-image.yml`.
-- Self-service scenario 09/10 live validation passed on current generated environments: Argo CD `demo-platform` is `Synced/Healthy`, `ClusterVirtualImage/alpine-base-3-23-v1` is `Ready`, app-only and app-with-vm generated environments are active, and portal backend can write requests/generated manifests to Gitea.
-- Latest portal UX update is syntax-checked, server-side dry-run validated and rolled out. Browser users should hard refresh to pick up updated JS. GitOps/YAML documentation was updated after the walkthrough.
+- Gitea controller пишет status/generated коммитами в `main`; перед локальным
+  push нужно сначала получить эти коммиты. Force-push запрещён.
+- DNS для practicum hostnames должен указывать на `192.168.2.31`; до появления
+  DNS используются записи `/etc/hosts`.
+- Self-signed сертификат portal требует доверия браузера либо замены issuer.
