@@ -83,6 +83,8 @@ DexAuthenticator имеет состояние `2/2`.
 - Application переведён на canonical Gitea URL из webhook payload;
 - только `argocd-repo-server` получил host alias
   `gitea-practicum.d8case.ru -> 192.168.2.31`; общекластерный DNS не изменялся;
+- реальный push проверен: Argo CD увидел новый revision за `9` секунд без
+  ручного `Sync` или `Refresh`;
 - один namespace для всех environments: `practicum-tks`;
 - лимиты: 3 активных environment, 2 VM;
 - controller не выполняет прямой `kubectl delete`;
