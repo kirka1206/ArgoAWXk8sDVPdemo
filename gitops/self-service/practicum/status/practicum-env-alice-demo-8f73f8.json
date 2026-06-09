@@ -8,9 +8,9 @@
   "createdAt": "2026-06-09T22:37:19Z",
   "expiresAt": "2026-06-10T00:37:19Z",
   "gitCommit": "624d112319565110324abfe8b4c41a9ff600db0c",
-  "awxJob": null,
-  "awxStatus": null,
-  "awxAttempts": 0,
+  "awxJob": 64,
+  "awxStatus": "pending",
+  "awxAttempts": 1,
   "argoCD": {
     "sync": "Synced",
     "health": "Healthy"
@@ -26,12 +26,12 @@
     "name": "practicum-env-alice-demo-8f73f8-vm",
     "phase": "Running",
     "ip": "10.66.0.33",
-    "agentReady": false,
-    "guestReady": false,
+    "agentReady": true,
+    "guestReady": true,
     "cpu": "1 core, 5%",
     "memory": "512Mi",
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v2"
   },
-  "updatedAt": "2026-06-09T22:39:37Z"
+  "updatedAt": "2026-06-09T22:41:24Z"
 }
