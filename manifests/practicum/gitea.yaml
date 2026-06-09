@@ -1,0 +1,133 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: practicum-gitea-data
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+  labels:
+    app.kubernetes.io/name: practicum-gitea
+    app.kubernetes.io/part-of: practicum-demo
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: replicated
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: practicum-gitea
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+  labels:
+    app.kubernetes.io/name: practicum-gitea
+    app.kubernetes.io/part-of: practicum-demo
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: practicum-gitea
+  template:
+    metadata:
+      annotations:
+        demo.deckhouse.io/description: "4 practicum"
+      labels:
+        app.kubernetes.io/name: practicum-gitea
+        app.kubernetes.io/part-of: practicum-demo
+    spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: practicum-gitea
+          image: gitea/gitea:1.24.6-rootless
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+            - name: ssh
+              containerPort: 2222
+          env:
+            - name: GITEA__server__ROOT_URL
+              value: http://gitea-practicum.d8case.ru/
+            - name: GITEA__server__DOMAIN
+              value: gitea-practicum.d8case.ru
+            - name: GITEA__server__SSH_DOMAIN
+              value: gitea-practicum.d8case.ru
+            - name: GITEA__server__SSH_PORT
+              value: "2222"
+            - name: GITEA__server__START_SSH_SERVER
+              value: "true"
+            - name: GITEA__database__DB_TYPE
+              value: sqlite3
+            - name: GITEA__security__INSTALL_LOCK
+              value: "true"
+            - name: GITEA__service__DISABLE_REGISTRATION
+              value: "true"
+          readinessProbe:
+            httpGet:
+              path: /api/healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 18
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/gitea
+            - name: config
+              mountPath: /etc/gitea
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: practicum-gitea-data
+        - name: config
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: practicum-gitea-http
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+  labels:
+    app.kubernetes.io/name: practicum-gitea
+    app.kubernetes.io/part-of: practicum-demo
+spec:
+  selector:
+    app.kubernetes.io/name: practicum-gitea
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: practicum-gitea-ssh
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+  labels:
+    app.kubernetes.io/name: practicum-gitea
+    app.kubernetes.io/part-of: practicum-demo
+spec:
+  selector:
+    app.kubernetes.io/name: practicum-gitea
+  ports:
+    - name: ssh
+      port: 2222
+      targetPort: ssh

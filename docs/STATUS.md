@@ -1,6 +1,6 @@
 # Current Status
 
-Updated: 2026-05-29 16:48 MSK
+Updated: 2026-06-09 01:45 MSK
 
 ## Repository Rule
 
@@ -19,6 +19,29 @@ Before starting new work in this repository, read this file and `docs/NEXT_STEPS
 - DKP/DVP cluster: `d8.kir.lab`
 - Ingress address: `10.77.77.208`
 - Master node `dmaster` is schedulable; the control-plane `NoSchedule` taint was removed for demo capacity.
+
+## Target Cluster Bootstrap
+
+- Target context: `practicum-tks-api.d8case.ru`
+- DKP Project and namespace: `practicum-tks`
+- Project administrator: `practicum-tks@demo.local`
+- IngressClass: `nginx`
+- Ingress address: `192.168.2.31`
+- Default StorageClass: `replicated`
+- Project quota: `4 CPU`, `8Gi` memory, `30Gi` storage
+- Current usage: `725m` CPU requests, `2464Mi` memory requests, `6Gi` storage
+- DNS names are not yet registered; `/etc/hosts` entries are required until DNS is configured.
+
+Installed in `practicum-tks`:
+
+- Gitea `1.24.6`: pod ready, PVC `2Gi` bound, API authentication checked.
+- Argo CD `3.4.2`: all seven workloads ready, API authentication for `practicum-admin` checked.
+- AWX Operator `2.19.1`: operator pod ready.
+- AWX `24.6.1`: web `3/3`, task `4/4`, PostgreSQL ready, migration Job complete, API authentication for `practicum-admin` checked.
+- Gitea repository `practicum/practicum-demo` exists with description `4 practicum`.
+- Ingresses respond with HTTP 200 through `192.168.2.31`.
+- Credentials are stored only in Kubernetes Secrets with `practicum` names.
+- No pre-existing stand objects were deleted during installation.
 
 ## UI Endpoints
 
@@ -91,6 +114,17 @@ Recent AWX result:
 
 ## Recent Fixes
 
+- Added repeatable target-cluster bootstrap artifacts:
+  - `manifests/practicum/` for Gitea, Argo CD, AWX Operator, AWX, RBAC, Ingress and resource defaults;
+  - `scripts/install-practicum-platform.sh` with a strict kube-context guard and idempotent apply flow;
+  - names and descriptions use `practicum` and `4 practicum` where supported.
+- Added `LimitRange/practicum-default-container-resources` because the DKP project
+  policy requires CPU and memory requests, while the AWX Operator 2.19.1
+  migration Job does not declare them. Kubernetes now injects safe defaults
+  without disabling the project policy or modifying the operator.
+- Replaced the AWX task rollout-history check with an `Available` condition wait
+  so a recovered initial migration does not leave a false
+  `ProgressDeadlineExceeded` installation failure.
 - Added up-to-date migration documentation for transferring the demo to another DKP/DVP stand:
   - `docs/prerequisites.ru.md`;
   - `docs/migration-plan.ru.md`;

@@ -2,10 +2,12 @@
 
 ## Immediate
 
-1. Before moving to a new DKP/DVP stand, fill the parameter table in `docs/migration-plan.ru.md`: target context, base domain, ingress IP, StorageClass, VM class and Git owner/repo.
-2. Decide whether to carry current generated self-service environments to the new stand or clean `gitops/self-service/requests/` and `gitops/self-service/generated/` before migration.
-3. Document AWX UI steps for creating `DVP VMs`, `postgres-vm`, `dvp-vm-ssh` and `Bootstrap DVP VM` in Russian docs.
-4. Continue scenario 08 live validation: start `golden-builder-vm`, run AWX customization and validation, then decide whether to publish `alpine-golden-3-23-v1`.
+1. Create DNS records for `gitea-practicum.d8case.ru`, `argocd-practicum.d8case.ru` and `awx-practicum.d8case.ru` pointing to `192.168.2.31`; use local `/etc/hosts` entries until then.
+2. Push the demo repository into `practicum/practicum-demo` on the new Gitea.
+3. Register the new Gitea repository in Argo CD and create the target Application only after target-specific domain, StorageClass, DVP class and namespace values are adapted.
+4. Configure AWX Project, Inventory, credentials and Job Templates for the new Gitea and target resources.
+5. Decide whether to carry current generated self-service environments to the new stand or clean `gitops/self-service/requests/` and `gitops/self-service/generated/` before migration.
+6. After bootstrap validation, ask the cluster administrator to replace the temporary `SuperAdmin` rule with least-privilege permissions.
 
 ## Architecture Improvements
 
