@@ -1,0 +1,54 @@
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualDisk
+metadata:
+  name: practicum-golden-builder-v2-root
+  namespace: practicum-tks
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    demo.deckhouse.io/description: "4 practicum"
+  labels:
+    app.kubernetes.io/part-of: practicum-demo
+    demo.practicum/scenario: golden-image
+    demo.practicum/image-role: builder
+    demo.practicum/image-version: 3-23-v2
+spec:
+  dataSource:
+    type: ObjectRef
+    objectRef:
+      kind: VirtualImage
+      name: practicum-alpine-golden-3-23-v1
+  persistentVolumeClaim:
+    size: 768Mi
+    storageClassName: replicated
+---
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualMachine
+metadata:
+  name: practicum-golden-builder-v2-vm
+  namespace: practicum-tks
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+    demo.deckhouse.io/description: "4 practicum"
+  labels:
+    app.kubernetes.io/part-of: practicum-demo
+    demo.practicum/scenario: golden-image
+    demo.practicum/image-role: builder
+    demo.practicum/image-version: 3-23-v2
+spec:
+  virtualMachineClassName: generic
+  runPolicy: AlwaysOnUnlessStoppedManually
+  osType: Generic
+  bootloader: BIOS
+  cpu:
+    cores: 1
+    coreFraction: 5%
+  memory:
+    size: 512Mi
+  blockDeviceRefs:
+    - kind: VirtualDisk
+      name: practicum-golden-builder-v2-root
+  provisioning:
+    type: UserDataRef
+    userDataRef:
+      kind: Secret
+      name: practicum-golden-builder-cloud-init

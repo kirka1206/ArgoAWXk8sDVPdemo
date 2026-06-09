@@ -7,6 +7,7 @@ EXPECTED_CONTEXT="${EXPECTED_CONTEXT:-practicum-tks-api.d8case.ru}"
 CREDENTIALS_FILE="${CREDENTIALS_FILE:-${ROOT_DIR}/local/practicum-demo-users.env}"
 SSH_KEY_FILE="${SSH_KEY_FILE:-${ROOT_DIR}/local/practicum-ssh/id_ed25519}"
 AWX_PORT="${AWX_PORT:-33002}"
+GOLDEN_BUILDER_VM_NAME="${GOLDEN_BUILDER_VM_NAME:-practicum-golden-builder-v2-vm}"
 
 if [[ "$(kubectl config current-context)" != "$EXPECTED_CONTEXT" ]]; then
   echo "Refusing to continue: expected context ${EXPECTED_CONTEXT}" >&2
@@ -117,7 +118,7 @@ credential_payload="$(jq -cn \
     credential_type:1,inputs:{username:"ansible",password:$password,ssh_key_data:$ssh_key}}')"
 credential_id="$(ensure_named credentials practicum-dvp-ssh "$credential_payload")"
 
-builder_ip="$(kubectl get vm practicum-golden-builder-vm -n "$NAMESPACE" \
+builder_ip="$(kubectl get vm "$GOLDEN_BUILDER_VM_NAME" -n "$NAMESPACE" \
   -o jsonpath='{.status.ipAddress}')"
 host_variables="$(jq -cn --arg host "$builder_ip" \
   '{ansible_host:$host,ansible_user:"ansible",
