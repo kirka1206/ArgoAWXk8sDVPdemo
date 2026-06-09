@@ -9,7 +9,7 @@
   "expiresAt": "2026-06-09T13:13:22Z",
   "gitCommit": null,
   "awxJob": 49,
-  "awxStatus": "pending",
+  "awxStatus": "failed",
   "argoCD": {
     "sync": "Synced",
     "health": "Healthy"
@@ -31,5 +31,5 @@
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v1"
   },
-  "updatedAt": "2026-06-09T11:44:33Z"
+  "updatedAt": "2026-06-09T11:45:18Z"
 }
