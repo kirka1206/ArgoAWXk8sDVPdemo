@@ -19,7 +19,7 @@
     "name": "practicum-env-alice-feature-537020",
     "replicas": 1,
     "readyReplicas": 1,
-    "url": "https://practicum-env-alice-feature-537020.d8case.ru",
+    "url": "http://practicum-env-alice-feature-537020.d8case.ru",
     "ingressReady": true
   },
   "virtualMachine": {
@@ -33,5 +33,5 @@
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v2"
   },
-  "updatedAt": "2026-06-09T22:22:40Z"
+  "updatedAt": "2026-06-09T22:22:46Z"
 }
