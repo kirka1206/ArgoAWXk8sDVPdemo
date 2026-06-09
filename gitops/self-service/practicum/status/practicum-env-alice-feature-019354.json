@@ -23,7 +23,7 @@
   },
   "virtualMachine": {
     "name": "practicum-env-alice-feature-019354-vm",
-    "phase": "Starting",
+    "phase": "Running",
     "ip": "10.66.0.33",
     "agentReady": false,
     "cpu": "1 core, 5%",
@@ -31,5 +31,5 @@
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v2"
   },
-  "updatedAt": "2026-06-09T11:47:30Z"
+  "updatedAt": "2026-06-09T11:47:58Z"
 }
