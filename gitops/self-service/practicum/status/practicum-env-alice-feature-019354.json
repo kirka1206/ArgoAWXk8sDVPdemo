@@ -11,8 +11,8 @@
   "awxJob": 51,
   "awxStatus": "failed",
   "argoCD": {
-    "sync": "Synced",
-    "health": "Progressing"
+    "sync": "OutOfSync",
+    "health": "Healthy"
   },
   "application": {
     "name": "practicum-env-alice-feature-019354",
@@ -23,14 +23,14 @@
   },
   "virtualMachine": {
     "name": "practicum-env-alice-feature-019354-vm",
-    "phase": "Terminating",
-    "ip": "10.66.0.33",
-    "agentReady": true,
-    "guestReady": true,
+    "phase": "Pending",
+    "ip": "10.66.0.46",
+    "agentReady": false,
+    "guestReady": false,
     "cpu": "1 core, 5%",
     "memory": "512Mi",
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v2"
   },
-  "updatedAt": "2026-06-09T11:51:49Z"
+  "updatedAt": "2026-06-09T11:52:21Z"
 }
