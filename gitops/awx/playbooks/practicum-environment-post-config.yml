@@ -1,0 +1,37 @@
+- name: Configure a practicum self-service VM
+  hosts: practicum_target
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Install practicum base packages on Alpine
+      ansible.builtin.command: apk add --no-cache qemu-guest-agent curl jq
+      register: apk_result
+      changed_when: "'OK:' in apk_result.stdout or 'OK:' in apk_result.stderr"
+      when: ansible_pkg_mgr == "apk"
+
+    - name: Enable qemu guest agent on OpenRC
+      ansible.builtin.service:
+        name: qemu-guest-agent
+        state: started
+        enabled: true
+      when: ansible_service_mgr == "openrc"
+
+    - name: Write practicum management marker
+      ansible.builtin.copy:
+        dest: /etc/practicum-managed
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          managed_by=AWX
+          environment={{ inventory_hostname }}
+          description=4 practicum
+
+    - name: Validate practicum marker
+      ansible.builtin.command: cat /etc/practicum-managed
+      register: practicum_marker
+      changed_when: false
+
+    - name: Print practicum validation result
+      ansible.builtin.debug:
+        var: practicum_marker.stdout_lines

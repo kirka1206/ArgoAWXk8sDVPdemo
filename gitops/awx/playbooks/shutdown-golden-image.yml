@@ -1,0 +1,10 @@
+- name: Shut down validated golden image builder
+  hosts: golden_builder
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Shut down builder VM after successful validation
+      ansible.builtin.command: poweroff
+      async: 1
+      poll: 0
+      changed_when: true
