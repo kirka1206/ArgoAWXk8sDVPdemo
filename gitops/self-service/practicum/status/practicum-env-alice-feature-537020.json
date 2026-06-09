@@ -13,12 +13,12 @@
   "awxAttempts": 0,
   "argoCD": {
     "sync": "Synced",
-    "health": "Progressing"
+    "health": "Healthy"
   },
   "application": {
     "name": "practicum-env-alice-feature-537020",
     "replicas": 1,
-    "readyReplicas": 0,
+    "readyReplicas": 1,
     "url": "https://practicum-env-alice-feature-537020.d8case.ru",
     "ingressReady": true
   },
@@ -33,5 +33,5 @@
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v2"
   },
-  "updatedAt": "2026-06-09T22:01:22Z"
+  "updatedAt": "2026-06-09T22:01:48Z"
 }
