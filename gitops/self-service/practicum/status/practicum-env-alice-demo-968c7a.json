@@ -2,6 +2,6 @@
   "environmentId": "practicum-env-alice-demo-968c7a",
   "namespace": "practicum-tks",
   "state": "Error",
-  "reason": "Gitea PUT /contents/gitops/self-service/practicum/status/practicum-env-alice-demo-968c7a.json: 422 {\"message\":\"sha does not match [given: 532abc1c8a8b7c88d72f726534054368d9753ad2, expected: eef17bdd132a00018893dc43fd31dbb2282eef19]\",\"url\":\"http://gitea-practicum.d8case.ru/api/swagger\"}\n",
-  "updatedAt": "2026-06-09T11:43:38Z"
+  "reason": "Gitea PUT /contents/gitops/self-service/practicum/status/practicum-env-alice-demo-968c7a.json: 500 {\"message\":\"\",\"url\":\"http://gitea-practicum.d8case.ru/api/swagger\"}\n",
+  "updatedAt": "2026-06-09T11:44:05Z"
 }
