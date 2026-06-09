@@ -8,7 +8,7 @@ metadata:
 spec:
   description: "4 practicum GitOps and DVP demo"
   sourceRepos:
-    - http://practicum-gitea-http.practicum-tks.svc.cluster.local:3000/practicum/practicum-demo.git
+    - http://gitea-practicum.d8case.ru/practicum/practicum-demo.git
   destinations:
     - namespace: practicum-tks
       server: https://kubernetes.default.svc
@@ -26,7 +26,7 @@ metadata:
 spec:
   project: practicum-demo
   source:
-    repoURL: http://practicum-gitea-http.practicum-tks.svc.cluster.local:3000/practicum/practicum-demo.git
+    repoURL: http://gitea-practicum.d8case.ru/practicum/practicum-demo.git
     targetRevision: main
     path: gitops/environments/practicum
   destination:

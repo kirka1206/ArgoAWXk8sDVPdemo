@@ -93,6 +93,12 @@ patches:
       name: argocd-repo-server
     patch: |-
       - op: add
+        path: /spec/template/spec/hostAliases
+        value:
+          - ip: 192.168.2.31
+            hostnames:
+              - gitea-practicum.d8case.ru
+      - op: add
         path: /spec/template/spec/initContainers/0/resources
         value:
           requests:
