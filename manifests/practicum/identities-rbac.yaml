@@ -1,0 +1,138 @@
+apiVersion: deckhouse.io/v1alpha1
+kind: Group
+metadata:
+  name: practicum-payments-devs
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+spec:
+  name: practicum-payments-devs
+  members:
+    - kind: User
+      name: alice-koroleva-practicum
+---
+apiVersion: deckhouse.io/v1alpha1
+kind: Group
+metadata:
+  name: practicum-analytics-devs
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+spec:
+  name: practicum-analytics-devs
+  members:
+    - kind: User
+      name: boris-smirnov-practicum
+---
+apiVersion: deckhouse.io/v1alpha1
+kind: Group
+metadata:
+  name: practicum-qa-devs
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+spec:
+  name: practicum-qa-devs
+  members:
+    - kind: User
+      name: marina-volkova-practicum
+---
+apiVersion: deckhouse.io/v1alpha1
+kind: Group
+metadata:
+  name: practicum-vm-operators
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+spec:
+  name: practicum-vm-operators
+  members:
+    - kind: User
+      name: victor-melnikov-practicum
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: practicum-self-service-portal
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: practicum-request-controller
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: practicum-vm-operator
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+rules:
+  - apiGroups: ["virtualization.deckhouse.io"]
+    resources:
+      - virtualmachines
+      - virtualdisks
+      - virtualdisksnapshots
+      - virtualmachineblockdeviceattachments
+      - virtualmachineipaddresses
+      - virtualmachineoperations
+      - virtualmachinerestores
+      - virtualmachinesnapshots
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["virtualization.deckhouse.io"]
+    resources: ["virtualimages"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["subresources.virtualization.deckhouse.io"]
+    resources:
+      - virtualmachines/console
+      - virtualmachines/vnc
+    verbs: ["get", "create", "update"]
+  - apiGroups: ["", "events.k8s.io"]
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: practicum-vm-operators
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+subjects:
+  - kind: Group
+    name: practicum-vm-operators
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: practicum-vm-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: practicum-vm-catalog-reader
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+rules:
+  - apiGroups: ["virtualization.deckhouse.io"]
+    resources:
+      - clustervirtualimages
+      - virtualmachineclasses
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: practicum-vm-catalog-readers
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+subjects:
+  - kind: Group
+    name: practicum-vm-operators
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: practicum-vm-catalog-reader
