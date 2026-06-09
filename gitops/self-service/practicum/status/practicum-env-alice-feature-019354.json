@@ -1,36 +1,7 @@
 {
   "environmentId": "practicum-env-alice-feature-019354",
   "namespace": "practicum-tks",
-  "state": "Provisioning",
-  "owner": "alice-koroleva-practicum",
-  "profile": "app-with-vm",
-  "purpose": "feature",
-  "createdAt": "2026-06-09T11:44:01Z",
-  "expiresAt": "2026-06-09T13:44:01Z",
-  "gitCommit": null,
-  "awxJob": 51,
-  "awxStatus": "failed",
-  "argoCD": {
-    "sync": "OutOfSync",
-    "health": "Healthy"
-  },
-  "application": {
-    "name": "practicum-env-alice-feature-019354",
-    "replicas": 1,
-    "readyReplicas": 1,
-    "url": "https://practicum-env-alice-feature-019354.d8case.ru",
-    "ingressReady": true
-  },
-  "virtualMachine": {
-    "name": "practicum-env-alice-feature-019354-vm",
-    "phase": "Pending",
-    "ip": "10.66.0.46",
-    "agentReady": false,
-    "guestReady": false,
-    "cpu": "1 core, 5%",
-    "memory": "512Mi",
-    "disk": "768Mi",
-    "image": "practicum-alpine-golden-3-23-v2"
-  },
-  "updatedAt": "2026-06-09T11:52:21Z"
+  "state": "Error",
+  "reason": "Gitea PUT /contents/gitops/self-service/practicum/status/practicum-env-alice-feature-019354.json: 500 {\"message\":\"\",\"url\":\"http://gitea-practicum.d8case.ru/api/swagger\"}\n",
+  "updatedAt": "2026-06-09T11:52:59Z"
 }
