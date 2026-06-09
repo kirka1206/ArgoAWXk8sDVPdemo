@@ -423,6 +423,18 @@ def cluster_status(request):
         condition.get("type"): condition.get("status")
         for condition in vm_status.get("conditions", [])
     }
+    running_condition = next(
+        (
+            condition
+            for condition in vm_status.get("conditions", [])
+            if condition.get("type") == "Running" and condition.get("status") == "True"
+        ),
+        {},
+    )
+    running_since = running_condition.get("lastTransitionTime")
+    running_long_enough = bool(
+        running_since and utcnow() - parse_time(running_since) >= dt.timedelta(seconds=90)
+    )
     disk_source = ((disk or {}).get("spec", {}).get("dataSource", {}).get("objectRef", {}))
     return {
         "argoCD": {
@@ -441,6 +453,7 @@ def cluster_status(request):
             "phase": vm_status.get("phase", "Pending"),
             "ip": vm_status.get("ipAddress"),
             "agentReady": vm_conditions.get("AgentReady") == "True",
+            "guestReady": vm_conditions.get("AgentReady") == "True" or running_long_enough,
             "cpu": "1 core, 5%",
             "memory": "512Mi",
             "disk": "768Mi",
@@ -499,7 +512,7 @@ def reconcile_existing(request, request_path):
         and vm
         and vm.get("phase") == "Running"
         and vm.get("ip")
-        and vm.get("agentReady")
+        and vm.get("guestReady")
         and not awx_job
     ):
         awx_job = launch_awx(request, vm["ip"])
