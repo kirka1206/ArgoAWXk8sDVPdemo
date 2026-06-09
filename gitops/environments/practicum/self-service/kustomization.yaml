@@ -13,7 +13,6 @@ configMapGenerator:
     files:
       - app/portal.py
 generatorOptions:
-  disableNameSuffixHash: true
   annotations:
     demo.deckhouse.io/description: "4 practicum"
   labels:
