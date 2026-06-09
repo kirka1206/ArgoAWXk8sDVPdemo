@@ -8,8 +8,8 @@
   "createdAt": "2026-06-09T11:44:01Z",
   "expiresAt": "2026-06-09T13:44:01Z",
   "gitCommit": null,
-  "awxJob": null,
-  "awxStatus": null,
+  "awxJob": 55,
+  "awxStatus": "pending",
   "argoCD": {
     "sync": "Synced",
     "health": "Healthy"
@@ -25,12 +25,12 @@
     "name": "practicum-env-alice-feature-019354-vm",
     "phase": "Running",
     "ip": "10.66.0.46",
-    "agentReady": false,
-    "guestReady": false,
+    "agentReady": true,
+    "guestReady": true,
     "cpu": "1 core, 5%",
     "memory": "512Mi",
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v2"
   },
-  "updatedAt": "2026-06-09T11:54:35Z"
+  "updatedAt": "2026-06-09T11:55:52Z"
 }
