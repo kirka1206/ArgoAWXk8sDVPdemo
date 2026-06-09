@@ -5,20 +5,20 @@
 ## Адрес
 
 ```text
-https://selfservice-awx.d8.kir.lab
+https://selfservice-practicum.d8case.ru
 ```
 
 Если DNS не настроен, добавьте на рабочей машине:
 
 ```text
-10.77.77.208 selfservice-awx.d8.kir.lab
+192.168.2.31 selfservice-practicum.d8case.ru
 ```
 
 ## Архитектура
 
 ```mermaid
 flowchart LR
-  Dev["Разработчик"] --> Ingress["Ingress selfservice-awx.d8.kir.lab"]
+  Dev["Разработчик"] --> Ingress["Ingress selfservice-practicum.d8case.ru"]
   Ingress --> DexAuth["DexAuthenticator"]
   DexAuth --> Dex["Dex / OIDC"]
   Ingress --> Portal["Self-service portal"]
@@ -31,15 +31,20 @@ flowchart LR
 
 ## Пользователи и группы
 
-В демо созданы три пользователя:
+На стенде practicum созданы три пользователя:
 
 | Пользователь | E-mail | Группа | Доступные профили |
 | --- | --- | --- | --- |
-| `alice-koroleva` | `alice.koroleva@demo.local` | `payments-devs` | `app-only`, `app-with-vm` |
-| `boris-smirnov` | `boris.smirnov@demo.local` | `analytics-devs` | `app-only`, `app-with-postgres-vm` |
-| `marina-volkova` | `marina.volkova@demo.local` | `qa-devs` | все профили |
+| `alice-koroleva-practicum` | `alice.koroleva.practicum@demo.local` | `practicum-payments-devs` | `app-only`, `app-with-vm` |
+| `boris-smirnov-practicum` | `boris.smirnov.practicum@demo.local` | `practicum-analytics-devs` | `app-only`, `app-with-postgres-vm` |
+| `marina-volkova-practicum` | `marina.volkova.practicum@demo.local` | `practicum-qa-devs` | все профили |
 
-Рабочие пароли не хранятся в Git. Для текущего стенда они сохранены локально в `local/self-service-demo-users.md`.
+Рабочие пароли не хранятся в Git. Для текущего стенда они сохранены локально в
+ignored-файле `local/practicum-demo-users.env`.
+
+Кнопка `Выйти` в шапке открывает `/logout`. Этот endpoint создаёт
+`DexAuthenticator`: он завершает текущую Dex-сессию и позволяет войти под другим
+демонстрационным пользователем.
 
 ## Как работает заявка
 
@@ -52,15 +57,15 @@ flowchart LR
 dev-<user>-<purpose>-<short-id>
 ```
 
-5. Backend создаёт в Gitea:
+5. Backend создаёт в Gitea только `EnvironmentRequest`:
 
 ```text
-gitops/self-service/requests/<name>.yaml
-gitops/self-service/generated/<name>/
+gitops/self-service/practicum/requests/<name>.yaml
 ```
 
-6. Argo CD применяет generated manifests.
-7. Portal читает статус namespace, deployment, ingress и VM через Kubernetes API.
+6. Request controller валидирует заявку и создаёт generated manifests.
+7. Argo CD применяет generated manifests в namespace `practicum-tks`.
+8. Portal читает status-файл, сформированный controller.
 
 ## Что показывает UI
 
@@ -105,17 +110,19 @@ Production-like вариант должен создавать branch/PR, зап
 ## Проверка
 
 ```bash
-kubectl get dexauthenticator -n self-service-portal
-kubectl get certificate -n self-service-portal self-service-portal
-kubectl get deploy,svc,ingress -n self-service-portal
-kubectl get users.deckhouse.io alice-koroleva boris-smirnov marina-volkova
-kubectl get groups.deckhouse.io payments-devs analytics-devs qa-devs
+kubectl get dexauthenticator -n practicum-tks selfservice-practicum
+kubectl get certificate -n practicum-tks selfservice-practicum
+kubectl get deploy,svc,ingress -n practicum-tks
+kubectl get users.deckhouse.io \
+  alice-koroleva-practicum boris-smirnov-practicum marina-volkova-practicum
+kubectl get groups.deckhouse.io \
+  practicum-payments-devs practicum-analytics-devs practicum-qa-devs
 ```
 
 После создания стенда через UI:
 
 ```bash
-kubectl get ns | grep dev-
-kubectl get deploy,svc,ingress,vd,vm -n <generated-namespace>
-kubectl get application -n argocd demo-platform
+kubectl get deploy,svc,ingress,vd,vm -n practicum-tks \
+  -l demo.practicum/environment=<environment-id>
+kubectl get application -n practicum-tks practicum-demo
 ```

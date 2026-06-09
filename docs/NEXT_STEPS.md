@@ -6,9 +6,10 @@
    `argocd-practicum.d8case.ru`, `awx-practicum.d8case.ru` и
    `selfservice-practicum.d8case.ru` на `192.168.2.31`.
 2. Заменить self-signed Certificate portal на доверенный issuer.
-3. Проверить вход Alice, Boris и Marina через реальный Dex UI и соответствие
-   доступных профилей их группам.
-4. Проверить redirect портала на Dex и возврат после login/logout.
+3. Alice проверена через реальный Dex UI: доступны только `app-only` и
+   `app-with-vm`. Проверить Boris и Marina и соответствие их профилей группам.
+4. После доставки кнопки `Выйти` проверить завершение Dex-сессии, повторный
+   redirect и вход под другим пользователем.
 5. Создать новое тестовое окружение через Web, дождаться `Ready`, после чего
    проверить автоматический TTL cleanup.
 6. Выполнить `scenarios/11-practicum-end-to-end.md`, не изменяя опубликованные

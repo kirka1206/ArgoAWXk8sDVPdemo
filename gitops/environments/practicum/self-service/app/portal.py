@@ -182,8 +182,10 @@ HTML = """<!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Practicum Self-Service</title><style>
 *{box-sizing:border-box}body{margin:0;background:#f4f6f8;color:#18232b;font:15px system-ui,sans-serif}
-header{background:#173f35;color:white;padding:24px max(24px,calc((100% - 1080px)/2))}
+header{background:#173f35;color:white;padding:24px max(24px,calc((100% - 1080px)/2));display:flex;align-items:center;justify-content:space-between;gap:20px}
 header h1{font-size:28px;margin:0 0 6px}header p{margin:0;color:#d5e6df}
+.logout{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border:1px solid #92b8aa;border-radius:6px;color:white;text-decoration:none;font-weight:700;white-space:nowrap}
+.logout:hover,.logout:focus-visible{background:#28594c;outline:2px solid white;outline-offset:2px}
 main{max-width:1080px;margin:0 auto;padding:24px;display:grid;grid-template-columns:380px 1fr;gap:20px}
 section{background:white;border:1px solid #d6dde2;border-radius:8px;padding:20px}h2{font-size:18px;margin:0 0 18px}
 label{display:grid;gap:7px;font-weight:650;margin-bottom:16px}select,button{min-height:42px;border-radius:6px;font:inherit}
@@ -191,9 +193,9 @@ select{border:1px solid #aebac3;background:white;padding:8px}button{border:0;bac
 .profile{border-left:4px solid #3c8c74;background:#f5faf8;padding:12px;margin:-4px 0 16px;line-height:1.45}
 .status{white-space:pre-wrap;line-height:1.5}.muted{color:#65737d}.error{color:#a12828}
 dl{display:grid;grid-template-columns:170px 1fr;gap:8px;margin:0}dt{color:#65737d}dd{margin:0;font-weight:600}
-@media(max-width:760px){main{grid-template-columns:1fr}}
+@media(max-width:760px){header{align-items:flex-start}main{grid-template-columns:1fr}.logout{min-width:88px}}
 </style></head><body>
-<header><h1>Practicum Self-Service</h1><p>Заказ временных стендов через единый GitOps-процесс</p></header>
+<header><div><h1>Practicum Self-Service</h1><p>Заказ временных стендов через единый GitOps-процесс</p></div><a class="logout" href="/logout">Выйти</a></header>
 <main><section><h2>Новая заявка</h2><div id="user" class="muted"></div>
 <form id="form"><label>Профиль стенда<select id="profile"></select></label><div id="details" class="profile"></div>
 <label>Назначение<select id="purpose"><option value="feature">Разработка функции</option><option value="bugfix">Проверка исправления</option><option value="demo">Демонстрация</option><option value="loadtest">Нагрузочный тест</option></select></label>

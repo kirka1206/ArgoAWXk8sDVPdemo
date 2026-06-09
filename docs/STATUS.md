@@ -1,6 +1,6 @@
 # Текущий статус
 
-Обновлено: 2026-06-09 23:07 MSK
+Обновлено: 2026-06-10 MSK
 
 ## Правило работы
 
@@ -66,6 +66,10 @@ DexAuthenticator имеет состояние `2/2`.
 - portal: `https://selfservice-practicum.d8case.ru`;
 - Certificate: Ready;
 - DexAuthenticator: создан;
+- Alice успешно вошла через Dex и видит только профили `app-only` и
+  `app-with-vm`;
+- в portal добавлена кнопка `Выйти`, использующая созданный
+  `DexAuthenticator` endpoint `/logout`;
 - request controller: Ready;
 - один namespace для всех environments: `practicum-tks`;
 - лимиты: 3 активных environment, 2 VM;

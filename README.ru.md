@@ -310,6 +310,8 @@ https://selfservice-practicum.d8case.ru
 `EnvironmentRequest`; generated manifests создаёт отдельный controller. Portal
 показывает environment ID, фиксированный namespace `practicum-tks`, Git commit,
 Argo CD, приложение, DVP VM, фактический golden image, AWX job и TTL.
+Кнопка `Выйти` вызывает endpoint `/logout`, созданный `DexAuthenticator`, и
+завершает Dex-сессию перед входом под другим демонстрационным пользователем.
 
 UI подробно объясняет профиль стенда, purpose, квоты и состав ресурсов. После создания заявки он показывает namespace, профиль, TTL, параметры приложения, service/ingress, VM/disk параметры и пути GitOps artifacts.
 
