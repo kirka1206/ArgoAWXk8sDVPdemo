@@ -64,5 +64,9 @@ spec:
         - python3
         - sudo
       runcmd:
+        - install -d -m 0700 -o ansible -g ansible /home/ansible/.ssh
+        - echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICulLQqgJayA+H56J/U03/3ncAeBlA2uedy6s235e/Wd 4 practicum AWX' > /home/ansible/.ssh/authorized_keys
+        - chown ansible:ansible /home/ansible/.ssh/authorized_keys
+        - chmod 0600 /home/ansible/.ssh/authorized_keys
         - rc-update add sshd default || true
         - service sshd start || true
