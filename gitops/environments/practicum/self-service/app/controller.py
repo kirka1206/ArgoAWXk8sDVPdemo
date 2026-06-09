@@ -419,7 +419,6 @@ def cluster_status(request):
         "argoCD": {
             "sync": (app_status.get("sync") or {}).get("status", "Unknown"),
             "health": (app_status.get("health") or {}).get("status", "Unknown"),
-            "revision": (app_status.get("sync") or {}).get("revision"),
         },
         "application": {
             "name": env,
