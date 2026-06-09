@@ -1,0 +1,68 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: practicum-gitea
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+  labels:
+    app.kubernetes.io/part-of: practicum-demo
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: gitea-practicum.d8case.ru
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: practicum-gitea-http
+                port:
+                  number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: practicum-argocd
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+  labels:
+    app.kubernetes.io/part-of: practicum-demo
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: argocd-practicum.d8case.ru
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: practicum-awx
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+  labels:
+    app.kubernetes.io/part-of: practicum-demo
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: awx-practicum.d8case.ru
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: practicum-awx-service
+                port:
+                  number: 80

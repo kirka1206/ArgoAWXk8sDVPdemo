@@ -1,0 +1,72 @@
+apiVersion: awx.ansible.com/v1beta1
+kind: AWX
+metadata:
+  name: practicum-awx
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+  labels:
+    app.kubernetes.io/part-of: practicum-demo
+spec:
+  admin_user: practicum-admin
+  service_type: clusterip
+  ingress_type: none
+  hostname: awx-practicum.d8case.ru
+  postgres_storage_class: replicated
+  postgres_storage_requirements:
+    requests:
+      storage: 4Gi
+  postgres_data_volume_init: true
+  postgres_security_context_settings:
+    fsGroup: 26
+    fsGroupChangePolicy: OnRootMismatch
+  projects_persistence: false
+  web_resource_requirements:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  task_resource_requirements:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  ee_resource_requirements:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  redis_resource_requirements:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  rsyslog_resource_requirements:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  init_container_resource_requirements:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  postgres_resource_requirements:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi

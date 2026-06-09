@@ -137,6 +137,54 @@ AWX_HOST=awx-demo.<target-domain> \
 AWX_URL=http://awx-demo.d8.kir.lab ./scripts/run-demo-job.sh
 ```
 
+## Установка платформенных компонентов в проект `practicum-tks`
+
+Для нового DKP/DVP-стенда подготовлен отдельный namespace-scoped комплект:
+
+```bash
+EXPECTED_CONTEXT=practicum-tks-api.d8case.ru \
+NAMESPACE=practicum-tks \
+./scripts/install-practicum-platform.sh
+```
+
+Скрипт устанавливает в namespace `practicum-tks`:
+
+- Gitea `1.24.6`, аккаунт `practicum`, репозиторий `practicum/practicum-demo`;
+- Argo CD `3.4.2`, локальный аккаунт `practicum-admin`;
+- AWX Operator `2.19.1` и AWX `24.6.1`, аккаунт `practicum-admin`;
+- Ingress-объекты и минимальные default resources для служебных pod сторонних операторов.
+
+Архитектурное решение: рабочие компоненты и их RBAC размещаются в проекте
+`practicum-tks`. Cluster-scoped CRD Argo CD и AWX создаются отдельно, потому что
+Kubernetes не поддерживает namespace-scoped CRD. Argo CD получает Role только
+на управление ресурсами namespace `practicum-tks`, а не всего кластера.
+
+Адреса:
+
+- Gitea: `http://gitea-practicum.d8case.ru`
+- Argo CD: `http://argocd-practicum.d8case.ru`
+- AWX: `http://awx-practicum.d8case.ru`
+
+Ingress IP на момент установки: `192.168.2.31`. Пока DNS-записи не созданы,
+на рабочей станции нужны записи:
+
+```text
+192.168.2.31 gitea-practicum.d8case.ru
+192.168.2.31 argocd-practicum.d8case.ru
+192.168.2.31 awx-practicum.d8case.ru
+```
+
+Пароли не хранятся в Git. Получить созданные credentials можно так:
+
+```bash
+kubectl -n practicum-tks get secret practicum-gitea-admin-credentials
+kubectl -n practicum-tks get secret practicum-argocd-admin-credentials
+kubectl -n practicum-tks get secret practicum-awx-admin-password
+```
+
+Манифесты находятся в `manifests/practicum/`. Установка идемпотентна и не
+удаляет уже существующие на стенде объекты.
+
 ## Расширенный DVP-контур
 
 Application `demo-platform` синхронизирует путь:
