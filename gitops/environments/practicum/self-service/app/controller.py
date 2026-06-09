@@ -405,7 +405,11 @@ def cluster_status(request):
     deployment = k8s_get(f"/apis/apps/v1/namespaces/{NAMESPACE}/deployments/{env}")
     ingress = k8s_get(f"/apis/networking.k8s.io/v1/namespaces/{NAMESPACE}/ingresses/{env}")
     vm = None
+    disk = None
     if request["vm"]:
+        disk = k8s_get(
+            f"/apis/virtualization.deckhouse.io/v1alpha2/namespaces/{NAMESPACE}/virtualdisks/{env}-root"
+        )
         vm = k8s_get(
             f"/apis/virtualization.deckhouse.io/v1alpha2/namespaces/{NAMESPACE}/virtualmachines/{env}-vm"
         )
@@ -415,6 +419,11 @@ def cluster_status(request):
     app_status = (application or {}).get("status", {})
     deployment_status = (deployment or {}).get("status", {})
     vm_status = (vm or {}).get("status", {})
+    vm_conditions = {
+        condition.get("type"): condition.get("status")
+        for condition in vm_status.get("conditions", [])
+    }
+    disk_source = ((disk or {}).get("spec", {}).get("dataSource", {}).get("objectRef", {}))
     return {
         "argoCD": {
             "sync": (app_status.get("sync") or {}).get("status", "Unknown"),
@@ -431,10 +440,11 @@ def cluster_status(request):
             "name": f"{env}-vm",
             "phase": vm_status.get("phase", "Pending"),
             "ip": vm_status.get("ipAddress"),
+            "agentReady": vm_conditions.get("AgentReady") == "True",
             "cpu": "1 core, 5%",
             "memory": "512Mi",
             "disk": "768Mi",
-            "image": active_image(),
+            "image": disk_source.get("name"),
         },
     }
 
@@ -484,7 +494,14 @@ def reconcile_existing(request, request_path):
     awx_job = current.get("awxJob")
     awx_status = current.get("awxStatus")
     vm = runtime["virtualMachine"]
-    if request["vm"] and vm and vm.get("phase") == "Running" and vm.get("ip") and not awx_job:
+    if (
+        request["vm"]
+        and vm
+        and vm.get("phase") == "Running"
+        and vm.get("ip")
+        and vm.get("agentReady")
+        and not awx_job
+    ):
         awx_job = launch_awx(request, vm["ip"])
         awx_status = "pending"
     elif awx_job and awx_status not in {"successful", "failed", "error", "canceled"}:
