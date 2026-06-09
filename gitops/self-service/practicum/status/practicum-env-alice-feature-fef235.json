@@ -1,0 +1,11 @@
+{
+  "environmentId": "practicum-env-alice-feature-fef235",
+  "namespace": "practicum-tks",
+  "state": "Provisioning",
+  "owner": "alice-koroleva-practicum",
+  "profile": "app-only",
+  "createdAt": "2026-06-09T22:25:01Z",
+  "expiresAt": "2026-06-10T00:25:01Z",
+  "gitCommit": "4838fbf2cca8f88e144643485fd8928b0f5735c3",
+  "updatedAt": "2026-06-09T22:25:43Z"
+}
