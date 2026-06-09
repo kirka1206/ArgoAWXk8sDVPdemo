@@ -3,3 +3,5 @@ kind: Kustomization
 resources:
   - source-image.yaml
   - builder.yaml
+  - published-image.yaml
+  - catalog.yaml

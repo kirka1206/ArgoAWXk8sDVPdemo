@@ -1,0 +1,20 @@
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualImage
+metadata:
+  name: practicum-alpine-golden-3-23-v1
+  namespace: practicum-tks
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+    demo.deckhouse.io/description: "4 practicum"
+  labels:
+    app.kubernetes.io/part-of: practicum-demo
+    demo.practicum/scenario: golden-image
+    demo.practicum/image-role: published
+    demo.practicum/image-version: 3-23-v1
+spec:
+  storage: ContainerRegistry
+  dataSource:
+    type: ObjectRef
+    objectRef:
+      kind: VirtualDisk
+      name: practicum-golden-builder-root
