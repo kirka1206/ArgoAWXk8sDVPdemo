@@ -11,7 +11,7 @@
   "awxJob": 49,
   "awxStatus": "failed",
   "argoCD": {
-    "sync": "OutOfSync",
+    "sync": "Synced",
     "health": "Healthy"
   },
   "application": {
@@ -26,10 +26,11 @@
     "phase": "Running",
     "ip": "10.66.0.32",
     "agentReady": true,
+    "guestReady": true,
     "cpu": "1 core, 5%",
     "memory": "512Mi",
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v1"
   },
-  "updatedAt": "2026-06-09T11:50:10Z"
+  "updatedAt": "2026-06-09T11:50:24Z"
 }
