@@ -16,9 +16,9 @@ spec:
     type: ObjectRef
     objectRef:
       kind: VirtualImage
-      name: practicum-alpine-golden-3-23-v1
+      name: practicum-alpine-base-3-23-v1
   persistentVolumeClaim:
-    size: 768Mi
+    size: 512Mi
     storageClassName: replicated
 ---
 apiVersion: virtualization.deckhouse.io/v1alpha2
