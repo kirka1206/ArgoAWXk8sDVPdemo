@@ -13,25 +13,25 @@
   "awxAttempts": 0,
   "argoCD": {
     "sync": "Synced",
-    "health": "Healthy"
+    "health": "Progressing"
   },
   "application": {
     "name": "practicum-env-alice-feature-537020",
     "replicas": 1,
     "readyReplicas": 0,
     "url": "https://practicum-env-alice-feature-537020.d8case.ru",
-    "ingressReady": false
+    "ingressReady": true
   },
   "virtualMachine": {
     "name": "practicum-env-alice-feature-537020-vm",
     "phase": "Pending",
-    "ip": null,
+    "ip": "10.66.0.32",
     "agentReady": false,
     "guestReady": false,
     "cpu": "1 core, 5%",
     "memory": "512Mi",
     "disk": "768Mi",
-    "image": null
+    "image": "practicum-alpine-golden-3-23-v2"
   },
-  "updatedAt": "2026-06-09T21:59:28Z"
+  "updatedAt": "2026-06-09T22:01:22Z"
 }
