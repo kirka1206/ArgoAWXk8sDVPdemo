@@ -3,11 +3,15 @@ kind: Kustomization
 namespace: practicum-tks
 resources:
   - platform.yaml
+  - portal.yaml
   - generated
 configMapGenerator:
   - name: practicum-request-controller-code
     files:
       - app/controller.py
+  - name: practicum-self-service-portal-code
+    files:
+      - app/portal.py
 generatorOptions:
   disableNameSuffixHash: true
   annotations:

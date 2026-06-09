@@ -1,0 +1,158 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: selfservice-practicum
+  namespace: practicum-tks
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+    demo.deckhouse.io/description: "4 practicum"
+spec:
+  secretName: selfservice-practicum-tls
+  dnsNames:
+    - selfservice-practicum.d8case.ru
+  issuerRef:
+    name: selfsigned
+    kind: ClusterIssuer
+---
+apiVersion: deckhouse.io/v1
+kind: DexAuthenticator
+metadata:
+  name: selfservice-practicum
+  namespace: practicum-tks
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+    demo.deckhouse.io/description: "4 practicum"
+spec:
+  applicationDomain: selfservice-practicum.d8case.ru
+  applicationIngressClassName: nginx
+  applicationIngressCertificateSecretName: selfservice-practicum-tls
+  allowedGroups:
+    - practicum-payments-devs
+    - practicum-analytics-devs
+    - practicum-qa-devs
+  sendAuthorizationHeader: true
+  signOutURL: /logout
+  keepUsersLoggedInFor: 8h
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: practicum-self-service-portal
+  namespace: practicum-tks
+  annotations:
+    argocd.argoproj.io/sync-wave: "7"
+    demo.deckhouse.io/description: "4 practicum"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: practicum-self-service-portal
+  template:
+    metadata:
+      labels:
+        app: practicum-self-service-portal
+        app.kubernetes.io/part-of: practicum-demo
+    spec:
+      serviceAccountName: practicum-self-service-portal
+      containers:
+        - name: portal
+          image: python:3.12-alpine
+          imagePullPolicy: IfNotPresent
+          command: ["python", "/app/portal.py"]
+          env:
+            - name: GITEA_URL
+              value: http://practicum-gitea-http.practicum-tks.svc.cluster.local:3000
+            - name: GITEA_OWNER
+              value: practicum
+            - name: GITEA_REPO
+              value: practicum-demo
+            - name: GITEA_BRANCH
+              value: main
+            - name: BASE_DOMAIN
+              value: d8case.ru
+            - name: NAMESPACE
+              value: practicum-tks
+            - name: GITEA_USER
+              valueFrom:
+                secretKeyRef:
+                  name: practicum-self-service-runtime
+                  key: giteaUsername
+            - name: GITEA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: practicum-self-service-runtime
+                  key: giteaPassword
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 192Mi
+          volumeMounts:
+            - name: code
+              mountPath: /app
+              readOnly: true
+      volumes:
+        - name: code
+          configMap:
+            name: practicum-self-service-portal-code
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: practicum-self-service-portal
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+spec:
+  selector:
+    app: practicum-self-service-portal
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: selfservice-practicum
+  namespace: practicum-tks
+  annotations:
+    argocd.argoproj.io/sync-wave: "8"
+    demo.deckhouse.io/description: "4 practicum"
+    nginx.ingress.kubernetes.io/auth-signin: https://$host/dex-authenticator/sign_in
+    nginx.ingress.kubernetes.io/auth-url: https://selfservice-practicum-dex-authenticator.practicum-tks.svc.cluster.local/dex-authenticator/auth
+    nginx.ingress.kubernetes.io/auth-response-headers: Authorization, X-Auth-Request-User, X-Auth-Request-Email, X-Auth-Request-Groups
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 32k
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: selfservice-practicum.d8case.ru
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: practicum-self-service-portal
+                port:
+                  name: http
+  tls:
+    - hosts:
+        - selfservice-practicum.d8case.ru
+      secretName: selfservice-practicum-tls
