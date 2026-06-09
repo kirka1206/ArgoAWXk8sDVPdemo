@@ -1,7 +1,7 @@
 {
   "environmentId": "practicum-env-alice-feature-fef235",
   "namespace": "practicum-tks",
-  "state": "Provisioning",
+  "state": "Ready",
   "owner": "alice-koroleva-practicum",
   "profile": "app-only",
   "purpose": "feature",
@@ -18,10 +18,10 @@
   "application": {
     "name": "practicum-env-alice-feature-fef235",
     "replicas": 1,
-    "readyReplicas": 0,
+    "readyReplicas": 1,
     "url": "http://practicum-env-alice-feature-fef235.d8case.ru",
     "ingressReady": true
   },
   "virtualMachine": null,
-  "updatedAt": "2026-06-09T22:26:16Z"
+  "updatedAt": "2026-06-09T22:26:44Z"
 }
