@@ -1,7 +1,7 @@
 {
   "environmentId": "practicum-env-alice-feature-537020",
   "namespace": "practicum-tks",
-  "state": "Provisioning",
+  "state": "Ready",
   "owner": "alice-koroleva-practicum",
   "profile": "app-with-vm",
   "purpose": "feature",
@@ -9,11 +9,11 @@
   "expiresAt": "2026-06-09T23:58:33Z",
   "gitCommit": "507855ee9542e9a8b1c93b3b462c623429e1a32f",
   "awxJob": 61,
-  "awxStatus": "running",
+  "awxStatus": "successful",
   "awxAttempts": 1,
   "argoCD": {
-    "sync": "Synced",
-    "health": "Healthy"
+    "sync": "Unknown",
+    "health": "Unknown"
   },
   "application": {
     "name": "practicum-env-alice-feature-537020",
@@ -33,5 +33,5 @@
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v2"
   },
-  "updatedAt": "2026-06-09T22:17:35Z"
+  "updatedAt": "2026-06-09T22:18:01Z"
 }
