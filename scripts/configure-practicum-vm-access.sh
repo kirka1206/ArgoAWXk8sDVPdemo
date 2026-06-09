@@ -63,8 +63,17 @@ runcmd:
 EOF
 )"
 
+secret_type="$(
+  kubectl get secret practicum-golden-builder-cloud-init \
+    -n "$NAMESPACE" -o jsonpath='{.type}' 2>/dev/null || true
+)"
+if [[ -n "$secret_type" && "$secret_type" != "provisioning.virtualization.deckhouse.io/cloud-init" ]]; then
+  kubectl delete secret practicum-golden-builder-cloud-init -n "$NAMESPACE"
+fi
+
 kubectl create secret generic practicum-golden-builder-cloud-init \
   -n "$NAMESPACE" \
+  --type=provisioning.virtualization.deckhouse.io/cloud-init \
   --from-literal=userData="$cloud_init" \
   --dry-run=client -o yaml |
   kubectl annotate --local -f - demo.deckhouse.io/description="4 practicum" -o yaml |
