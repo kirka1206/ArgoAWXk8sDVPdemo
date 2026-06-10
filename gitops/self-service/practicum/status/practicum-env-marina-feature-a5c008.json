@@ -26,7 +26,7 @@
   },
   "virtualMachine": {
     "name": "practicum-env-marina-feature-a5c008-vm",
-    "phase": "Starting",
+    "phase": "Running",
     "ip": "10.66.0.32",
     "agentReady": false,
     "guestReady": false,
@@ -41,5 +41,5 @@
       "command": "d8 v ssh ansible@practicum-env-marina-feature-a5c008-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "updatedAt": "2026-06-10T13:41:18Z"
+  "updatedAt": "2026-06-10T13:41:46Z"
 }
