@@ -13,7 +13,7 @@
   "awxAttempts": 3,
   "reason": null,
   "argoCD": {
-    "sync": "Synced",
+    "sync": "OutOfSync",
     "health": "Healthy"
   },
   "application": {
@@ -34,5 +34,5 @@
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v2"
   },
-  "updatedAt": "2026-06-10T06:53:28Z"
+  "updatedAt": "2026-06-10T07:03:58Z"
 }
