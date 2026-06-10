@@ -3,4 +3,3 @@ kind: Kustomization
 resources:
   - practicum-env-alice-feature-175041
   - practicum-env-alice-feature-73cce8
-  - practicum-env-marina-feature-6639ff
