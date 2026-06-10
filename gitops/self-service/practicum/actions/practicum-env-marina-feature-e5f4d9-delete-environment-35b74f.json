@@ -1,0 +1,15 @@
+{
+  "apiVersion": "demo.practicum/v1",
+  "kind": "EnvironmentAction",
+  "metadata": {
+    "name": "practicum-env-marina-feature-e5f4d9-delete-environment-35b74f"
+  },
+  "spec": {
+    "environment": "practicum-env-marina-feature-e5f4d9",
+    "action": "delete-environment",
+    "actor": "marina-volkova-practicum",
+    "actorEmail": "marina.volkova.practicum@demo.local",
+    "reason": "owner-request",
+    "requestedAt": "2026-06-10T09:31:12Z"
+  }
+}
