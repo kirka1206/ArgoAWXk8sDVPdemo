@@ -1,0 +1,139 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: practicum-env-alice-bugfix-d634cb
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+    demo.practicum/expires-at: "2026-06-10T23:30:01Z"
+  labels:
+    app.kubernetes.io/part-of: practicum-demo
+    demo.practicum/environment: practicum-env-alice-bugfix-d634cb
+    demo.practicum/owner: alice-koroleva-practicum
+    demo.practicum/expires-at: 20260610T233001Z
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: practicum-env-alice-bugfix-d634cb
+  template:
+    metadata:
+      labels:
+        app: practicum-env-alice-bugfix-d634cb
+        demo.practicum/environment: practicum-env-alice-bugfix-d634cb
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: practicum-env-alice-bugfix-d634cb
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+    demo.practicum/expires-at: "2026-06-10T23:30:01Z"
+  labels:
+    app.kubernetes.io/part-of: practicum-demo
+    demo.practicum/environment: practicum-env-alice-bugfix-d634cb
+    demo.practicum/owner: alice-koroleva-practicum
+    demo.practicum/expires-at: 20260610T233001Z
+spec:
+  selector:
+    app: practicum-env-alice-bugfix-d634cb
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: practicum-env-alice-bugfix-d634cb
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+    demo.practicum/expires-at: "2026-06-10T23:30:01Z"
+  labels:
+    app.kubernetes.io/part-of: practicum-demo
+    demo.practicum/environment: practicum-env-alice-bugfix-d634cb
+    demo.practicum/owner: alice-koroleva-practicum
+    demo.practicum/expires-at: 20260610T233001Z
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: practicum-env-alice-bugfix-d634cb.d8case.ru
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: practicum-env-alice-bugfix-d634cb
+                port:
+                  name: http
+---
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualDisk
+metadata:
+  name: practicum-env-alice-bugfix-d634cb-root
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+    demo.practicum/expires-at: "2026-06-10T23:30:01Z"
+  labels:
+    app.kubernetes.io/part-of: practicum-demo
+    demo.practicum/environment: practicum-env-alice-bugfix-d634cb
+    demo.practicum/owner: alice-koroleva-practicum
+    demo.practicum/expires-at: 20260610T233001Z
+spec:
+  dataSource:
+    type: ObjectRef
+    objectRef:
+      kind: VirtualImage
+      name: practicum-alpine-golden-3-23-v2
+  persistentVolumeClaim:
+    size: 768Mi
+    storageClassName: replicated
+---
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualMachine
+metadata:
+  name: practicum-env-alice-bugfix-d634cb-vm
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+    demo.practicum/expires-at: "2026-06-10T23:30:01Z"
+  labels:
+    app.kubernetes.io/part-of: practicum-demo
+    demo.practicum/environment: practicum-env-alice-bugfix-d634cb
+    demo.practicum/owner: alice-koroleva-practicum
+    demo.practicum/expires-at: 20260610T233001Z
+spec:
+  virtualMachineClassName: generic
+  runPolicy: AlwaysOnUnlessStoppedManually
+  osType: Generic
+  bootloader: BIOS
+  cpu:
+    cores: 1
+    coreFraction: 5%
+  memory:
+    size: 512Mi
+  blockDeviceRefs:
+    - kind: VirtualDisk
+      name: practicum-env-alice-bugfix-d634cb-root
+  provisioning:
+    type: UserDataRef
+    userDataRef:
+      kind: Secret
+      name: practicum-golden-builder-cloud-init
