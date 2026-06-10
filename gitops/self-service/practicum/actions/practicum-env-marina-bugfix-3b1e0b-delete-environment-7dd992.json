@@ -1,0 +1,15 @@
+{
+  "apiVersion": "demo.practicum/v1",
+  "kind": "EnvironmentAction",
+  "metadata": {
+    "name": "practicum-env-marina-bugfix-3b1e0b-delete-environment-7dd992"
+  },
+  "spec": {
+    "environment": "practicum-env-marina-bugfix-3b1e0b",
+    "action": "delete-environment",
+    "actor": "victor-melnikov-practicum",
+    "actorEmail": "victor.melnikov.practicum@demo.local",
+    "reason": "Acceptance test: удалить оставшийся временный стенд",
+    "requestedAt": "2026-06-10T08:36:03Z"
+  }
+}
