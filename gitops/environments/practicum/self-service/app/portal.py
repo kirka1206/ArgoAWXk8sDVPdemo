@@ -9,6 +9,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
@@ -244,11 +245,20 @@ def create_request(user, payload):
 
 
 def environments_for(user, include_cleaned=False):
+    items = [
+        item
+        for item in list_dir(STATUS_ROOT)
+        if item.get("type") == "file" and item["name"].endswith(".json")
+    ]
+
+    def load_status(item):
+        return json.loads(get_text(item["path"], "{}") or "{}")
+
+    with ThreadPoolExecutor(max_workers=min(8, max(1, len(items)))) as executor:
+        statuses = executor.map(load_status, items)
+
     result = []
-    for item in list_dir(STATUS_ROOT):
-        if item.get("type") != "file" or not item["name"].endswith(".json"):
-            continue
-        status = json.loads(get_text(item["path"], "{}") or "{}")
+    for status in statuses:
         if status.get("owner") != user["name"]:
             continue
         if not include_cleaned and status.get("state") == "Cleaned":
