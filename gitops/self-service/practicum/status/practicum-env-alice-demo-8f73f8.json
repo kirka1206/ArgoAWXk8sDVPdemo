@@ -1,37 +1,8 @@
 {
   "environmentId": "practicum-env-alice-demo-8f73f8",
   "namespace": "practicum-tks",
-  "state": "Ready",
+  "state": "Expired",
   "owner": "alice-koroleva-practicum",
-  "profile": "app-with-vm",
-  "purpose": "demo",
-  "createdAt": "2026-06-09T22:37:19Z",
   "expiresAt": "2026-06-10T00:37:19Z",
-  "gitCommit": "624d112319565110324abfe8b4c41a9ff600db0c",
-  "awxJob": 64,
-  "awxStatus": "successful",
-  "awxAttempts": 1,
-  "argoCD": {
-    "sync": "Synced",
-    "health": "Healthy"
-  },
-  "application": {
-    "name": "practicum-env-alice-demo-8f73f8",
-    "replicas": 1,
-    "readyReplicas": 1,
-    "url": "http://practicum-env-alice-demo-8f73f8.d8case.ru",
-    "ingressReady": true
-  },
-  "virtualMachine": {
-    "name": "practicum-env-alice-demo-8f73f8-vm",
-    "phase": "Running",
-    "ip": "10.66.0.33",
-    "agentReady": true,
-    "guestReady": true,
-    "cpu": "1 core, 5%",
-    "memory": "512Mi",
-    "disk": "768Mi",
-    "image": "practicum-alpine-golden-3-23-v2"
-  },
-  "updatedAt": "2026-06-10T00:00:56Z"
+  "updatedAt": "2026-06-10T00:37:27Z"
 }
