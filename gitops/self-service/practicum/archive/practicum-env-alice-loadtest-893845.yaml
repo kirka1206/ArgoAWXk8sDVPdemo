@@ -1,0 +1,18 @@
+{
+  "apiVersion": "demo.practicum/v1",
+  "kind": "EnvironmentRequest",
+  "metadata": {
+    "name": "practicum-env-alice-loadtest-893845"
+  },
+  "spec": {
+    "owner": "alice-koroleva-practicum",
+    "email": "alice.koroleva.practicum@demo.local",
+    "groups": [
+      "practicum-payments-devs"
+    ],
+    "profile": "app-only",
+    "purpose": "loadtest",
+    "ttl": "2h",
+    "createdAt": "2026-06-10T15:26:12Z"
+  }
+}
