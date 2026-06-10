@@ -8,9 +8,9 @@
   "createdAt": "2026-06-10T06:27:45Z",
   "expiresAt": "2026-06-10T10:27:45Z",
   "gitCommit": "c33226626cbdd06dc28f86ed648975e4fa5bbe2c",
-  "awxJob": null,
-  "awxStatus": null,
-  "awxAttempts": 0,
+  "awxJob": 66,
+  "awxStatus": "pending",
+  "awxAttempts": 1,
   "argoCD": {
     "sync": "Synced",
     "health": "Healthy"
@@ -26,12 +26,12 @@
     "name": "practicum-env-marina-feature-10d265-vm",
     "phase": "Running",
     "ip": "10.66.0.32",
-    "agentReady": false,
-    "guestReady": false,
+    "agentReady": true,
+    "guestReady": true,
     "cpu": "1 core, 5%",
     "memory": "512Mi",
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v2"
   },
-  "updatedAt": "2026-06-10T06:30:36Z"
+  "updatedAt": "2026-06-10T06:31:47Z"
 }
