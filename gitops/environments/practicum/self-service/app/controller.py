@@ -461,9 +461,12 @@ def load_request_for_environment(environment):
     return validate_request(json.loads(text)), path, text
 
 
-def action_status(environment, action, state, status, reason=None, **extra):
+def action_status(
+    environment, action, state, status, reason=None, root_updates=None, **extra
+):
     current = load_json(f"{STATUS_ROOT}/{environment}.json", {}) or {}
     current.pop("updatedAt", None)
+    current.update(root_updates or {})
     current["state"] = state
     current["reason"] = reason
     current["lastAction"] = {
@@ -643,7 +646,19 @@ def reconcile_action(item):
         )
         if not vm and not disk and not request["vm"]:
             archive_action(action_path, normalized, "Completed")
-            action_status(environment, normalized, "Ready", "Completed")
+            action_status(
+                environment,
+                normalized,
+                "Ready",
+                "Completed",
+                root_updates={
+                    "profile": "app-only",
+                    "postgresVersion": None,
+                    "virtualMachine": None,
+                    "awxJob": None,
+                    "awxStatus": None,
+                },
+            )
             return
         if request["vm"]:
             document = json.loads(request_text)
