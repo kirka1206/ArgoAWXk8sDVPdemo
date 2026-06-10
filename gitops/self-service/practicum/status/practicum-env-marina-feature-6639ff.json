@@ -1,12 +1,29 @@
 {
   "environmentId": "practicum-env-marina-feature-6639ff",
   "namespace": "practicum-tks",
-  "state": "Provisioning",
+  "state": "Ready",
   "owner": "marina-volkova-practicum",
   "profile": "app-only",
   "postgresVersion": null,
+  "purpose": "feature",
   "createdAt": "2026-06-10T13:22:47Z",
   "expiresAt": "2026-06-10T15:22:47Z",
   "gitCommit": "12241669af6ff0574009ae895850bfd935bddf2f",
-  "updatedAt": "2026-06-10T13:23:17Z"
+  "awxJob": null,
+  "awxStatus": null,
+  "awxAttempts": 0,
+  "reason": null,
+  "argoCD": {
+    "sync": "Synced",
+    "health": "Progressing"
+  },
+  "application": {
+    "name": "practicum-env-marina-feature-6639ff",
+    "replicas": 1,
+    "readyReplicas": 1,
+    "url": "http://practicum-env-marina-feature-6639ff.d8case.ru",
+    "ingressReady": true
+  },
+  "virtualMachine": null,
+  "updatedAt": "2026-06-10T13:23:45Z"
 }
