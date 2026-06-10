@@ -104,7 +104,8 @@ DexAuthenticator имеет состояние `2/2`.
 - реальный push проверен: Argo CD увидел новый revision за `9` секунд без
   ручного `Sync` или `Refresh`;
 - один namespace для всех environments: `practicum-tks`;
-- лимиты: 3 активных environment, 2 VM;
+- лимиты вынесены в env request controller:
+  `MAX_ACTIVE_ENVIRONMENTS=7`, `MAX_ACTIVE_VMS=7`;
 - controller не выполняет прямой `kubectl delete`;
 - AWX стартует после guest readiness, максимум 3 попытки.
 

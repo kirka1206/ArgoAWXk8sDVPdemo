@@ -23,6 +23,8 @@ NAMESPACE = os.environ.get("NAMESPACE", "practicum-tks")
 BASE_DOMAIN = os.environ.get("BASE_DOMAIN", "d8case.ru")
 STORAGE_CLASS = os.environ.get("STORAGE_CLASS", "replicated")
 VM_CLASS = os.environ.get("VM_CLASS", "generic")
+MAX_ACTIVE_ENVIRONMENTS = int(os.environ.get("MAX_ACTIVE_ENVIRONMENTS", "3"))
+MAX_ACTIVE_VMS = int(os.environ.get("MAX_ACTIVE_VMS", "2"))
 REQUEST_ROOT = "gitops/self-service/practicum/requests"
 ARCHIVE_ROOT = "gitops/self-service/practicum/archive"
 STATUS_ROOT = "gitops/self-service/practicum/status"
@@ -616,7 +618,10 @@ def reconcile():
             if utcnow() >= parse_time(request["expiresAt"]):
                 delete_generated(request, path)
                 continue
-            if len(active) >= 3 or (request["vm"] and active_vm >= 2):
+            if (
+                len(active) >= MAX_ACTIVE_ENVIRONMENTS
+                or (request["vm"] and active_vm >= MAX_ACTIVE_VMS)
+            ):
                 write_status(
                     env,
                     "Queued",
@@ -626,6 +631,8 @@ def reconcile():
                     reason="capacity-limit",
                     activeEnvironments=len(active),
                     activeVirtualMachines=active_vm,
+                    maxActiveEnvironments=MAX_ACTIVE_ENVIRONMENTS,
+                    maxActiveVirtualMachines=MAX_ACTIVE_VMS,
                     expiresAt=request["expiresAt"],
                 )
                 continue

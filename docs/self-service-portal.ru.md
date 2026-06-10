@@ -197,3 +197,19 @@ d8 v ssh ansible@<environment-id>-vm \
 Пароль и приватный ключ не записываются в `EnvironmentRequest` или status:
 пользователь получает команду, а файл ключа подготавливается на ноутбуке
 демонстратора вне Git.
+
+## Ограничение ёмкости
+
+Максимальное число одновременно активных стендов и VM задаётся в Deployment
+`practicum-request-controller`:
+
+```yaml
+- name: MAX_ACTIVE_ENVIRONMENTS
+  value: "7"
+- name: MAX_ACTIVE_VMS
+  value: "7"
+```
+
+Controller читает эти значения из окружения. Если лимит достигнут, заявка
+остаётся в Git со статусом `Queued` и причиной `capacity-limit`; после
+освобождения ресурса следующий reconcile продолжает её автоматически.

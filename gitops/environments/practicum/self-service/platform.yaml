@@ -95,6 +95,10 @@ spec:
               value: replicated
             - name: VM_CLASS
               value: generic
+            - name: MAX_ACTIVE_ENVIRONMENTS
+              value: "7"
+            - name: MAX_ACTIVE_VMS
+              value: "7"
             - name: AWX_URL
               value: http://practicum-awx-service.practicum-tks.svc.cluster.local
             - name: GITEA_USER
