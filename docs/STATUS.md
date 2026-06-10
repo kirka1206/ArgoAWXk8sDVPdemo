@@ -83,6 +83,9 @@ DexAuthenticator имеет состояние `2/2`.
 - playbook исправлен: выбирает самый новый доступный `postgresqlNN`;
 - controller исправлен: после трёх failed AWX attempts выставляет `Error` с
   причиной вместо бесконечного `Provisioning`;
+- исправление проверено на исходной заявке Marina
+  `practicum-env-marina-feature-10d265`: повторный AWX job `73` завершился
+  `successful` за `43.5` секунды, итоговый status заявки — `Ready`;
 - request controller: Ready;
 - в Gitea создан repository push webhook на внутренний endpoint Argo CD;
 - Gitea webhook allowlist ограничен точным Service DNS

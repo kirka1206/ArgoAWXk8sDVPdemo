@@ -13,11 +13,9 @@
 5. Создать новое тестовое окружение через Web, дождаться `Ready`, после чего
    проверить корректный owner/Environment ID, переход
    `Submitted -> Provisioning -> Ready` и автоматический TTL cleanup.
-6. Повторно проверить Marina с `app-with-postgres-vm`: динамический выбор
-   PostgreSQL package, успешный AWX job и terminal state `Ready`.
-7. Выполнить `scenarios/11-practicum-end-to-end.md`, не изменяя опубликованные
+6. Выполнить `scenarios/11-practicum-end-to-end.md`, не изменяя опубликованные
    golden image v1/v2.
-8. Заменить временный `SuperAdmin` пользователя `practicum-tks@demo.local` на
+7. Заменить временный `SuperAdmin` пользователя `practicum-tks@demo.local` на
    минимально необходимые права.
 
 ## Приоритет 2. Проверить роли и профили
