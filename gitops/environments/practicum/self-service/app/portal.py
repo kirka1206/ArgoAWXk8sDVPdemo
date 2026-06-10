@@ -245,17 +245,31 @@ def create_request(user, payload):
 
 
 def environments_for(user, include_cleaned=False):
-    items = [
-        item
-        for item in list_dir(STATUS_ROOT)
-        if item.get("type") == "file" and item["name"].endswith(".json")
-    ]
+    if include_cleaned:
+        names = {
+            item["name"].rsplit(".", 1)[0]
+            for item in list_dir(STATUS_ROOT)
+            if item.get("type") == "file" and item["name"].endswith(".json")
+        }
+    else:
+        names = {
+            item["name"].rsplit(".", 1)[0]
+            for item in list_dir(REQUEST_ROOT)
+            if item.get("type") == "file" and item["name"].endswith((".yaml", ".json"))
+        }
+        for item in list_dir(ACTION_ROOT):
+            if item.get("type") != "file" or not item["name"].endswith(".json"):
+                continue
+            action = json.loads(get_text(item["path"], "{}") or "{}")
+            environment = slug((action.get("spec") or {}).get("environment"))
+            if environment:
+                names.add(environment)
 
-    def load_status(item):
-        return json.loads(get_text(item["path"], "{}") or "{}")
+    def load_status(environment):
+        return json.loads(get_text(f"{STATUS_ROOT}/{environment}.json", "{}") or "{}")
 
-    with ThreadPoolExecutor(max_workers=min(8, max(1, len(items)))) as executor:
-        statuses = executor.map(load_status, items)
+    with ThreadPoolExecutor(max_workers=min(8, max(1, len(names)))) as executor:
+        statuses = executor.map(load_status, names)
 
     result = []
     for status in statuses:
@@ -358,11 +372,12 @@ async function poll(){if(!last)return;try{const s=await api(`/api/status/${last}
 function badge(s){const c=s==="Ready"?"ready":s==="Cleaned"?"":s.includes("Error")||s==="Rejected"?"error":"work";return`<span class="badge ${c}">${s}</span>`}
 function operationText(s){const names={ActionRequested:"Запрос операции записан в Git. Контроллер ожидает обработку.",VMDeleting:"VM и диск удалены из desired state. Argo CD выполняет prune.",DeletionRequested:"Запрос удаления принят и записан в Git.",Deleting:"Ресурсы удалены из desired state. Argo CD выполняет prune.",VMStarting:"DVP запускает виртуальную машину.",VMStopping:"DVP останавливает виртуальную машину.",VMRestarting:"DVP выполняет перезапуск виртуальной машины.",Provisioning:"Argo CD создаёт ресурсы, затем AWX настраивает ОС.",Queued:"Заявка ожидает свободной ёмкости."};if(names[s.state])return names[s.state];if(s.lastAction?.status==="Running")return`Выполняется ${s.lastAction.action}. Статус проверяется каждые 5 секунд.`;if(s.lastAction?.status==="Completed")return`Последняя операция ${s.lastAction.action} завершена.`;return""}
 function card(s,history=false){const vm=s.virtualMachine,app=s.application||{},op=operationText(s);return `<article class="card"><div class="card-head"><div><div class="title">${s.environmentId}</div><div class="muted">Namespace: ${s.namespace||"practicum-tks"}</div></div>${badge(s.state)}</div><div class="card-body"><div class="kv"><span>Владелец</span><b>${s.owner||"-"}</b><span>Профиль</span><b>${s.profile||"-"}</b><span>PostgreSQL</span><b>${s.postgresVersion||"не требуется"}</b><span>TTL до</span><b>${s.expiresAt||"-"}</b><span>Приложение</span><b>${app.name||"-"}, ready ${app.readyReplicas??"-"}/${app.replicas??"-"}</b><span>URL</span><b>${app.url?`<a href="${app.url}" target="_blank">${app.url}</a>`:"-"}</b><span>VM</span><b>${vm?.name||"не требуется"}</b><span>VM IP</span><b>${vm?.ip||"-"}</b><span>Характеристики VM</span><b>${vm?`${vm.cpu}, RAM ${vm.memory}, disk ${vm.disk}, image ${vm.image}`:"-"}</b><span>Логин VM</span><b>${vm?.access?.username||"-"}${vm?.access?.authentication?` (${vm.access.authentication})`:""}</b><span>SSH</span><b class="mono">${vm?.access?.command||"-"}</b><span>AWX</span><b>${s.awxJob||"-"} / ${s.awxStatus||"-"}</b><span>Git commit</span><b class="mono">${s.gitCommit||"-"}</b></div>${op?`<div class="operation ${s.lastAction?.status==="Completed"?"ready":""}"><b>Ход операции</b><br>${op}${s.reason?`<br>Причина: ${s.reason}`:""}</div>`:""}</div>${history?"":`<div class="card-foot">${vm?`<button class="secondary" onclick="ask('${s.environmentId}','delete-vm')">Удалить VM</button>`:"<span></span>"}<button class="danger" onclick="ask('${s.environmentId}','delete-environment')">Удалить стенд</button></div>`}</article>`}
-async function loadEnvs(manual=false){clearTimeout(listPollTimer);const button=$("refreshEnvs");if(button)button.disabled=true;$("envRefreshState").textContent=manual?"Обновляем данные из Git...":"Загружаем стенды...";try{const [active,history]=await Promise.all([api(`/api/environments?t=${Date.now()}`),api(`/api/environments?history=1&t=${Date.now()}`)]);$("envs").innerHTML=active.length?active.map(s=>card(s)).join(""):`<div class="panel empty">Активных стендов нет</div>`;const cleaned=history.filter(s=>s.state==="Cleaned");$("historyList").innerHTML=cleaned.length?cleaned.map(s=>card(s,true)).join(""):`<div class="panel empty">История пока пуста</div>`;$("envRefreshState").textContent=`Показано стендов: ${active.length}. Обновлено ${new Date().toLocaleTimeString("ru-RU")}.`;if(active.some(working))listPollTimer=setTimeout(()=>loadEnvs(false),5000)}catch(e){$("envRefreshState").textContent=`Не удалось обновить: ${e.message}`}finally{if(button)button.disabled=false}}
+async function loadEnvs(manual=false){clearTimeout(listPollTimer);const button=$("refreshEnvs");if(button)button.disabled=true;$("envRefreshState").textContent=manual?"Обновляем данные из Git...":"Загружаем стенды...";try{const active=await api(`/api/environments?t=${Date.now()}`);$("envs").innerHTML=active.length?active.map(s=>card(s)).join(""):`<div class="panel empty">Активных стендов нет</div>`;$("envRefreshState").textContent=`Показано стендов: ${active.length}. Обновлено ${new Date().toLocaleTimeString("ru-RU")}.`;if(active.some(working))listPollTimer=setTimeout(()=>loadEnvs(false),5000)}catch(e){$("envRefreshState").textContent=`Не удалось обновить: ${e.message}`}finally{if(button)button.disabled=false}}
+async function loadHistory(){try{const history=await api(`/api/environments?history=1&t=${Date.now()}`);const cleaned=history.filter(s=>s.state==="Cleaned");$("historyList").innerHTML=cleaned.length?cleaned.map(s=>card(s,true)).join(""):`<div class="panel empty">История пока пуста</div>`}catch(e){$("historyList").innerHTML=`<div class="panel empty">Не удалось загрузить историю: ${e.message}</div>`}}
 function ask(env,action){pendingAction={environment:env,action};$("modalTitle").textContent=action==="delete-vm"?"Удалить виртуальную машину?":"Удалить стенд?";$("modalText").textContent=env;$("modalWarning").textContent=action==="delete-vm"?"VM и VirtualDisk будут необратимо удалены. Приложение сохранится.":"Deployment, Service, Ingress, VM и диск будут удалены через Argo CD prune.";$("modal").classList.add("open")}
 function closeModal(){$("modal").classList.remove("open");pendingAction=null}
 $("confirmAction").onclick=async()=>{const a=pendingAction;closeModal();try{await api("/api/actions",{method:"POST",body:JSON.stringify(a)});last=a.environment;show("mine");$("envRefreshState").textContent="Операция записана в Git. Ожидаем controller и Argo CD...";loadEnvs(false)}catch(e){$("envRefreshState").textContent=`Не удалось создать операцию: ${e.message}`}}
-function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll("nav button").forEach(v=>v.classList.toggle("active",v.dataset.view===id));$("crumb").textContent={new:"Новый стенд",mine:"Мои стенды",history:"История"}[id];if(id!=="new")loadEnvs()}
+function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll("nav button").forEach(v=>v.classList.toggle("active",v.dataset.view===id));$("crumb").textContent={new:"Новый стенд",mine:"Мои стенды",history:"История"}[id];if(id==="mine")loadEnvs();if(id==="history")loadHistory()}
 async function init(){const me=await api("/api/me");profiles=me.profiles;purposes=me.purposes;$("user").textContent=me.email||me.name;$("initial").textContent=(me.name||"U")[0].toUpperCase();$("profile").innerHTML=profiles.map(p=>`<option value="${p.name}">${p.title}</option>`).join("");$("purpose").innerHTML=purposes.map(p=>`<option value="${p.name}">${p.title}</option>`).join("");document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>show(b.dataset.view));$("profile").onchange=renderProfile;$("purpose").onchange=renderPurpose;renderProfile();renderPurpose();loadEnvs()}
 $("form").onsubmit=async e=>{e.preventDefault();clearTimeout(pollTimer);$("submit").disabled=true;$("progress").hidden=false;$("activity").textContent="Создаём EnvironmentRequest в Git...";const p=profile();try{const r=await api("/api/requests",{method:"POST",body:JSON.stringify({profile:$("profile").value,purpose:$("purpose").value,ttl:$("ttl").value,postgresVersion:p.postgresVersions?.length?$("postgresVersion").value:null})});last=r.environmentId;render(r);poll()}catch(err){$("submit").disabled=false;$("progress").hidden=true;$("activity").textContent=err.message}};
 init().catch(e=>{$("result").textContent=e.message});
