@@ -1,0 +1,11 @@
+{
+  "id": "practicum-env-marina-bugfix-3b1e0b-delete-environment-7dd992",
+  "environment": "practicum-env-marina-bugfix-3b1e0b",
+  "action": "delete-environment",
+  "actor": "victor-melnikov-practicum",
+  "reason": "Acceptance test: удалить оставшийся временный стенд",
+  "requestedAt": "2026-06-10T08:36:03Z",
+  "gitCommit": "490777082b8e0f0794ddc26a3a614cb0764b311f",
+  "outcome": "Completed",
+  "completedAt": "2026-06-10T08:37:48Z"
+}
