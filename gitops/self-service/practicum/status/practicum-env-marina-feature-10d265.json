@@ -24,7 +24,7 @@
   },
   "virtualMachine": {
     "name": "practicum-env-marina-feature-10d265-vm",
-    "phase": "Pending",
+    "phase": "Starting",
     "ip": "10.66.0.32",
     "agentReady": false,
     "guestReady": false,
@@ -33,5 +33,5 @@
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v2"
   },
-  "updatedAt": "2026-06-10T06:29:00Z"
+  "updatedAt": "2026-06-10T06:30:10Z"
 }
