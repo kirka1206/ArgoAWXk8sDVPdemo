@@ -1,0 +1,11 @@
+{
+  "id": "practicum-env-marina-bugfix-39884b-restart-vm-5810f8",
+  "environment": "practicum-env-marina-bugfix-39884b",
+  "action": "restart-vm",
+  "actor": "victor-melnikov-practicum",
+  "reason": "Проверка GitOps lifecycle после внедрения портала",
+  "requestedAt": "2026-06-10T08:28:11Z",
+  "gitCommit": "2c2bfe6f4cd0fa5d825f8eec8556b8f56e7ef1c4",
+  "outcome": "Completed",
+  "completedAt": "2026-06-10T08:29:50Z"
+}
