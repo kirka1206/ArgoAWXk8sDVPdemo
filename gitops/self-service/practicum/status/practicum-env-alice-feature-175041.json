@@ -15,7 +15,7 @@
   "reason": null,
   "argoCD": {
     "sync": "Synced",
-    "health": "Progressing"
+    "health": "Healthy"
   },
   "application": {
     "name": "practicum-env-alice-feature-175041",
@@ -25,5 +25,5 @@
     "ingressReady": true
   },
   "virtualMachine": null,
-  "updatedAt": "2026-06-10T15:30:45Z"
+  "updatedAt": "2026-06-10T15:31:25Z"
 }
