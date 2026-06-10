@@ -1,7 +1,7 @@
 {
   "environmentId": "practicum-env-marina-feature-10d265",
   "namespace": "practicum-tks",
-  "state": "Provisioning",
+  "state": "Ready",
   "owner": "marina-volkova-practicum",
   "profile": "app-with-postgres-vm",
   "purpose": "feature",
@@ -9,7 +9,7 @@
   "expiresAt": "2026-06-10T10:27:45Z",
   "gitCommit": "c33226626cbdd06dc28f86ed648975e4fa5bbe2c",
   "awxJob": 73,
-  "awxStatus": "running",
+  "awxStatus": "successful",
   "awxAttempts": 3,
   "reason": null,
   "argoCD": {
@@ -34,5 +34,5 @@
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v2"
   },
-  "updatedAt": "2026-06-10T06:53:02Z"
+  "updatedAt": "2026-06-10T06:53:28Z"
 }
