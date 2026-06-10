@@ -2,7 +2,11 @@
   "apiVersion": "demo.practicum/v1",
   "kind": "EnvironmentRequest",
   "metadata": {
-    "name": "practicum-env-marina-feature-e6bd5c"
+    "name": "practicum-env-marina-feature-e6bd5c",
+    "annotations": {
+      "demo.practicum/deleted-by": "marina-volkova-practicum",
+      "demo.practicum/delete-reason": "owner-request"
+    }
   },
   "spec": {
     "owner": "marina-volkova-practicum",
