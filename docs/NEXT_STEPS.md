@@ -27,6 +27,8 @@
 5. Подтвердить `Forbidden` для Victor на Secrets, Deployments, RBAC и изменение
    VirtualImage/ClusterVirtualImage.
 6. Подтвердить, что разработчики не могут создавать VM напрямую.
+7. Провести `scenarios/12-dvp-vm-drift-correction.md` на временной VM и
+   проверить кратковременный `OutOfSync`, self-heal и controlled restart.
 
 ## Приоритет 3. Усилить Git workflow
 
