@@ -49,6 +49,25 @@ PROFILES = {
     },
 }
 
+PURPOSES = {
+    "feature": {
+        "title": "Разработка функции",
+        "description": "Стенд для разработки и проверки новой функциональности. Выбор влияет на Environment ID и аудит, но не меняет ресурсы выбранного профиля.",
+    },
+    "bugfix": {
+        "title": "Проверка исправления",
+        "description": "Изолированный стенд для воспроизведения дефекта и проверки исправления. Ресурсы определяет профиль стенда.",
+    },
+    "demo": {
+        "title": "Демонстрация",
+        "description": "Временный стенд для показа сценария или презентации. Назначение сохраняется в Git и отображается в истории.",
+    },
+    "loadtest": {
+        "title": "Нагрузочный тест",
+        "description": "Стенд с пометкой для нагрузочных проверок. Текущая демо-версия не увеличивает ресурсы автоматически: их по-прежнему задаёт профиль.",
+    },
+}
+
 APPROVED_USERS = {
     "alice.koroleva.practicum@demo.local": {
         "name": "alice-koroleva-practicum",
@@ -166,6 +185,7 @@ def send(handler, status, payload, content_type="application/json; charset=utf-8
     handler.send_response(status)
     handler.send_header("Content-Type", content_type)
     handler.send_header("Content-Length", str(len(body)))
+    handler.send_header("Cache-Control", "no-store")
     handler.end_headers()
     handler.wfile.write(body)
 
@@ -174,6 +194,8 @@ def create_request(user, payload):
     profile = payload.get("profile")
     ttl = payload.get("ttl")
     purpose = slug(payload.get("purpose", "demo"))
+    if purpose not in PURPOSES:
+        raise ValueError("Неизвестное назначение")
     if profile not in PROFILES:
         raise ValueError("Неизвестный профиль")
     if ttl not in PROFILES[profile]["ttl"]:
@@ -281,7 +303,7 @@ nav button{width:100%;display:flex;align-items:center;gap:10px;border:0;backgrou
 .shell{min-width:0}.top{height:66px;background:#fff;border-bottom:1px solid #dce3ea;display:flex;align-items:center;justify-content:space-between;padding:0 28px}.crumb{color:#61758a}.user{display:flex;align-items:center;gap:10px}.avatar{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#eaf3ff;color:#0969d7;font-weight:800}.logout{color:#536a80;text-decoration:none}
 main{padding:26px;max-width:1400px}.view{display:none}.view.active{display:block}.heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px}h1{font-size:27px;margin:0 0 6px}h2{font-size:18px;margin:0}.muted{color:#6b7f92}.panel,.card{background:#fff;border:1px solid #dce3ea;border-radius:8px;box-shadow:0 1px 2px #142b4410}.panel{padding:20px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
 label{display:grid;gap:7px;font-weight:650;margin-bottom:16px}select,button{min-height:40px;border-radius:6px;font:inherit}select{border:1px solid #b8c5d1;background:white;padding:8px}.primary{border:0;background:#1677e8;color:white;font-weight:750;padding:0 16px}.danger{border:0;background:#c93535;color:white;font-weight:750;padding:0 16px}.secondary{border:1px solid #b8c5d1;background:#fff;color:#263b50;padding:0 14px}
-.profile{border-left:3px solid #1677e8;background:#f2f7fd;padding:12px;margin:-4px 0 16px;line-height:1.45}.card{overflow:hidden}.card-head{padding:16px;border-bottom:1px solid #e7ecf1;display:flex;justify-content:space-between;gap:12px}.card-body{padding:16px;display:grid;gap:10px}.card-foot{background:#f7f9fb;padding:12px 16px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.title{font-weight:800;font-size:16px}.badge{display:inline-flex;padding:4px 8px;border-radius:12px;background:#eaf3ff;color:#0969d7;font-size:12px;font-weight:750}.badge.ready{background:#e5f7f1;color:#08785a}.badge.work{background:#fff3da;color:#9a6200}.badge.error{background:#fde9e9;color:#ad2929}.kv{display:grid;grid-template-columns:120px 1fr;gap:6px}.kv span:nth-child(odd){color:#718497}.mono{font-family:ui-monospace,monospace;overflow-wrap:anywhere}.status{white-space:pre-wrap;line-height:1.5}.progress{height:4px;background:#e6ebf0;overflow:hidden}.progress span{display:block;width:35%;height:100%;background:#1677e8;animation:move 1.5s infinite}@keyframes move{from{transform:translateX(-110%)}to{transform:translateX(330%)}}
+.profile{border-left:3px solid #1677e8;background:#f2f7fd;padding:12px;margin:-4px 0 16px;line-height:1.45}.purpose-help{border-left:3px solid #8ca4bc;background:#f7f9fb;padding:10px 12px;margin:-5px 0 16px;line-height:1.45;color:#52677d}.card{overflow:hidden}.card-head{padding:16px;border-bottom:1px solid #e7ecf1;display:flex;justify-content:space-between;gap:12px}.card-body{padding:16px;display:grid;gap:12px}.card-foot{background:#f7f9fb;padding:12px 16px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.title{font-weight:800;font-size:16px}.badge{display:inline-flex;padding:4px 8px;border-radius:12px;background:#eaf3ff;color:#0969d7;font-size:12px;font-weight:750}.badge.ready{background:#e5f7f1;color:#08785a}.badge.work{background:#fff3da;color:#9a6200}.badge.error{background:#fde9e9;color:#ad2929}.kv{display:grid;grid-template-columns:135px minmax(0,1fr);gap:7px 10px}.kv span:nth-child(odd){color:#718497}.kv b{font-weight:650;overflow-wrap:anywhere}.operation{border-left:3px solid #d98b15;background:#fff8e9;padding:10px 12px;line-height:1.45}.operation.ready{border-color:#15966f;background:#edf9f5}.mono{font-family:ui-monospace,monospace;overflow-wrap:anywhere}.status{white-space:pre-wrap;line-height:1.5}.progress{height:4px;background:#e6ebf0;overflow:hidden}.progress span{display:block;width:35%;height:100%;background:#1677e8;animation:move 1.5s infinite}@keyframes move{from{transform:translateX(-110%)}to{transform:translateX(330%)}}
 .modal{position:fixed;inset:0;background:#10203388;display:none;place-items:center;padding:20px;z-index:10}.modal.open{display:grid}.dialog{width:min(520px,100%);background:#fff;border-radius:8px;padding:22px}.warning{background:#fff4e4;border-left:3px solid #d98b15;padding:12px;margin:16px 0}.actions{display:flex;justify-content:flex-end;gap:10px}.empty{padding:42px;text-align:center;color:#718497}
 @media(max-width:760px){.app{grid-template-columns:1fr}aside{height:auto;position:static;border-right:0;border-bottom:1px solid #dce3ea}.brand{padding-bottom:10px}nav{display:flex;overflow:auto}nav button{white-space:nowrap}.top{padding:0 16px}.user span:not(.avatar){display:none}main{padding:18px}.heading{align-items:flex-start;flex-direction:column}.grid{grid-template-columns:1fr}}
 </style></head><body>
@@ -291,17 +313,18 @@ label{display:grid;gap:7px;font-weight:650;margin-bottom:16px}select,button{min-
 <main><section id="new" class="view active"><div class="heading"><div><h1>Новый стенд</h1><div class="muted">Заказ ресурсов через GitOps</div></div></div><div class="panel">
 <form id="form"><label>Профиль стенда<select id="profile"></select></label><div id="details" class="profile"></div>
 <label id="postgresVersionField" hidden>Версия PostgreSQL<select id="postgresVersion"></select></label>
-<label>Назначение<select id="purpose"><option value="feature">Разработка функции</option><option value="bugfix">Проверка исправления</option><option value="demo">Демонстрация</option><option value="loadtest">Нагрузочный тест</option></select></label>
+<label>Назначение<select id="purpose"></select></label><div id="purposeDetails" class="purpose-help"></div>
 <label>Время жизни<select id="ttl"></select></label><button id="submit" class="primary">Отправить заявку</button></form></div>
 <div class="panel" style="margin-top:16px"><h2>Результат</h2><div id="progress" class="progress" hidden><span></span></div><p id="activity" class="muted">После отправки здесь появится ход выполнения.</p><div id="result" class="status"></div></div></section>
-<section id="mine" class="view"><div class="heading"><div><h1>Мои стенды</h1><div class="muted">Активные приложения и виртуальные машины</div></div><button class="secondary" onclick="loadEnvs()">↻ Обновить</button></div><div id="envs" class="grid"></div></section>
+<section id="mine" class="view"><div class="heading"><div><h1>Мои стенды</h1><div class="muted">Все активные стенды текущего пользователя из GitOps status</div></div><button id="refreshEnvs" class="secondary" onclick="loadEnvs(true)">↻ Обновить</button></div><div id="envRefreshState" class="muted" style="margin:-10px 0 14px"></div><div id="envs" class="grid"></div></section>
 <section id="history" class="view"><div class="heading"><div><h1>История</h1><div class="muted">Очищенные стенды и последние операции</div></div></div><div id="historyList" class="grid"></div></section></main></div></div>
 <div id="modal" class="modal"><div class="dialog"><h2 id="modalTitle"></h2><p id="modalText"></p><div class="warning" id="modalWarning"></div><div class="actions"><button class="secondary" onclick="closeModal()">Отмена</button><button class="danger" id="confirmAction">Подтвердить</button></div></div></div>
 <script>
-let profiles=[],last=null,pollTimer=null,pendingAction=null;const $=id=>document.getElementById(id);
-async function api(path,opts={}){const r=await fetch(path,{headers:{"Content-Type":"application/json"},...opts});const p=await r.json();if(!r.ok)throw Error(p.error||"Ошибка");return p}
+let profiles=[],purposes=[],last=null,pollTimer=null,listPollTimer=null,pendingAction=null;const $=id=>document.getElementById(id);
+async function api(path,opts={}){const r=await fetch(path,{cache:"no-store",headers:{"Content-Type":"application/json"},...opts});const p=await r.json();if(!r.ok)throw Error(p.error||"Ошибка");return p}
 function profile(){return profiles.find(p=>p.name===$("profile").value)}
 function renderProfile(){const p=profile();$("details").innerHTML=`<b>${p.title}</b><br>${p.description}<br><br><b>Ресурсы:</b> приложение 1 replica, 25m CPU / 32Mi RAM${p.vm?`, VM ${p.vm.cpu}, RAM ${p.vm.memory}, диск ${p.vm.disk}`:"; VM не создаётся"}.<br><b>Namespace:</b> practicum-tks`;$("ttl").innerHTML=p.ttl.map(v=>`<option>${v}</option>`).join("");const versions=p.postgresVersions||[];$("postgresVersionField").hidden=!versions.length;$("postgresVersion").innerHTML=versions.map(v=>`<option value="${v}">PostgreSQL ${v}</option>`).join("")}
+function renderPurpose(){const p=purposes.find(p=>p.name===$("purpose").value);$("purposeDetails").innerHTML=`<b>${p.title}</b><br>${p.description}`}
 function working(s){return !["Ready","Rejected","Error","Cleaned","ActionFailed"].includes(s.state)}
 function render(s){$("progress").hidden=!working(s);$("activity").textContent=working(s)?"Система выполняет GitOps-операцию. Статус обновляется каждые 5 секунд.":s.state==="Ready"?"Стенд готов.":"Операция завершена.";$("result").textContent=`Environment ID: ${s.environmentId}
 Namespace: ${s.namespace}
@@ -323,13 +346,14 @@ SSH: ${s.virtualMachine?.access?.command||"-"}
 AWX job/status: ${s.awxJob||"-"} / ${s.awxStatus||"-"}`;}
 async function poll(){if(!last)return;try{const s=await api(`/api/status/${last}`);render(s);if(!working(s)){$("submit").disabled=false;loadEnvs();return}}catch(e){$("activity").textContent=`Ошибка связи: ${e.message}. Повтор через 5 секунд.`}pollTimer=setTimeout(poll,5000)}
 function badge(s){const c=s==="Ready"?"ready":s==="Cleaned"?"":s.includes("Error")||s==="Rejected"?"error":"work";return`<span class="badge ${c}">${s}</span>`}
-function card(s,history=false){const vm=s.virtualMachine;return `<article class="card"><div class="card-head"><div><div class="title">${s.environmentId}</div><div class="muted">${s.profile||"-"}</div></div>${badge(s.state)}</div><div class="card-body"><div class="kv"><span>TTL</span><b>${s.expiresAt||"-"}</b><span>Приложение</span><b>${s.application?.readyReplicas??"-"}/${s.application?.replicas??"-"}</b><span>VM</span><b>${vm?`${vm.phase} · ${vm.ip||"-"}`:"Нет"}</b><span>AWX</span><b>${s.awxJob||"-"} / ${s.awxStatus||"-"}</b></div>${s.lastAction?`<div class="muted">Последнее действие: ${s.lastAction.action} · ${s.lastAction.status}</div>`:""}</div>${history?"":`<div class="card-foot">${vm?`<button class="secondary" onclick="ask('${s.environmentId}','delete-vm')">Удалить VM</button>`:"<span></span>"}<button class="danger" onclick="ask('${s.environmentId}','delete-environment')">Удалить стенд</button></div>`}</article>`}
-async function loadEnvs(){const active=await api("/api/environments");$("envs").innerHTML=active.length?active.map(s=>card(s)).join(""):`<div class="panel empty">Активных стендов нет</div>`;const history=await api("/api/environments?history=1");const cleaned=history.filter(s=>s.state==="Cleaned");$("historyList").innerHTML=cleaned.length?cleaned.map(s=>card(s,true)).join(""):`<div class="panel empty">История пока пуста</div>`}
+function operationText(s){const names={ActionRequested:"Запрос операции записан в Git. Контроллер ожидает обработку.",VMDeleting:"VM и диск удалены из desired state. Argo CD выполняет prune.",DeletionRequested:"Запрос удаления принят и записан в Git.",Deleting:"Ресурсы удалены из desired state. Argo CD выполняет prune.",VMStarting:"DVP запускает виртуальную машину.",VMStopping:"DVP останавливает виртуальную машину.",VMRestarting:"DVP выполняет перезапуск виртуальной машины.",Provisioning:"Argo CD создаёт ресурсы, затем AWX настраивает ОС.",Queued:"Заявка ожидает свободной ёмкости."};if(names[s.state])return names[s.state];if(s.lastAction?.status==="Running")return`Выполняется ${s.lastAction.action}. Статус проверяется каждые 5 секунд.`;if(s.lastAction?.status==="Completed")return`Последняя операция ${s.lastAction.action} завершена.`;return""}
+function card(s,history=false){const vm=s.virtualMachine,app=s.application||{},op=operationText(s);return `<article class="card"><div class="card-head"><div><div class="title">${s.environmentId}</div><div class="muted">Namespace: ${s.namespace||"practicum-tks"}</div></div>${badge(s.state)}</div><div class="card-body"><div class="kv"><span>Владелец</span><b>${s.owner||"-"}</b><span>Профиль</span><b>${s.profile||"-"}</b><span>PostgreSQL</span><b>${s.postgresVersion||"не требуется"}</b><span>TTL до</span><b>${s.expiresAt||"-"}</b><span>Приложение</span><b>${app.name||"-"}, ready ${app.readyReplicas??"-"}/${app.replicas??"-"}</b><span>URL</span><b>${app.url?`<a href="${app.url}" target="_blank">${app.url}</a>`:"-"}</b><span>VM</span><b>${vm?.name||"не требуется"}</b><span>VM IP</span><b>${vm?.ip||"-"}</b><span>Характеристики VM</span><b>${vm?`${vm.cpu}, RAM ${vm.memory}, disk ${vm.disk}, image ${vm.image}`:"-"}</b><span>Логин VM</span><b>${vm?.access?.username||"-"}${vm?.access?.authentication?` (${vm.access.authentication})`:""}</b><span>SSH</span><b class="mono">${vm?.access?.command||"-"}</b><span>AWX</span><b>${s.awxJob||"-"} / ${s.awxStatus||"-"}</b><span>Git commit</span><b class="mono">${s.gitCommit||"-"}</b></div>${op?`<div class="operation ${s.lastAction?.status==="Completed"?"ready":""}"><b>Ход операции</b><br>${op}${s.reason?`<br>Причина: ${s.reason}`:""}</div>`:""}</div>${history?"":`<div class="card-foot">${vm?`<button class="secondary" onclick="ask('${s.environmentId}','delete-vm')">Удалить VM</button>`:"<span></span>"}<button class="danger" onclick="ask('${s.environmentId}','delete-environment')">Удалить стенд</button></div>`}</article>`}
+async function loadEnvs(manual=false){clearTimeout(listPollTimer);const button=$("refreshEnvs");if(button)button.disabled=true;$("envRefreshState").textContent=manual?"Обновляем данные из Git...":"Загружаем стенды...";try{const [active,history]=await Promise.all([api(`/api/environments?t=${Date.now()}`),api(`/api/environments?history=1&t=${Date.now()}`)]);$("envs").innerHTML=active.length?active.map(s=>card(s)).join(""):`<div class="panel empty">Активных стендов нет</div>`;const cleaned=history.filter(s=>s.state==="Cleaned");$("historyList").innerHTML=cleaned.length?cleaned.map(s=>card(s,true)).join(""):`<div class="panel empty">История пока пуста</div>`;$("envRefreshState").textContent=`Показано стендов: ${active.length}. Обновлено ${new Date().toLocaleTimeString("ru-RU")}.`;if(active.some(working))listPollTimer=setTimeout(()=>loadEnvs(false),5000)}catch(e){$("envRefreshState").textContent=`Не удалось обновить: ${e.message}`}finally{if(button)button.disabled=false}}
 function ask(env,action){pendingAction={environment:env,action};$("modalTitle").textContent=action==="delete-vm"?"Удалить виртуальную машину?":"Удалить стенд?";$("modalText").textContent=env;$("modalWarning").textContent=action==="delete-vm"?"VM и VirtualDisk будут необратимо удалены. Приложение сохранится.":"Deployment, Service, Ingress, VM и диск будут удалены через Argo CD prune.";$("modal").classList.add("open")}
 function closeModal(){$("modal").classList.remove("open");pendingAction=null}
-$("confirmAction").onclick=async()=>{const a=pendingAction;closeModal();await api("/api/actions",{method:"POST",body:JSON.stringify(a)});last=a.environment;show("mine");poll()}
+$("confirmAction").onclick=async()=>{const a=pendingAction;closeModal();try{await api("/api/actions",{method:"POST",body:JSON.stringify(a)});last=a.environment;show("mine");$("envRefreshState").textContent="Операция записана в Git. Ожидаем controller и Argo CD...";loadEnvs(false)}catch(e){$("envRefreshState").textContent=`Не удалось создать операцию: ${e.message}`}}
 function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll("nav button").forEach(v=>v.classList.toggle("active",v.dataset.view===id));$("crumb").textContent={new:"Новый стенд",mine:"Мои стенды",history:"История"}[id];if(id!=="new")loadEnvs()}
-async function init(){const me=await api("/api/me");profiles=me.profiles;$("user").textContent=me.email||me.name;$("initial").textContent=(me.name||"U")[0].toUpperCase();$("profile").innerHTML=profiles.map(p=>`<option value="${p.name}">${p.title}</option>`).join("");document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>show(b.dataset.view));$("profile").onchange=renderProfile;renderProfile();loadEnvs()}
+async function init(){const me=await api("/api/me");profiles=me.profiles;purposes=me.purposes;$("user").textContent=me.email||me.name;$("initial").textContent=(me.name||"U")[0].toUpperCase();$("profile").innerHTML=profiles.map(p=>`<option value="${p.name}">${p.title}</option>`).join("");$("purpose").innerHTML=purposes.map(p=>`<option value="${p.name}">${p.title}</option>`).join("");document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>show(b.dataset.view));$("profile").onchange=renderProfile;$("purpose").onchange=renderPurpose;renderProfile();renderPurpose();loadEnvs()}
 $("form").onsubmit=async e=>{e.preventDefault();clearTimeout(pollTimer);$("submit").disabled=true;$("progress").hidden=false;$("activity").textContent="Создаём EnvironmentRequest в Git...";const p=profile();try{const r=await api("/api/requests",{method:"POST",body:JSON.stringify({profile:$("profile").value,purpose:$("purpose").value,ttl:$("ttl").value,postgresVersion:p.postgresVersions?.length?$("postgresVersion").value:null})});last=r.environmentId;render(r);poll()}catch(err){$("submit").disabled=false;$("progress").hidden=true;$("activity").textContent=err.message}};
 init().catch(e=>{$("result").textContent=e.message});
 </script></body></html>"""
@@ -352,9 +376,19 @@ class Handler(BaseHTTPRequestHandler):
                     for name, profile in PROFILES.items()
                     if set(user["groups"]).intersection(profile["groups"])
                 ]
-                return send(self, 200, {**user, "profiles": allowed, "namespace": NAMESPACE})
+                purposes = [
+                    {"name": name, **purpose}
+                    for name, purpose in PURPOSES.items()
+                ]
+                return send(self, 200, {
+                    **user,
+                    "profiles": allowed,
+                    "purposes": purposes,
+                    "namespace": NAMESPACE,
+                })
             if self.path.startswith("/api/environments"):
-                include_cleaned = urllib.parse.urlparse(self.path).query == "history=1"
+                query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                include_cleaned = query.get("history") == ["1"]
                 return send(self, 200, environments_for(user, include_cleaned))
             if self.path.startswith("/api/status/"):
                 environment = slug(urllib.parse.unquote(self.path.rsplit("/", 1)[1]))

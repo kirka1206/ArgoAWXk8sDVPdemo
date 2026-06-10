@@ -21,9 +21,12 @@
 8. Повторить `scenarios/13-manual-environment-lifecycle.md` как чистый
    демонстрационный прогон; техническая live-приёмка start/stop/restart,
    delete VM и delete environment уже выполнена.
-9. Выполнить `scenarios/11-practicum-end-to-end.md`, не изменяя опубликованные
+9. На следующем пользовательском прогоне проверить расширенную карточку
+   `Мои стенды`, ручное обновление без browser cache и прогресс удаления с
+   polling каждые 5 секунд.
+10. Выполнить `scenarios/11-practicum-end-to-end.md`, не изменяя опубликованные
    golden image v1/v2.
-10. Заменить временный `SuperAdmin` пользователя `practicum-tks@demo.local` на
+11. Заменить временный `SuperAdmin` пользователя `practicum-tks@demo.local` на
    минимально необходимые права.
 
 ## Приоритет 2. Проверить роли и профили
