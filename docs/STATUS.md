@@ -78,6 +78,11 @@ DexAuthenticator имеет состояние `2/2`.
   `Готово`, `Ошибка`, текущий этап и polling каждые 5 секунд;
 - повторная отправка блокируется до terminal state, ошибка связи не останавливает
   последующие проверки статуса;
+- выявлен дефект профиля `app-with-postgres-vm`: AWX job `70` завершался
+  `failed`, потому что Alpine 3.23 не содержит пакет `postgresql15`;
+- playbook исправлен: выбирает самый новый доступный `postgresqlNN`;
+- controller исправлен: после трёх failed AWX attempts выставляет `Error` с
+  причиной вместо бесконечного `Provisioning`;
 - request controller: Ready;
 - в Gitea создан repository push webhook на внутренний endpoint Argo CD;
 - Gitea webhook allowlist ограничен точным Service DNS

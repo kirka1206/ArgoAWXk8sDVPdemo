@@ -525,7 +525,19 @@ def reconcile_existing(request, request_path):
     app_ready = runtime["application"]["readyReplicas"] >= runtime["application"]["replicas"]
     vm_ready = not request["vm"] or (vm and vm.get("phase") == "Running")
     awx_ready = not request["vm"] or awx_status == "successful"
-    state = "Ready" if app_ready and vm_ready and awx_ready else "Provisioning"
+    awx_failed = (
+        request["vm"]
+        and awx_status in {"failed", "error", "canceled"}
+        and awx_attempts >= 3
+    )
+    state = "Error" if awx_failed else (
+        "Ready" if app_ready and vm_ready and awx_ready else "Provisioning"
+    )
+    reason = (
+        f"AWX post-configuration failed after {awx_attempts} attempts; "
+        f"last job: {awx_job}, status: {awx_status}"
+        if awx_failed else None
+    )
     write_status(
         env,
         state,
@@ -538,6 +550,7 @@ def reconcile_existing(request, request_path):
         awxJob=awx_job,
         awxStatus=awx_status,
         awxAttempts=awx_attempts,
+        reason=reason,
         **runtime,
     )
 
