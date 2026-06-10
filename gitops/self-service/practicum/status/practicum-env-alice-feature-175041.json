@@ -1,29 +1,8 @@
 {
   "environmentId": "practicum-env-alice-feature-175041",
   "namespace": "practicum-tks",
-  "state": "Ready",
+  "state": "Expired",
   "owner": "alice-koroleva-practicum",
-  "profile": "app-only",
-  "postgresVersion": null,
-  "purpose": "feature",
-  "createdAt": "2026-06-10T15:02:52Z",
   "expiresAt": "2026-06-10T17:02:52Z",
-  "gitCommit": "7ce0f51c3c99f2964103b3e7dc4aec5ddb8e1adc",
-  "awxJob": null,
-  "awxStatus": null,
-  "awxAttempts": 0,
-  "reason": null,
-  "argoCD": {
-    "sync": "Synced",
-    "health": "Healthy"
-  },
-  "application": {
-    "name": "practicum-env-alice-feature-175041",
-    "replicas": 1,
-    "readyReplicas": 1,
-    "url": "http://practicum-env-alice-feature-175041.d8case.ru",
-    "ingressReady": true
-  },
-  "virtualMachine": null,
-  "updatedAt": "2026-06-10T15:31:25Z"
+  "updatedAt": "2026-06-10T17:03:02Z"
 }
