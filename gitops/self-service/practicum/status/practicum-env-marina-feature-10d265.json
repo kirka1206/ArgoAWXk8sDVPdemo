@@ -1,7 +1,7 @@
 {
   "environmentId": "practicum-env-marina-feature-10d265",
   "namespace": "practicum-tks",
-  "state": "Ready",
+  "state": "Deleting",
   "owner": "marina-volkova-practicum",
   "profile": "app-with-postgres-vm",
   "postgresVersion": "18",
@@ -41,5 +41,14 @@
       "command": "d8 v ssh ansible@practicum-env-marina-feature-10d265-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "updatedAt": "2026-06-10T08:55:02Z"
+  "lastAction": {
+    "id": "practicum-env-marina-feature-10d265-delete-environment-39fec7",
+    "action": "delete-environment",
+    "actor": "marina-volkova-practicum",
+    "reason": "owner-request",
+    "requestedAt": "2026-06-10T08:55:39Z",
+    "gitCommit": "220e50987a1a04ac054e6ea8383762ffb3e67010",
+    "status": "Running"
+  },
+  "updatedAt": "2026-06-10T08:57:31Z"
 }
