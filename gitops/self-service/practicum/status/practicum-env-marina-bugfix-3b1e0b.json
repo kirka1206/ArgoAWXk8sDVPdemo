@@ -5,8 +5,41 @@
   "owner": "marina-volkova-practicum",
   "profile": "app-with-vm",
   "postgresVersion": null,
+  "purpose": "bugfix",
   "createdAt": "2026-06-10T07:08:05Z",
   "expiresAt": "2026-06-10T09:08:05Z",
   "gitCommit": "28d367034e38ca291ef85357d32d913ef061ae72",
-  "updatedAt": "2026-06-10T07:08:35Z"
+  "awxJob": null,
+  "awxStatus": null,
+  "awxAttempts": 0,
+  "reason": null,
+  "argoCD": {
+    "sync": "Synced",
+    "health": "Healthy"
+  },
+  "application": {
+    "name": "practicum-env-marina-bugfix-3b1e0b",
+    "replicas": 1,
+    "readyReplicas": 1,
+    "url": "http://practicum-env-marina-bugfix-3b1e0b.d8case.ru",
+    "ingressReady": true
+  },
+  "virtualMachine": {
+    "name": "practicum-env-marina-bugfix-3b1e0b-vm",
+    "phase": "Pending",
+    "ip": "10.66.0.33",
+    "agentReady": false,
+    "guestReady": false,
+    "cpu": "1 core, 5%",
+    "memory": "512Mi",
+    "disk": "768Mi",
+    "image": "practicum-alpine-golden-3-23-v2",
+    "access": {
+      "username": "ansible",
+      "authentication": "SSH key",
+      "identityFile": "local/practicum-ssh/id_ed25519",
+      "command": "d8 v ssh ansible@practicum-env-marina-bugfix-3b1e0b-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
+    }
+  },
+  "updatedAt": "2026-06-10T07:09:09Z"
 }
