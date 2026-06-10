@@ -1,0 +1,18 @@
+{
+  "apiVersion": "demo.practicum/v1",
+  "kind": "EnvironmentRequest",
+  "metadata": {
+    "name": "practicum-env-marina-feature-6639ff"
+  },
+  "spec": {
+    "owner": "marina-volkova-practicum",
+    "email": "marina.volkova.practicum@demo.local",
+    "groups": [
+      "practicum-qa-devs"
+    ],
+    "profile": "app-only",
+    "purpose": "feature",
+    "ttl": "2h",
+    "createdAt": "2026-06-10T13:22:47Z"
+  }
+}
