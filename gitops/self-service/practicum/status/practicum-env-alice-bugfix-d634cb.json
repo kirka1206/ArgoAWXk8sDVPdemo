@@ -14,8 +14,8 @@
   "awxAttempts": 1,
   "reason": null,
   "argoCD": {
-    "sync": "OutOfSync",
-    "health": "Progressing"
+    "sync": "Synced",
+    "health": "Healthy"
   },
   "application": {
     "name": "practicum-env-alice-bugfix-d634cb",
@@ -41,5 +41,5 @@
       "command": "d8 v ssh ansible@practicum-env-alice-bugfix-d634cb-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "updatedAt": "2026-06-10T17:09:37Z"
+  "updatedAt": "2026-06-10T17:10:11Z"
 }
