@@ -1,7 +1,7 @@
 {
   "environmentId": "practicum-env-marina-bugfix-3b1e0b",
   "namespace": "practicum-tks",
-  "state": "Ready",
+  "state": "Deleting",
   "owner": "marina-volkova-practicum",
   "profile": "app-only",
   "postgresVersion": null,
@@ -25,5 +25,14 @@
     "ingressReady": true
   },
   "virtualMachine": null,
-  "updatedAt": "2026-06-10T08:35:21Z"
+  "lastAction": {
+    "id": "practicum-env-marina-bugfix-3b1e0b-delete-environment-7dd992",
+    "action": "delete-environment",
+    "actor": "victor-melnikov-practicum",
+    "reason": "Acceptance test: удалить оставшийся временный стенд",
+    "requestedAt": "2026-06-10T08:36:03Z",
+    "gitCommit": "490777082b8e0f0794ddc26a3a614cb0764b311f",
+    "status": "Running"
+  },
+  "updatedAt": "2026-06-10T08:36:42Z"
 }
