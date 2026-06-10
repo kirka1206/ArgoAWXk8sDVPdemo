@@ -26,7 +26,7 @@
   },
   "virtualMachine": {
     "name": "practicum-env-marina-bugfix-3b1e0b-vm",
-    "phase": "Pending",
+    "phase": "Starting",
     "ip": "10.66.0.33",
     "agentReady": false,
     "guestReady": false,
@@ -41,5 +41,5 @@
       "command": "d8 v ssh ansible@practicum-env-marina-bugfix-3b1e0b-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "updatedAt": "2026-06-10T07:09:09Z"
+  "updatedAt": "2026-06-10T07:10:30Z"
 }
