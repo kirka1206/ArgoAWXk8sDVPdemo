@@ -5,8 +5,41 @@
   "owner": "alice-koroleva-practicum",
   "profile": "app-with-vm",
   "postgresVersion": null,
+  "purpose": "feature",
   "createdAt": "2026-06-10T15:08:27Z",
   "expiresAt": "2026-06-10T17:08:27Z",
   "gitCommit": "3b36e3dba0d91e56d332699a6156da444cdbd768",
-  "updatedAt": "2026-06-10T15:10:42Z"
+  "awxJob": null,
+  "awxStatus": null,
+  "awxAttempts": 0,
+  "reason": null,
+  "argoCD": {
+    "sync": "Synced",
+    "health": "Healthy"
+  },
+  "application": {
+    "name": "practicum-env-alice-feature-73cce8",
+    "replicas": 1,
+    "readyReplicas": 1,
+    "url": "http://practicum-env-alice-feature-73cce8.d8case.ru",
+    "ingressReady": true
+  },
+  "virtualMachine": {
+    "name": "practicum-env-alice-feature-73cce8-vm",
+    "phase": "Starting",
+    "ip": "10.66.0.32",
+    "agentReady": false,
+    "guestReady": false,
+    "cpu": "1 core, 5%",
+    "memory": "512Mi",
+    "disk": "768Mi",
+    "image": "practicum-alpine-golden-3-23-v2",
+    "access": {
+      "username": "ansible",
+      "authentication": "SSH key",
+      "identityFile": "local/practicum-ssh/id_ed25519",
+      "command": "d8 v ssh ansible@practicum-env-alice-feature-73cce8-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
+    }
+  },
+  "updatedAt": "2026-06-10T15:12:08Z"
 }
