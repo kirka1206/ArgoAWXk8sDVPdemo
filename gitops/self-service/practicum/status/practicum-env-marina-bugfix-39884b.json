@@ -14,7 +14,7 @@
   "awxAttempts": 1,
   "reason": null,
   "argoCD": {
-    "sync": "Synced",
+    "sync": "OutOfSync",
     "health": "Healthy"
   },
   "application": {
@@ -28,8 +28,8 @@
     "name": "practicum-env-marina-bugfix-39884b-vm",
     "phase": "Running",
     "ip": "10.66.0.46",
-    "agentReady": false,
-    "guestReady": false,
+    "agentReady": true,
+    "guestReady": true,
     "cpu": "1 core, 5%",
     "memory": "512Mi",
     "disk": "768Mi",
@@ -41,5 +41,5 @@
       "command": "d8 v ssh ansible@practicum-env-marina-bugfix-39884b-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "updatedAt": "2026-06-10T08:30:52Z"
+  "updatedAt": "2026-06-10T08:32:01Z"
 }
