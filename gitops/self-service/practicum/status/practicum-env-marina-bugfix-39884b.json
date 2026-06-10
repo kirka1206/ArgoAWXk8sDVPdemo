@@ -1,13 +1,12 @@
 {
   "environmentId": "practicum-env-marina-bugfix-39884b",
   "namespace": "practicum-tks",
-  "state": "Rejected",
-  "reason": "Gitea PUT /contents/gitops/environments/practicum/self-service/generated/kustomization.yaml: 500 {\"message\":\"\",\"url\":\"http://gitea-practicum.d8case.ru/api/swagger\"}\n",
+  "state": "Provisioning",
   "owner": "marina-volkova-practicum",
   "profile": "app-with-postgres-vm",
   "postgresVersion": "17",
-  "activeEnvironments": 2,
-  "activeVirtualMachines": 2,
+  "createdAt": "2026-06-10T07:13:41Z",
   "expiresAt": "2026-06-10T11:13:41Z",
-  "updatedAt": "2026-06-10T07:24:01Z"
+  "gitCommit": "c088ec5452300cfe45912d266648f71ad0e20ecb",
+  "updatedAt": "2026-06-10T07:24:42Z"
 }
