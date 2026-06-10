@@ -122,6 +122,28 @@ DexAuthenticator имеет состояние `2/2`.
 - controller не выполняет прямой `kubectl delete`;
 - AWX стартует после guest readiness, максимум 3 попытки.
 
+Live-приёмка lifecycle выполнена 2026-06-10:
+
+- Victor portal пропускает только Victor с группой
+  `practicum-vm-operators`; запрос с неверной группой получает `403`;
+- пользовательский API не разрешает Alice удалить стенд Marina и возвращает
+  `403`;
+- `restart-vm` прошёл через Git action и versioned
+  `VirtualMachineOperation`, после выполнения operation удалён из desired
+  state, VM осталась `Running`;
+- `delete-vm` для `practicum-env-marina-bugfix-3b1e0b` удалил VM и
+  VirtualDisk через Argo CD prune, сохранил Deployment, Service и Ingress и
+  преобразовал request в `app-only`;
+- последующий `delete-environment` перевёл status через
+  `DeletionRequested/Deleting` в `Cleaned`, архивировал request/action и
+  удалил только app, Service и Ingress выбранного environment;
+- Application `practicum-demo` после операций вернулся в
+  `Synced/Healthy`;
+- оба portal Deployment и request controller имеют `1/1 Ready`,
+  Certificate административного portal — `Ready`;
+- desktop и mobile layout проверены на отсутствие горизонтального
+  переполнения; фильтры, меню и модальные подтверждения проверены в браузере.
+
 Проверенное окружение:
 
 - ID: `practicum-env-alice-feature-019354`;
@@ -181,17 +203,20 @@ TTL. Для выполнения сценария VM drift нужно созда
 - golden image Git -> Argo CD -> DVP -> AWX -> publish: пройден;
 - Web request -> Git -> controller -> Argo CD -> DVP -> AWX: пройден;
 - TTL cleanup: пройден.
+- Python и встроенный JavaScript lifecycle portal: пройдены;
+- atomic Gitea `repoChangeFiles` commit: пройден;
+- user ownership и Victor group authorization: пройдены;
+- `restart-vm`, `delete-vm`, `delete-environment`: пройдены;
+- desktop/mobile UI lifecycle portal: пройден.
 
 ## Сценарии
 
-Добавлен `scenarios/12-dvp-vm-drift-correction.md`:
+Добавлены сценарии:
 
-- безопасный drift по CPU/RAM;
-- различие между DVP operation и изменением desired state;
-- self-heal Argo CD;
-- controlled restart;
-- опциональное удаление только VM с сохранением диска;
-- ограничения AWX и рекомендации RBAC/admission policy.
+- `scenarios/12-dvp-vm-drift-correction.md`: drift, self-heal и controlled
+  restart;
+- `scenarios/13-manual-environment-lifecycle.md`: пользовательское удаление
+  собственных ресурсов и административные операции Victor через Git actions.
 
 Это стабильная точка продолжения: Application `Synced/Healthy`, временные
 environment-ресурсы очищены, golden images и остановленные builder-диски

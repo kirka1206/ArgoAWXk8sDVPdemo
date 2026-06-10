@@ -15,10 +15,12 @@
    `Submitted -> Provisioning -> Ready` и автоматический TTL cleanup.
 6. Проверить PostgreSQL-профиль для версий `16`, `17`, `18` и выполнить
    показанную portal команду `d8 v ssh`.
-7. Добавить `192.168.2.31 vm-admin-practicum.d8case.ru` в DNS или `/etc/hosts`
-   и проверить Dex-вход Victor.
-8. Выполнить `scenarios/13-manual-environment-lifecycle.md` на временных
-   tenant environments.
+7. Добавить `192.168.2.31 vm-admin-practicum.d8case.ru` в постоянный DNS;
+   временная запись `/etc/hosts`, Dex-доступ Victor и lifecycle API уже
+   проверены.
+8. Повторить `scenarios/13-manual-environment-lifecycle.md` как чистый
+   демонстрационный прогон; техническая live-приёмка start/stop/restart,
+   delete VM и delete environment уже выполнена.
 9. Выполнить `scenarios/11-practicum-end-to-end.md`, не изменяя опубликованные
    golden image v1/v2.
 10. Заменить временный `SuperAdmin` пользователя `practicum-tks@demo.local` на
@@ -42,8 +44,9 @@ Repository webhook Gitea -> Argo CD настроен для немедленно
 push. Периодический polling остаётся резервным механизмом.
 
 1. Перевести automation с прямых commit в `main` на branch/PR.
-2. Объединить generated-файлы и kustomization в один Git commit через Git tree
-   API или отдельный Git worker.
+2. Атомарное обновление action/generated/kustomization через Gitea
+   `repoChangeFiles` реализовано; следующим шагом добавить retry с
+   exponential backoff для конфликтов конкурентных commits.
 3. Добавить CI-проверку схемы EnvironmentRequest, owner/group/profile/TTL и
    Kustomize render до merge.
 4. Добавить защиту ветки `main` и обязательное review platform team.

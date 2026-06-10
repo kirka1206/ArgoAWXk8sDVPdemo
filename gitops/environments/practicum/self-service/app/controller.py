@@ -928,7 +928,8 @@ def reconcile():
         except Exception as exc:
             action = json.loads(get_text(item["path"], "{}") or "{}")
             spec = action.get("spec") or {}
-            environment = slug(spec.get("environment") or item["name"])
+            fallback_environment = item["name"].rsplit(".", 1)[0]
+            environment = slug(spec.get("environment") or fallback_environment)
             existing = load_json(f"{STATUS_ROOT}/{environment}.json", {}) or {}
             existing.pop("updatedAt", None)
             write_status(

@@ -1,7 +1,0 @@
-{
-  "environmentId": "practicum-env-marina-bugfix-3b1e0b-delete-vm-c4238b-json",
-  "namespace": "practicum-tks",
-  "state": "ActionFailed",
-  "reason": "Gitea POST /contents: 500 {\"message\":\"\",\"url\":\"http://gitea-practicum.d8case.ru/api/swagger\"}\n",
-  "updatedAt": "2026-06-10T08:34:25Z"
-}
