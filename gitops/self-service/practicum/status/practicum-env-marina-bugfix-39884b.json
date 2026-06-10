@@ -28,8 +28,8 @@
     "name": "practicum-env-marina-bugfix-39884b-vm",
     "phase": "Running",
     "ip": "10.66.0.46",
-    "agentReady": true,
-    "guestReady": true,
+    "agentReady": false,
+    "guestReady": false,
     "cpu": "1 core, 5%",
     "memory": "512Mi",
     "disk": "768Mi",
@@ -41,14 +41,5 @@
       "command": "d8 v ssh ansible@practicum-env-marina-bugfix-39884b-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "lastAction": {
-    "id": "practicum-env-marina-bugfix-39884b-restart-vm-5810f8",
-    "action": "restart-vm",
-    "actor": "victor-melnikov-practicum",
-    "reason": "Проверка GitOps lifecycle после внедрения портала",
-    "requestedAt": "2026-06-10T08:28:11Z",
-    "gitCommit": "2c2bfe6f4cd0fa5d825f8eec8556b8f56e7ef1c4",
-    "status": "Completed"
-  },
-  "updatedAt": "2026-06-10T08:29:59Z"
+  "updatedAt": "2026-06-10T08:30:52Z"
 }
