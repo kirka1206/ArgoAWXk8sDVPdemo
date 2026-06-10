@@ -1,12 +1,29 @@
 {
   "environmentId": "practicum-env-alice-loadtest-893845",
   "namespace": "practicum-tks",
-  "state": "Provisioning",
+  "state": "Ready",
   "owner": "alice-koroleva-practicum",
   "profile": "app-only",
   "postgresVersion": null,
+  "purpose": "loadtest",
   "createdAt": "2026-06-10T15:26:12Z",
   "expiresAt": "2026-06-10T17:26:12Z",
   "gitCommit": "46a5d7e1f8236bf7c571bcd033e1d493cb65f72f",
-  "updatedAt": "2026-06-10T15:26:39Z"
+  "awxJob": null,
+  "awxStatus": null,
+  "awxAttempts": 0,
+  "reason": null,
+  "argoCD": {
+    "sync": "Synced",
+    "health": "Progressing"
+  },
+  "application": {
+    "name": "practicum-env-alice-loadtest-893845",
+    "replicas": 1,
+    "readyReplicas": 1,
+    "url": "http://practicum-env-alice-loadtest-893845.d8case.ru",
+    "ingressReady": true
+  },
+  "virtualMachine": null,
+  "updatedAt": "2026-06-10T15:27:21Z"
 }
