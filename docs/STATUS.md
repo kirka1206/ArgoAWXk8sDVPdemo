@@ -90,6 +90,8 @@ DexAuthenticator имеет состояние `2/2`.
   controller валидирует allowlist и передаёт точный пакет в AWX;
 - для VM-профилей status и portal показывают пользователя `ansible`, SSH key
   authentication и готовую команду `d8 v ssh`; секреты в Git не добавляются;
+- обработчик временной ошибки Gitea сохраняет AWX job, attempts и runtime-поля
+  существующего status, чтобы следующий reconcile не запускал job повторно;
 - request controller: Ready;
 - в Gitea создан repository push webhook на внутренний endpoint Argo CD;
 - Gitea webhook allowlist ограничен точным Service DNS

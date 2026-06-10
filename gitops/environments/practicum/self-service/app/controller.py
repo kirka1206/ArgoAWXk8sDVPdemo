@@ -645,7 +645,13 @@ def reconcile():
         except Exception as exc:
             environment = slug(item["name"].rsplit(".", 1)[0])
             state = "Error" if environment in active else "Rejected"
-            write_status(environment, state, reason=str(exc))
+            existing = load_json(f"{STATUS_ROOT}/{environment}.json", {}) or {}
+            preserved = {
+                key: value
+                for key, value in existing.items()
+                if key not in {"environmentId", "namespace", "state", "reason", "updatedAt"}
+            }
+            write_status(environment, state, reason=str(exc), **preserved)
 
 
 if __name__ == "__main__":
