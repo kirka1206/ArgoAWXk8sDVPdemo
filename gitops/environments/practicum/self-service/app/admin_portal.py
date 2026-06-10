@@ -2,15 +2,16 @@
 import base64
 import datetime as dt
 import hashlib
+import io
 import json
 import os
 import re
+import tarfile
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 import threading
-from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
@@ -64,6 +65,16 @@ def get_text(path, default=""):
 def list_dir(path):
     result = gitea("GET", f"/contents/{urllib.parse.quote(path, safe='/')}?ref={GITEA_BRANCH}")
     return result if isinstance(result, list) else []
+
+
+def branch_archive():
+    url = f"{GITEA_URL}/{GITEA_OWNER}/{GITEA_REPO}/archive/{GITEA_BRANCH}.tar.gz"
+    request = urllib.request.Request(
+        url,
+        headers={"Authorization": basic_auth(), "Accept": "application/gzip"},
+    )
+    with urllib.request.urlopen(request, timeout=20) as response:
+        return response.read()
 
 
 def put_text(path, content, message):
@@ -136,22 +147,16 @@ def environments():
         if ENVIRONMENT_CACHE["data"] and now - ENVIRONMENT_CACHE["loadedAt"] < ENVIRONMENT_CACHE_TTL:
             return ENVIRONMENT_CACHE["data"]
         try:
-            items = [
-                item
-                for item in list_dir(STATUS_ROOT)
-                if item.get("type") == "file" and item["name"].endswith(".json")
-            ]
-
-            def load_status(item):
-                return json.loads(get_text(item["path"], "{}") or "{}")
-
-            with ThreadPoolExecutor(max_workers=min(6, max(1, len(items)))) as executor:
-                statuses = executor.map(load_status, items)
-            result = [
-                status
-                for status in statuses
-                if status.get("environmentId", "").startswith("practicum-env-")
-            ]
+            archive = tarfile.open(fileobj=io.BytesIO(branch_archive()), mode="r:gz")
+            result = []
+            marker = f"/{STATUS_ROOT}/"
+            for member in archive.getmembers():
+                if not member.isfile() or marker not in member.name or not member.name.endswith(".json"):
+                    continue
+                source = archive.extractfile(member)
+                status = json.loads(source.read().decode()) if source else {}
+                if status.get("environmentId", "").startswith("practicum-env-"):
+                    result.append(status)
             ENVIRONMENT_CACHE["data"] = sorted(
                 result,
                 key=lambda value: value.get("updatedAt", ""),
