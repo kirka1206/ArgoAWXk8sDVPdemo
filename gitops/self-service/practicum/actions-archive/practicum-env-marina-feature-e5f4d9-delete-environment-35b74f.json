@@ -1,0 +1,11 @@
+{
+  "id": "practicum-env-marina-feature-e5f4d9-delete-environment-35b74f",
+  "environment": "practicum-env-marina-feature-e5f4d9",
+  "action": "delete-environment",
+  "actor": "marina-volkova-practicum",
+  "reason": "owner-request",
+  "requestedAt": "2026-06-10T09:31:12Z",
+  "gitCommit": "e33fd2dde67fff58da9f7d28bf1a2bdd65e98791",
+  "outcome": "Completed",
+  "completedAt": "2026-06-10T09:32:59Z"
+}
