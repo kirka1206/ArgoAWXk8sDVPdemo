@@ -1,0 +1,18 @@
+{
+  "apiVersion": "demo.practicum/v1",
+  "kind": "EnvironmentRequest",
+  "metadata": {
+    "name": "practicum-env-marina-bugfix-3b1e0b"
+  },
+  "spec": {
+    "owner": "marina-volkova-practicum",
+    "email": "marina.volkova.practicum@demo.local",
+    "groups": [
+      "practicum-qa-devs"
+    ],
+    "profile": "app-with-vm",
+    "purpose": "bugfix",
+    "ttl": "2h",
+    "createdAt": "2026-06-10T07:08:05Z"
+  }
+}
