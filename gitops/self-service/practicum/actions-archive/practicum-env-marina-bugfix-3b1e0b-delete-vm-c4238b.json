@@ -1,0 +1,11 @@
+{
+  "id": "practicum-env-marina-bugfix-3b1e0b-delete-vm-c4238b",
+  "environment": "practicum-env-marina-bugfix-3b1e0b",
+  "action": "delete-vm",
+  "actor": "victor-melnikov-practicum",
+  "reason": "Acceptance test: удалить VM и диск, сохранить приложение",
+  "requestedAt": "2026-06-10T08:30:43Z",
+  "gitCommit": "2b6afd29bf4a39b33c8b3c19bdbc1857c5fb67b8",
+  "outcome": "Completed",
+  "completedAt": "2026-06-10T08:33:42Z"
+}
