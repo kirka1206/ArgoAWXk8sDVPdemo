@@ -1,0 +1,21 @@
+{
+  "apiVersion": "demo.practicum/v1",
+  "kind": "EnvironmentRequest",
+  "metadata": {
+    "name": "practicum-env-marina-feature-a5c008"
+  },
+  "spec": {
+    "owner": "marina-volkova-practicum",
+    "email": "marina.volkova.practicum@demo.local",
+    "groups": [
+      "practicum-qa-devs"
+    ],
+    "profile": "app-with-postgres-vm",
+    "purpose": "feature",
+    "ttl": "4h",
+    "createdAt": "2026-06-10T13:38:51Z",
+    "postgresql": {
+      "version": "17"
+    }
+  }
+}
