@@ -1,7 +1,7 @@
 {
   "environmentId": "practicum-env-alice-bugfix-d634cb",
   "namespace": "practicum-tks",
-  "state": "Provisioning",
+  "state": "Ready",
   "owner": "alice-koroleva-practicum",
   "profile": "app-with-vm",
   "postgresVersion": null,
@@ -10,7 +10,7 @@
   "expiresAt": "2026-06-10T23:30:01Z",
   "gitCommit": "37b16dca5232d9cb68f4079394ca61b5e0405887",
   "awxJob": 90,
-  "awxStatus": "pending",
+  "awxStatus": "successful",
   "awxAttempts": 1,
   "reason": null,
   "argoCD": {
@@ -41,5 +41,5 @@
       "command": "d8 v ssh ansible@practicum-env-alice-bugfix-d634cb-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "updatedAt": "2026-06-10T15:34:04Z"
+  "updatedAt": "2026-06-10T15:34:40Z"
 }
