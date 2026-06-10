@@ -1,0 +1,15 @@
+{
+  "apiVersion": "demo.practicum/v1",
+  "kind": "EnvironmentAction",
+  "metadata": {
+    "name": "practicum-env-marina-bugfix-39884b-delete-environment-49156e"
+  },
+  "spec": {
+    "environment": "practicum-env-marina-bugfix-39884b",
+    "action": "delete-environment",
+    "actor": "marina-volkova-practicum",
+    "actorEmail": "marina.volkova.practicum@demo.local",
+    "reason": "owner-request",
+    "requestedAt": "2026-06-10T08:55:58Z"
+  }
+}
