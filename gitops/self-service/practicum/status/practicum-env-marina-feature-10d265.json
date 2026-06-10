@@ -13,7 +13,7 @@
   "awxAttempts": 0,
   "argoCD": {
     "sync": "Synced",
-    "health": "Progressing"
+    "health": "Healthy"
   },
   "application": {
     "name": "practicum-env-marina-feature-10d265",
@@ -33,5 +33,5 @@
     "disk": "768Mi",
     "image": "practicum-alpine-golden-3-23-v2"
   },
-  "updatedAt": "2026-06-10T06:28:34Z"
+  "updatedAt": "2026-06-10T06:29:00Z"
 }
