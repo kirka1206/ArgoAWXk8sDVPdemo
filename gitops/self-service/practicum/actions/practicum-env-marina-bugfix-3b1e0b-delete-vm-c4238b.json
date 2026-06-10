@@ -1,0 +1,15 @@
+{
+  "apiVersion": "demo.practicum/v1",
+  "kind": "EnvironmentAction",
+  "metadata": {
+    "name": "practicum-env-marina-bugfix-3b1e0b-delete-vm-c4238b"
+  },
+  "spec": {
+    "environment": "practicum-env-marina-bugfix-3b1e0b",
+    "action": "delete-vm",
+    "actor": "victor-melnikov-practicum",
+    "actorEmail": "victor.melnikov.practicum@demo.local",
+    "reason": "Acceptance test: удалить VM и диск, сохранить приложение",
+    "requestedAt": "2026-06-10T08:30:43Z"
+  }
+}
