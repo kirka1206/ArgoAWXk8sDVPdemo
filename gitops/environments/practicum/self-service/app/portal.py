@@ -40,10 +40,11 @@ PROFILES = {
     },
     "app-with-postgres-vm": {
         "title": "Приложение + PostgreSQL VM",
-        "description": "Приложение и минимальная DVP VM, для которой AWX устанавливает и проверяет PostgreSQL-настройки.",
+        "description": "Приложение и минимальная DVP VM, для которой AWX устанавливает выбранную версию PostgreSQL и проверяет настройку.",
         "groups": {"practicum-analytics-devs", "practicum-qa-devs"},
         "ttl": ["4h", "8h", "24h"],
         "vm": {"cpu": "1 core / 5%", "memory": "512Mi", "disk": "768Mi"},
+        "postgresVersions": ["16", "17", "18"],
     },
 }
 
@@ -173,6 +174,10 @@ def create_request(user, payload):
         raise ValueError("TTL недоступен для выбранного профиля")
     if not set(user["groups"]).intersection(PROFILES[profile]["groups"]):
         raise PermissionError("Группа пользователя не имеет доступа к профилю")
+    postgres_version = payload.get("postgresVersion")
+    allowed_postgres_versions = PROFILES[profile].get("postgresVersions", [])
+    if allowed_postgres_versions and postgres_version not in allowed_postgres_versions:
+        raise ValueError("Недоступная версия PostgreSQL")
     owner = user["name"]
     suffix = hashlib.sha256(f"{owner}-{time.time_ns()}".encode()).hexdigest()[:6]
     short_owner = owner.replace("-practicum", "").split("-")[0]
@@ -192,6 +197,8 @@ def create_request(user, payload):
             "createdAt": created,
         },
     }
+    if postgres_version:
+        document["spec"]["postgresql"] = {"version": postgres_version}
     result = put_text(
         f"{REQUEST_ROOT}/{environment}.yaml",
         json.dumps(document, ensure_ascii=False, indent=2) + "\n",
@@ -201,6 +208,7 @@ def create_request(user, payload):
         "environmentId": environment,
         "namespace": NAMESPACE,
         "profile": profile,
+        "postgresVersion": postgres_version,
         "ttl": ttl,
         "gitCommit": commit_sha(result),
         "status": "Submitted",
@@ -238,6 +246,7 @@ dl{display:grid;grid-template-columns:170px 1fr;gap:8px;margin:0}dt{color:#65737
 <header><div><h1>Practicum Self-Service</h1><p>Заказ временных стендов через единый GitOps-процесс</p></div><a class="logout" href="/logout">Выйти</a></header>
 <main><section><h2>Новая заявка</h2><div id="user" class="muted"></div>
 <form id="form"><label>Профиль стенда<select id="profile"></select></label><div id="details" class="profile"></div>
+<label id="postgresVersionField" hidden>Версия PostgreSQL<select id="postgresVersion"></select></label>
 <label>Назначение<select id="purpose"><option value="feature">Разработка функции</option><option value="bugfix">Проверка исправления</option><option value="demo">Демонстрация</option><option value="loadtest">Нагрузочный тест</option></select></label>
 <label>Время жизни<select id="ttl"></select></label><button id="submit">Отправить заявку</button></form></section>
 <section><h2>Результат</h2><div class="status-head"><div id="state" class="state"><span class="state-dot"></span><span>Ожидание</span></div><div id="pollMeta" class="poll-meta"></div></div>
@@ -247,7 +256,7 @@ dl{display:grid;grid-template-columns:170px 1fr;gap:8px;margin:0}dt{color:#65737
 let profiles=[],last=null,pollCount=0,startedAt=null,pollTimer=null;const $=id=>document.getElementById(id);
 async function api(path,opts={}){const r=await fetch(path,{headers:{"Content-Type":"application/json"},...opts});const p=await r.json();if(!r.ok)throw Error(p.error||"Ошибка");return p}
 function profile(){return profiles.find(p=>p.name===$("profile").value)}
-function renderProfile(){const p=profile();$("details").innerHTML=`<b>${p.title}</b><br>${p.description}<br><br><b>Ресурсы:</b> приложение 1 replica, 25m CPU / 32Mi RAM${p.vm?`, VM ${p.vm.cpu}, RAM ${p.vm.memory}, диск ${p.vm.disk}`:"; VM не создаётся"}.<br><b>Namespace:</b> practicum-tks`; $("ttl").innerHTML=p.ttl.map(v=>`<option>${v}</option>`).join("")}
+function renderProfile(){const p=profile();$("details").innerHTML=`<b>${p.title}</b><br>${p.description}<br><br><b>Ресурсы:</b> приложение 1 replica, 25m CPU / 32Mi RAM${p.vm?`, VM ${p.vm.cpu}, RAM ${p.vm.memory}, диск ${p.vm.disk}`:"; VM не создаётся"}.<br><b>Namespace:</b> practicum-tks`;$("ttl").innerHTML=p.ttl.map(v=>`<option>${v}</option>`).join("");const versions=p.postgresVersions||[];$("postgresVersionField").hidden=!versions.length;$("postgresVersion").innerHTML=versions.map(v=>`<option value="${v}">PostgreSQL ${v}</option>`).join("")}
 function viewState(s){const state=s.state||s.status||"Submitted";if(["Rejected","Error"].includes(state))return{label:"Ошибка",kind:"failed",working:false};if(state==="Ready")return{label:"Готово",kind:"ready",working:false};if(state==="Cleaned")return{label:"Удалено по TTL",kind:"ready",working:false};if(state==="Expired")return{label:"Срок истёк",kind:"ready",working:false};if(state==="Queued")return{label:"В очереди",kind:"working",working:true};return{label:"В работе",kind:"working",working:true}}
 function activity(s){const state=s.state||s.status||"Submitted";if(state==="Submitted")return"Заявка записана в Git. Ожидаем, когда request controller начнёт обработку.";if(state==="Queued")return"Заявка проверена и ждёт свободной квоты платформы.";if(["Rejected","Error"].includes(state))return s.reason?`Обработка остановлена: ${s.reason}`:"Обработка остановлена. Проверьте причину ниже.";if(state==="Ready")return"Стенд готов к использованию. Все обязательные проверки завершены.";if(state==="Cleaned")return"Время жизни завершилось, ресурсы заявки удалены через GitOps.";if(state==="Expired")return"Время жизни завершилось. Выполняется GitOps-очистка ресурсов.";if(state==="Provisioning"){if(!s.application)return"Argo CD применяет манифесты приложения и инфраструктуры.";if((s.application.readyReplicas??0)<(s.application.replicas??1))return"Kubernetes запускает контейнерное приложение.";if(!s.virtualMachine&&s.profile!=="app-only")return"Приложение запущено. DVP создаёт диск и виртуальную машину.";if(!s.virtualMachine)return"Приложение запущено. Завершаются проверки готовности стенда.";if(s.virtualMachine.phase!=="Running")return`DVP создаёт и запускает виртуальную машину. Текущая фаза: ${s.virtualMachine.phase||"ожидание"}.`;if(!s.virtualMachine.guestReady)return"Виртуальная машина запущена. Ожидаем готовность гостевой ОС и qemu-guest-agent.";if(!s.awxJob)return"Гостевая ОС готова. Request controller запускает AWX post-configuration.";if(["failed","error","canceled"].includes(s.awxStatus))return`AWX job ${s.awxJob} завершился со статусом ${s.awxStatus}. Controller проверяет возможность повторного запуска.`;if(s.awxStatus!=="successful")return`AWX выполняет настройку и проверку ОС. Job ${s.awxJob}, статус ${s.awxStatus||"pending"}.`;return"AWX завершил работу успешно. Controller выполняет итоговую проверку стенда."}return"Система обрабатывает заявку."}
 function render(s){const v=viewState(s);$("state").className=`state ${v.kind}`;$("state").querySelector("span:last-child").textContent=v.label;$("progress").hidden=!v.working;$("activity").className=`activity ${v.kind==="failed"?"error":"muted"}`;$("activity").textContent=activity(s);const elapsed=startedAt?Math.max(0,Math.floor((Date.now()-startedAt)/1000)):0;$("pollMeta").textContent=v.working?`Проверка каждые 5 секунд · ${pollCount} · прошло ${elapsed} сек.`:`Обновлено ${new Date().toLocaleTimeString("ru-RU")}`;$("result").className=`status ${v.kind==="failed"?"error":""}`;$("result").textContent=`Environment ID: ${s.environmentId}
@@ -256,6 +265,7 @@ Namespace: ${s.namespace}
 Причина: ${s.reason||"-"}
 Владелец: ${s.owner||"-"}
 Профиль: ${s.profile||"-"}
+Версия PostgreSQL: ${s.postgresVersion||"не требуется"}
 TTL до: ${s.expiresAt||"-"}
 Git commit: ${s.gitCommit||"-"}
 Argo CD: ${s.argoCD?.sync||"-"} / ${s.argoCD?.health||"-"}
@@ -264,10 +274,12 @@ URL: ${s.application?.url||"-"}
 VM: ${s.virtualMachine?.name||"не требуется"}
 VM phase/IP: ${s.virtualMachine?.phase||"-"} / ${s.virtualMachine?.ip||"-"}
 VM: ${s.virtualMachine?`${s.virtualMachine.cpu}, RAM ${s.virtualMachine.memory}, disk ${s.virtualMachine.disk}, image ${s.virtualMachine.image}`:"-"}
+Логин VM: ${s.virtualMachine?.access?.username||"-"} (${s.virtualMachine?.access?.authentication||"-"})
+SSH: ${s.virtualMachine?.access?.command||"-"}
 AWX job/status: ${s.awxJob||"-"} / ${s.awxStatus||"-"}`;}
 async function poll(){if(!last)return;pollCount++;try{const s=await api(`/api/status/${last}`);render(s);if(["Ready","Rejected","Error","Cleaned"].includes(s.state)){$("submit").disabled=false;return}}catch(e){$("state").className="state failed";$("state").querySelector("span:last-child").textContent="Ошибка связи";$("activity").className="activity error";$("activity").textContent=`Не удалось получить статус: ${e.message}. Повторим через 5 секунд.`}pollTimer=setTimeout(poll,5000)}
 async function init(){const me=await api("/api/me");profiles=me.profiles;$("user").textContent=`${me.email||me.name} · ${me.groups.join(", ")}`;$("profile").innerHTML=profiles.map(p=>`<option value="${p.name}">${p.title}</option>`).join("");if(!profiles.length){$("form").hidden=true;$("result").textContent="Для групп пользователя нет доступных профилей.";return}$("profile").onchange=renderProfile;renderProfile()}
-$("form").onsubmit=async e=>{e.preventDefault();clearTimeout(pollTimer);$("submit").disabled=true;$("state").className="state working";$("state").querySelector("span:last-child").textContent="Отправка";$("progress").hidden=false;$("activity").className="activity muted";$("activity").textContent="Создаём EnvironmentRequest в Git...";$("result").textContent="";$("pollMeta").textContent="";try{const r=await api("/api/requests",{method:"POST",body:JSON.stringify({profile:$("profile").value,purpose:$("purpose").value,ttl:$("ttl").value})});last=r.environmentId;pollCount=0;startedAt=Date.now();render(r);poll()}catch(err){$("submit").disabled=false;$("progress").hidden=true;$("state").className="state failed";$("state").querySelector("span:last-child").textContent="Ошибка";$("activity").className="activity error";$("activity").textContent="Заявку не удалось отправить.";$("result").className="status error";$("result").textContent=err.message}};
+$("form").onsubmit=async e=>{e.preventDefault();clearTimeout(pollTimer);$("submit").disabled=true;$("state").className="state working";$("state").querySelector("span:last-child").textContent="Отправка";$("progress").hidden=false;$("activity").className="activity muted";$("activity").textContent="Создаём EnvironmentRequest в Git...";$("result").textContent="";$("pollMeta").textContent="";const p=profile();try{const r=await api("/api/requests",{method:"POST",body:JSON.stringify({profile:$("profile").value,purpose:$("purpose").value,ttl:$("ttl").value,postgresVersion:p.postgresVersions?.length?$("postgresVersion").value:null})});last=r.environmentId;pollCount=0;startedAt=Date.now();render(r);poll()}catch(err){$("submit").disabled=false;$("progress").hidden=true;$("state").className="state failed";$("state").querySelector("span:last-child").textContent="Ошибка";$("activity").className="activity error";$("activity").textContent="Заявку не удалось отправить.";$("result").className="status error";$("result").textContent=err.message}};
 init().catch(e=>{$("result").textContent=e.message});
 </script></body></html>"""
 

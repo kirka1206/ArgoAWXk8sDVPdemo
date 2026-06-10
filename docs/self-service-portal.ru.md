@@ -117,9 +117,20 @@ gitops/self-service/practicum/requests/<name>.yaml
 После исчерпания попыток заявка переходит из `Provisioning` в `Error`; portal
 показывает причину, номер последнего AWX job и прекращает polling.
 
-Для профиля `app-with-postgres-vm` Alpine playbook определяет доступный пакет
-`postgresqlNN` через `apk search` и выбирает самую новую доступную версию. Это
-исключает зависимость сценария от устаревшего имени вроде `postgresql15`.
+Для профиля `app-with-postgres-vm` пользователь выбирает PostgreSQL `16`, `17`
+или `18`. Portal сохраняет выбор в заявке:
+
+```yaml
+spec:
+  profile: app-with-postgres-vm
+  postgresql:
+    version: "17"
+```
+
+Controller принимает только значения из allowlist, передаёт AWX пакет
+`postgresql17`, а playbook перед установкой проверяет его наличие через
+`apk search -x`. Для совместимости заявки, созданные до появления этого поля,
+трактуются как PostgreSQL `18`.
 
 ## Важное ограничение демо
 
@@ -158,6 +169,12 @@ kubectl get application -n practicum-tks practicum-demo
 
 IP виртуальной машины вида `10.66.x.x` относится к внутренней DVP-сети. Для SSH
 не нужен маршрут с ноутбука: DVP CLI проксирует соединение через Kubernetes API.
+Portal выводит эти же параметры в результате заявки:
+
+- пользователь: `ansible`;
+- аутентификация: SSH key;
+- локальный ключ: `local/practicum-ssh/id_ed25519`;
+- готовая команда с фактическим именем VM.
 
 ```bash
 d8 v ssh ansible@<environment-id>-vm \
@@ -177,3 +194,6 @@ d8 v ssh ansible@<environment-id>-vm \
 ```
 
 Публиковать SSH через `NodePort` или `LoadBalancer` для этого демо не нужно.
+Пароль и приватный ключ не записываются в `EnvironmentRequest` или status:
+пользователь получает команду, а файл ключа подготавливается на ноутбуке
+демонстратора вне Git.

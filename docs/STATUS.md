@@ -86,6 +86,10 @@ DexAuthenticator имеет состояние `2/2`.
 - исправление проверено на исходной заявке Marina
   `practicum-env-marina-feature-10d265`: повторный AWX job `73` завершился
   `successful` за `43.5` секунды, итоговый status заявки — `Ready`;
+- portal и request contract расширены выбором PostgreSQL `16`, `17` или `18`;
+  controller валидирует allowlist и передаёт точный пакет в AWX;
+- для VM-профилей status и portal показывают пользователя `ansible`, SSH key
+  authentication и готовую команду `d8 v ssh`; секреты в Git не добавляются;
 - request controller: Ready;
 - в Gitea создан repository push webhook на внутренний endpoint Argo CD;
 - Gitea webhook allowlist ограничен точным Service DNS

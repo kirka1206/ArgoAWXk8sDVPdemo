@@ -32,6 +32,10 @@
 - `app-with-vm`: добавляет минимальную DVP VM из утверждённого `ClusterVirtualImage`.
 - `app-with-postgres-vm`: добавляет VM как цель для PostgreSQL post-configuration через AWX.
 
+Для PostgreSQL-профиля выберите версию `16`, `17` или `18`. После готовности
+VM в блоке результата скопируйте сформированную команду `d8 v ssh`: portal уже
+подставит пользователя `ansible`, имя VM, namespace и путь к локальному ключу.
+
 
 - помогает аудиторам понять, зачем создан стенд;
 - попадает в GitOps request и labels/annotations;

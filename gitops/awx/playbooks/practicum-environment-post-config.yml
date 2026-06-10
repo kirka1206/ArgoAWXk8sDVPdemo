@@ -15,18 +15,16 @@
   gather_facts: true
   become: true
   tasks:
-    - name: Select the newest PostgreSQL package available on Alpine
-      ansible.builtin.shell: |
-        set -o pipefail
-        apk search -x 'postgresql[0-9]*' |
-          sed -n 's/^\(postgresql[0-9][0-9]*\)-.*/\1/p' |
-          sort -Vu |
-          tail -n 1
-      args:
-        executable: /bin/ash
-      register: postgresql_package
+    - name: Validate requested PostgreSQL package on Alpine
+      ansible.builtin.command:
+        argv:
+          - apk
+          - search
+          - -x
+          - "{{ postgresql_package }}"
+      register: postgresql_package_search
       changed_when: false
-      failed_when: postgresql_package.stdout | trim == ""
+      failed_when: postgresql_package not in postgresql_package_search.stdout
       when:
         - ansible_pkg_mgr == "apk"
         - install_postgresql | default(false) | bool
@@ -34,7 +32,7 @@
     - name: Install practicum base packages on Alpine
       ansible.builtin.command: >-
         apk add --no-cache qemu-guest-agent curl jq
-        {{ postgresql_package.stdout | trim if install_postgresql | default(false) | bool else '' }}
+        {{ postgresql_package if install_postgresql | default(false) | bool else '' }}
       register: apk_result
       changed_when: "'OK:' in apk_result.stdout or 'OK:' in apk_result.stderr"
       when: ansible_pkg_mgr == "apk"

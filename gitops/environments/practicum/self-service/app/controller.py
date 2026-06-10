@@ -34,8 +34,15 @@ K8S_CA = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 PROFILES = {
     "app-only": {"vm": False, "postgres": False, "ttl": {"2h", "4h", "8h"}},
     "app-with-vm": {"vm": True, "postgres": False, "ttl": {"2h", "4h", "8h"}},
-    "app-with-postgres-vm": {"vm": True, "postgres": True, "ttl": {"4h", "8h", "24h"}},
+    "app-with-postgres-vm": {
+        "vm": True,
+        "postgres": True,
+        "postgresVersions": {"16", "17", "18"},
+        "ttl": {"4h", "8h", "24h"},
+    },
 }
+SSH_USERNAME = "ansible"
+SSH_IDENTITY_FILE = "local/practicum-ssh/id_ed25519"
 OWNERS = {
     "alice-koroleva-practicum": {
         "email": "alice.koroleva.practicum@demo.local",
@@ -237,6 +244,15 @@ def validate_request(document):
         raise ValueError("profile is not allowed for owner")
     if ttl not in PROFILES[profile]["ttl"]:
         raise ValueError("TTL is not allowed for profile")
+    postgres_version = (spec.get("postgresql") or {}).get("version")
+    if PROFILES[profile]["postgres"]:
+        # Requests created before version selection was introduced used the
+        # newest package available in Alpine 3.23, which is PostgreSQL 18.
+        postgres_version = str(postgres_version or "18")
+        if postgres_version not in PROFILES[profile]["postgresVersions"]:
+            raise ValueError("PostgreSQL version must be one of: 16, 17, 18")
+    elif postgres_version:
+        raise ValueError("PostgreSQL version is allowed only for the PostgreSQL profile")
     requested_groups = set(spec.get("groups") or [])
     if requested_groups and not requested_groups.issubset(OWNERS[owner]["groups"]):
         raise ValueError("request contains unauthorized groups")
@@ -257,6 +273,7 @@ def validate_request(document):
         "expiresAt": iso(expires_at),
         "vm": PROFILES[profile]["vm"],
         "postgres": PROFILES[profile]["postgres"],
+        "postgresVersion": postgres_version,
     }
 
 
@@ -457,6 +474,16 @@ def cluster_status(request):
             "memory": "512Mi",
             "disk": "768Mi",
             "image": disk_source.get("name"),
+            "access": {
+                "username": SSH_USERNAME,
+                "authentication": "SSH key",
+                "identityFile": SSH_IDENTITY_FILE,
+                "command": (
+                    f"d8 v ssh {SSH_USERNAME}@{env}-vm "
+                    f"--namespace {NAMESPACE} "
+                    f"--identity-file {SSH_IDENTITY_FILE} --local-ssh"
+                ),
+            },
         },
     }
 
@@ -478,6 +505,11 @@ def launch_awx(request, host):
             "target_host": host,
             "target_name": request["environment"],
             "install_postgresql": request["postgres"],
+            "postgresql_version": request["postgresVersion"],
+            "postgresql_package": (
+                f"postgresql{request['postgresVersion']}"
+                if request["postgres"] else ""
+            ),
         }
     })
     return result["job"]
@@ -543,6 +575,7 @@ def reconcile_existing(request, request_path):
         state,
         owner=request["owner"],
         profile=request["profile"],
+        postgresVersion=request["postgresVersion"],
         purpose=request["purpose"],
         createdAt=request["createdAt"],
         expiresAt=request["expiresAt"],
@@ -589,6 +622,7 @@ def reconcile():
                     "Queued",
                     owner=request["owner"],
                     profile=request["profile"],
+                    postgresVersion=request["postgresVersion"],
                     reason="capacity-limit",
                     activeEnvironments=len(active),
                     activeVirtualMachines=active_vm,
@@ -603,6 +637,7 @@ def reconcile():
                 "Provisioning",
                 owner=request["owner"],
                 profile=request["profile"],
+                postgresVersion=request["postgresVersion"],
                 createdAt=request["createdAt"],
                 expiresAt=request["expiresAt"],
                 gitCommit=commit_sha(result) or latest_commit(path),

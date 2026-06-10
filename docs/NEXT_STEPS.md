@@ -13,9 +13,11 @@
 5. Создать новое тестовое окружение через Web, дождаться `Ready`, после чего
    проверить корректный owner/Environment ID, переход
    `Submitted -> Provisioning -> Ready` и автоматический TTL cleanup.
-6. Выполнить `scenarios/11-practicum-end-to-end.md`, не изменяя опубликованные
+6. Проверить PostgreSQL-профиль для версий `16`, `17`, `18` и выполнить
+   показанную portal команду `d8 v ssh`.
+7. Выполнить `scenarios/11-practicum-end-to-end.md`, не изменяя опубликованные
    golden image v1/v2.
-7. Заменить временный `SuperAdmin` пользователя `practicum-tks@demo.local` на
+8. Заменить временный `SuperAdmin` пользователя `practicum-tks@demo.local` на
    минимально необходимые права.
 
 ## Приоритет 2. Проверить роли и профили
