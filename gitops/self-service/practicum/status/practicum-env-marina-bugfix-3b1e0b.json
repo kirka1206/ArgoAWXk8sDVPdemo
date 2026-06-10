@@ -14,7 +14,7 @@
   "awxAttempts": 1,
   "reason": null,
   "argoCD": {
-    "sync": "OutOfSync",
+    "sync": "Synced",
     "health": "Healthy"
   },
   "application": {
@@ -41,5 +41,5 @@
       "command": "d8 v ssh ansible@practicum-env-marina-bugfix-3b1e0b-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "updatedAt": "2026-06-10T08:30:15Z"
+  "updatedAt": "2026-06-10T08:30:57Z"
 }
