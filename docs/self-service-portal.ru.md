@@ -213,3 +213,36 @@ d8 v ssh ansible@<environment-id>-vm \
 Controller читает эти значения из окружения. Если лимит достигнут, заявка
 остаётся в Git со статусом `Queued` и причиной `capacity-limit`; после
 освобождения ресурса следующий reconcile продолжает её автоматически.
+
+## Управление жизненным циклом
+
+Пользовательский портал содержит разделы `Новый стенд`, `Мои стенды` и
+`История`. Пользователь может:
+
+- удалить собственную VM вместе с VirtualDisk, сохранив приложение;
+- удалить собственный стенд целиком;
+- наблюдать состояния `VMDeleting`, `Deleting` и `Cleaned`.
+
+Кнопки не удаляют Kubernetes-объекты напрямую. Backend создаёт
+`EnvironmentAction` в `gitops/self-service/practicum/actions/`. Controller
+проверяет владельца и атомарно обновляет request, generated manifests и root
+kustomization через Gitea `repoChangeFiles` API. Argo CD prune выполняет фактическое
+удаление.
+
+Административный портал:
+
+```text
+https://vm-admin-practicum.d8case.ru
+```
+
+Он доступен только Victor Melnikov и группе `practicum-vm-operators`. Victor
+видит tenant environments всех пользователей, может запускать, останавливать,
+перезапускать и удалять VM, а также удалять стенды. Для каждого действия
+обязательна причина. Golden builder VM и платформенные компоненты отфильтрованы
+на backend и не попадают в административный UI.
+
+Для локального DNS:
+
+```text
+192.168.2.31 vm-admin-practicum.d8case.ru
+```

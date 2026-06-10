@@ -15,9 +15,13 @@
    `Submitted -> Provisioning -> Ready` и автоматический TTL cleanup.
 6. Проверить PostgreSQL-профиль для версий `16`, `17`, `18` и выполнить
    показанную portal команду `d8 v ssh`.
-7. Выполнить `scenarios/11-practicum-end-to-end.md`, не изменяя опубликованные
+7. Добавить `192.168.2.31 vm-admin-practicum.d8case.ru` в DNS или `/etc/hosts`
+   и проверить Dex-вход Victor.
+8. Выполнить `scenarios/13-manual-environment-lifecycle.md` на временных
+   tenant environments.
+9. Выполнить `scenarios/11-practicum-end-to-end.md`, не изменяя опубликованные
    golden image v1/v2.
-8. Заменить временный `SuperAdmin` пользователя `practicum-tks@demo.local` на
+10. Заменить временный `SuperAdmin` пользователя `practicum-tks@demo.local` на
    минимально необходимые права.
 
 ## Приоритет 2. Проверить роли и профили

@@ -109,6 +109,16 @@ DexAuthenticator имеет состояние `2/2`.
 - изменение лимитов проверено на заявке
   `practicum-env-marina-bugfix-39884b`: после rollout controller она
   автоматически вышла из `Queued/capacity-limit` в `Provisioning`;
+- реализован GitOps lifecycle через `EnvironmentAction`: delete environment,
+  delete VM+disk, start, stop и restart VM;
+- пользовательский portal получил `Мои стенды`, `История` и двойное
+  подтверждение удаления собственных ресурсов;
+- добавлен отдельный Victor portal `vm-admin-practicum.d8case.ru`, доступный
+  только `practicum-vm-operators`; причина административного действия
+  обязательна;
+- action/request/generated/kustomization обновляются атомарным Gitea
+  `repoChangeFiles` commit,
+  фактическое удаление выполняет Argo CD prune;
 - controller не выполняет прямой `kubectl delete`;
 - AWX стартует после guest readiness, максимум 3 попытки.
 

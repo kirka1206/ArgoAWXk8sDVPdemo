@@ -4,6 +4,7 @@ namespace: practicum-tks
 resources:
   - platform.yaml
   - portal.yaml
+  - admin-portal.yaml
   - generated
 configMapGenerator:
   - name: practicum-request-controller-code
@@ -12,6 +13,9 @@ configMapGenerator:
   - name: practicum-self-service-portal-code
     files:
       - app/portal.py
+  - name: practicum-vm-admin-portal-code
+    files:
+      - app/admin_portal.py
 generatorOptions:
   annotations:
     demo.deckhouse.io/description: "4 practicum"

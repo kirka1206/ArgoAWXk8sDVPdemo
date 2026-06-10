@@ -28,6 +28,8 @@ MAX_ACTIVE_VMS = int(os.environ.get("MAX_ACTIVE_VMS", "2"))
 REQUEST_ROOT = "gitops/self-service/practicum/requests"
 ARCHIVE_ROOT = "gitops/self-service/practicum/archive"
 STATUS_ROOT = "gitops/self-service/practicum/status"
+ACTION_ROOT = "gitops/self-service/practicum/actions"
+ACTION_ARCHIVE_ROOT = "gitops/self-service/practicum/actions-archive"
 GENERATED_ROOT = "gitops/environments/practicum/self-service/generated"
 GENERATED_KUSTOMIZATION = f"{GENERATED_ROOT}/kustomization.yaml"
 K8S_TOKEN = "/var/run/secrets/kubernetes.io/serviceaccount/token"
@@ -153,6 +155,39 @@ def delete_file(path, message):
             "message": message,
             "sha": existing["sha"],
         })
+
+
+def atomic_commit(message, writes=None, deletes=None):
+    writes = writes or {}
+    deletes = deletes or []
+    operations = []
+    for path, content in writes.items():
+        existing = get_file(path)
+        operation = {
+            "operation": "update" if existing else "create",
+            "path": path,
+            "content": base64.b64encode(content.encode()).decode(),
+        }
+        if existing:
+            operation["sha"] = existing["sha"]
+        operations.append(operation)
+    for path in deletes:
+        existing = get_file(path)
+        if not existing:
+            continue
+        operations.append({
+            "operation": "delete",
+            "path": path,
+            "sha": existing["sha"],
+        })
+    if not operations:
+        return latest_commit(GENERATED_KUSTOMIZATION)
+    result = gitea("POST", "/contents", {
+        "branch": GITEA_BRANCH,
+        "message": message,
+        "files": operations,
+    })
+    return commit_sha(result)
 
 
 def list_dir(path):
@@ -384,13 +419,24 @@ def render_resources(request):
     return "---\n".join(documents)
 
 
+def generated_kustomization(include_operation=False):
+    resources = ["resources.yaml"]
+    if include_operation:
+        resources.append("operation.yaml")
+    return (
+        "apiVersion: kustomize.config.k8s.io/v1beta1\n"
+        "kind: Kustomization\nresources:\n"
+        + "".join(f"  - {name}\n" for name in resources)
+    )
+
+
 def create_generated(request):
     env = request["environment"]
     base = f"{GENERATED_ROOT}/{env}"
     put_text(f"{base}/resources.yaml", render_resources(request), f"Generate self-service environment {env}")
     put_text(
         f"{base}/kustomization.yaml",
-        "apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\nresources:\n  - resources.yaml\n",
+        generated_kustomization(),
         f"Finalize self-service environment {env}",
     )
     environments = root_environments()
@@ -398,6 +444,264 @@ def create_generated(request):
         environments.append(env)
         return write_root(environments, f"Activate self-service environment {env}")
     return None
+
+
+def action_files():
+    return [
+        item for item in list_dir(ACTION_ROOT)
+        if item.get("type") == "file" and item["name"].endswith(".json")
+    ]
+
+
+def load_request_for_environment(environment):
+    path = f"{REQUEST_ROOT}/{environment}.yaml"
+    text = get_text(path)
+    if not text:
+        return None, path, None
+    return validate_request(json.loads(text)), path, text
+
+
+def action_status(environment, action, state, status, reason=None, **extra):
+    current = load_json(f"{STATUS_ROOT}/{environment}.json", {}) or {}
+    current.pop("updatedAt", None)
+    current["state"] = state
+    current["reason"] = reason
+    current["lastAction"] = {
+        "id": action["id"],
+        "action": action["action"],
+        "actor": action["actor"],
+        "reason": action.get("reason"),
+        "requestedAt": action["requestedAt"],
+        "gitCommit": action.get("gitCommit"),
+        "status": status,
+        **extra,
+    }
+    return write_status(
+        environment,
+        current.pop("state"),
+        **{
+            key: value for key, value in current.items()
+            if key not in {"environmentId", "namespace"}
+        },
+    )
+
+
+def archive_action(action_path, action, outcome):
+    archived = {**action, "outcome": outcome, "completedAt": iso(utcnow())}
+    atomic_commit(
+        f"Archive environment action {action['id']}: {outcome}",
+        writes={
+            f"{ACTION_ARCHIVE_ROOT}/{action['id']}.json":
+                json.dumps(archived, ensure_ascii=False, indent=2) + "\n",
+        },
+        deletes=[action_path],
+    )
+
+
+def operation_manifest(action):
+    operation = {
+        "start-vm": "Start",
+        "stop-vm": "Stop",
+        "restart-vm": "Restart",
+    }[action["action"]]
+    name = f"{action['environment']}-{operation.lower()}-{action['id'][-6:]}"[:63]
+    return name, f"""apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualMachineOperation
+metadata:
+  name: {name}
+  namespace: {NAMESPACE}
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+  labels:
+    app.kubernetes.io/part-of: practicum-demo
+    demo.practicum/environment: {action['environment']}
+    demo.practicum/action: {action['id']}
+spec:
+  type: {operation}
+  virtualMachineName: {action['environment']}-vm
+"""
+
+
+def reconcile_action(item):
+    action_path = item["path"]
+    action = json.loads(get_text(action_path))
+    action_id = slug((action.get("metadata") or {}).get("name"))
+    spec = action.get("spec") or {}
+    environment = slug(spec.get("environment"))
+    action_type = spec.get("action")
+    actor = spec.get("actor")
+    reason = str(spec.get("reason") or "").strip()
+    requested_at = spec.get("requestedAt") or iso(utcnow())
+    if action.get("kind") != "EnvironmentAction":
+        raise ValueError("kind must be EnvironmentAction")
+    if action_type not in {
+        "delete-environment", "delete-vm", "start-vm", "stop-vm", "restart-vm",
+    }:
+        raise ValueError("unsupported environment action")
+    if actor not in {*OWNERS, "victor-melnikov-practicum"}:
+        raise ValueError("actor is not approved")
+    if actor == "victor-melnikov-practicum" and not reason:
+        raise ValueError("administrator reason is required")
+    request, request_path, request_text = load_request_for_environment(environment)
+    current = load_json(f"{STATUS_ROOT}/{environment}.json", {}) or {}
+    if not request:
+        if action_type == "delete-environment" and current.get("state") == "Deleting":
+            deployment = k8s_get(
+                f"/apis/apps/v1/namespaces/{NAMESPACE}/deployments/{environment}"
+            )
+            vm = k8s_get(
+                f"/apis/virtualization.deckhouse.io/v1alpha2/namespaces/{NAMESPACE}"
+                f"/virtualmachines/{environment}-vm"
+            )
+            disk = k8s_get(
+                f"/apis/virtualization.deckhouse.io/v1alpha2/namespaces/{NAMESPACE}"
+                f"/virtualdisks/{environment}-root"
+            )
+            if not deployment and not vm and not disk:
+                normalized = {
+                    "id": action_id, "environment": environment,
+                    "action": action_type, "actor": actor, "reason": reason,
+                    "requestedAt": requested_at, "gitCommit": latest_commit(action_path),
+                }
+                archive_action(action_path, normalized, "Completed")
+                action_status(environment, normalized, "Cleaned", "Completed")
+            return
+        if action_type.startswith("delete") and current.get("state") == "Cleaned":
+            archive_action(action_path, {
+                "id": action_id, "environment": environment, "action": action_type,
+                "actor": actor, "reason": reason, "requestedAt": requested_at,
+            }, "NoOp")
+            return
+        raise ValueError("environment does not exist")
+    if actor != "victor-melnikov-practicum" and request["owner"] != actor:
+        raise PermissionError("actor does not own this environment")
+    normalized = {
+        "id": action_id,
+        "environment": environment,
+        "action": action_type,
+        "actor": actor,
+        "reason": reason,
+        "requestedAt": requested_at,
+        "gitCommit": latest_commit(action_path),
+    }
+    base = f"{GENERATED_ROOT}/{environment}"
+    if action_type == "delete-environment":
+        awx_job = current.get("awxJob")
+        if awx_job and current.get("awxStatus") not in {
+            "successful", "failed", "error", "canceled",
+        }:
+            try:
+                awx("POST", f"/jobs/{awx_job}/cancel/", {})
+            except urllib.error.HTTPError as exc:
+                if exc.code not in {400, 405}:
+                    raise
+        deployment = k8s_get(f"/apis/apps/v1/namespaces/{NAMESPACE}/deployments/{environment}")
+        vm = k8s_get(
+            f"/apis/virtualization.deckhouse.io/v1alpha2/namespaces/{NAMESPACE}"
+            f"/virtualmachines/{environment}-vm"
+        )
+        if environment not in root_environments() and not deployment and not vm:
+            archive_action(action_path, normalized, "Completed")
+            action_status(environment, normalized, "Cleaned", "Completed")
+            return
+        if environment in root_environments():
+            environments = [name for name in root_environments() if name != environment]
+            resources = "resources: []\n" if not environments else (
+                "resources:\n" + "".join(f"  - {name}\n" for name in sorted(environments))
+            )
+            archived_request = json.loads(request_text)
+            archived_request["metadata"]["annotations"] = {
+                "demo.practicum/deleted-by": actor,
+                "demo.practicum/delete-reason": reason or "owner-request",
+            }
+            atomic_commit(
+                f"Request deletion of environment {environment}",
+                writes={
+                    GENERATED_KUSTOMIZATION:
+                        "apiVersion: kustomize.config.k8s.io/v1beta1\n"
+                        f"kind: Kustomization\n{resources}",
+                    f"{ARCHIVE_ROOT}/{environment}.yaml":
+                        json.dumps(archived_request, ensure_ascii=False, indent=2) + "\n",
+                },
+                deletes=[
+                    f"{base}/resources.yaml",
+                    f"{base}/kustomization.yaml",
+                    f"{base}/operation.yaml",
+                    request_path,
+                ],
+            )
+        action_status(environment, normalized, "Deleting", "Running")
+        return
+    if action_type == "delete-vm":
+        vm = k8s_get(
+            f"/apis/virtualization.deckhouse.io/v1alpha2/namespaces/{NAMESPACE}"
+            f"/virtualmachines/{environment}-vm"
+        )
+        disk = k8s_get(
+            f"/apis/virtualization.deckhouse.io/v1alpha2/namespaces/{NAMESPACE}"
+            f"/virtualdisks/{environment}-root"
+        )
+        if not vm and not disk and not request["vm"]:
+            archive_action(action_path, normalized, "Completed")
+            action_status(environment, normalized, "Ready", "Completed")
+            return
+        if request["vm"]:
+            document = json.loads(request_text)
+            document["spec"]["profile"] = "app-only"
+            document["spec"].pop("postgresql", None)
+            app_request = validate_request(document)
+            atomic_commit(
+                f"Remove VM from environment {environment}",
+                writes={
+                    request_path: json.dumps(document, ensure_ascii=False, indent=2) + "\n",
+                    f"{base}/resources.yaml": render_resources(app_request),
+                    f"{base}/kustomization.yaml": generated_kustomization(),
+                },
+                deletes=[f"{base}/operation.yaml"],
+            )
+        action_status(environment, normalized, "VMDeleting", "Running")
+        return
+    if not request["vm"]:
+        raise ValueError("environment has no virtual machine")
+    operation_name, manifest = operation_manifest(normalized)
+    operation = k8s_get(
+        f"/apis/virtualization.deckhouse.io/v1alpha2/namespaces/{NAMESPACE}"
+        f"/virtualmachineoperations/{operation_name}"
+    )
+    phase = (operation or {}).get("status", {}).get("phase")
+    if phase == "Completed":
+        atomic_commit(
+            f"Complete VM operation {action_id}",
+            writes={f"{base}/kustomization.yaml": generated_kustomization()},
+            deletes=[f"{base}/operation.yaml"],
+        )
+        archive_action(action_path, normalized, "Completed")
+        action_status(environment, normalized, "Ready", "Completed")
+        return
+    if phase in {"Failed", "Error"}:
+        archive_action(action_path, normalized, "Failed")
+        action_status(
+            environment, normalized, "ActionFailed", "Failed",
+            reason=f"VirtualMachineOperation {operation_name} failed",
+        )
+        return
+    if not get_text(f"{base}/operation.yaml"):
+        atomic_commit(
+            f"Start VM operation {action_id}",
+            writes={
+                f"{base}/operation.yaml": manifest,
+                f"{base}/kustomization.yaml": generated_kustomization(True),
+            },
+        )
+    states = {
+        "start-vm": "VMStarting",
+        "stop-vm": "VMStopping",
+        "restart-vm": "VMRestarting",
+    }
+    action_status(
+        environment, normalized, states[action_type], "Running",
+        operation=operation_name,
+    )
 
 
 def k8s_get(path):
@@ -599,6 +903,28 @@ def request_files():
 
 
 def reconcile():
+    actions = sorted(action_files(), key=lambda value: value["name"])
+    action_environments = set()
+    for item in actions:
+        try:
+            raw_action = json.loads(get_text(item["path"], "{}") or "{}")
+            action_environments.add(slug((raw_action.get("spec") or {}).get("environment")))
+            reconcile_action(item)
+        except Exception as exc:
+            action = json.loads(get_text(item["path"], "{}") or "{}")
+            spec = action.get("spec") or {}
+            environment = slug(spec.get("environment") or item["name"])
+            existing = load_json(f"{STATUS_ROOT}/{environment}.json", {}) or {}
+            existing.pop("updatedAt", None)
+            write_status(
+                environment,
+                "ActionFailed",
+                **{
+                    key: value for key, value in existing.items()
+                    if key not in {"environmentId", "namespace", "state", "reason"}
+                },
+                reason=str(exc),
+            )
     files = request_files()
     active = root_environments()
     active_vm = 0
@@ -612,6 +938,8 @@ def reconcile():
             document = json.loads(get_text(path))
             request = validate_request(document)
             env = request["environment"]
+            if env in action_environments:
+                continue
             if env in active:
                 reconcile_existing(request, path)
                 continue

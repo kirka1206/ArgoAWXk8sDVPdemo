@@ -22,6 +22,7 @@ NAMESPACE = os.environ.get("NAMESPACE", "practicum-tks")
 BASE_DOMAIN = os.environ.get("BASE_DOMAIN", "d8case.ru")
 REQUEST_ROOT = "gitops/self-service/practicum/requests"
 STATUS_ROOT = "gitops/self-service/practicum/status"
+ACTION_ROOT = "gitops/self-service/practicum/actions"
 
 PROFILES = {
     "app-only": {
@@ -93,6 +94,11 @@ def get_file(path):
 def get_text(path, default=""):
     item = get_file(path)
     return base64.b64decode(item["content"]).decode() if item else default
+
+
+def list_dir(path):
+    result = gitea("GET", f"/contents/{urllib.parse.quote(path, safe='/')}?ref={GITEA_BRANCH}")
+    return result if isinstance(result, list) else []
 
 
 def put_text(path, content, message):
@@ -215,51 +221,89 @@ def create_request(user, payload):
     }
 
 
+def environments_for(user, include_cleaned=False):
+    result = []
+    for item in list_dir(STATUS_ROOT):
+        if item.get("type") != "file" or not item["name"].endswith(".json"):
+            continue
+        status = json.loads(get_text(item["path"], "{}") or "{}")
+        if status.get("owner") != user["name"]:
+            continue
+        if not include_cleaned and status.get("state") == "Cleaned":
+            continue
+        result.append(status)
+    return sorted(result, key=lambda value: value.get("updatedAt", ""), reverse=True)
+
+
+def create_action(user, payload):
+    environment = slug(payload.get("environment"))
+    action = payload.get("action")
+    if action not in {"delete-vm", "delete-environment"}:
+        raise ValueError("Недоступное действие")
+    status = json.loads(get_text(f"{STATUS_ROOT}/{environment}.json", "{}") or "{}")
+    if not status:
+        raise ValueError("Стенд не найден")
+    if status.get("owner") != user["name"]:
+        raise PermissionError("Нельзя управлять чужим стендом")
+    if status.get("lastAction", {}).get("status") == "Running":
+        raise ValueError("Предыдущее действие ещё выполняется")
+    if action == "delete-vm" and not status.get("virtualMachine"):
+        raise ValueError("В стенде нет виртуальной машины")
+    action_id = f"{environment}-{action}-{hashlib.sha256(str(time.time_ns()).encode()).hexdigest()[:6]}"[:63]
+    requested = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    document = {
+        "apiVersion": "demo.practicum/v1",
+        "kind": "EnvironmentAction",
+        "metadata": {"name": action_id},
+        "spec": {
+            "environment": environment,
+            "action": action,
+            "actor": user["name"],
+            "actorEmail": user["email"],
+            "reason": "owner-request",
+            "requestedAt": requested,
+        },
+    }
+    result = put_text(
+        f"{ACTION_ROOT}/{action_id}.json",
+        json.dumps(document, ensure_ascii=False, indent=2) + "\n",
+        f"Request {action} for {environment}",
+    )
+    return {"actionId": action_id, "environmentId": environment, "gitCommit": commit_sha(result)}
+
+
 HTML = """<!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Practicum Self-Service</title><style>
-*{box-sizing:border-box}body{margin:0;background:#f4f6f8;color:#18232b;font:15px system-ui,sans-serif}
-header{background:#173f35;color:white;padding:24px max(24px,calc((100% - 1080px)/2));display:flex;align-items:center;justify-content:space-between;gap:20px}
-header h1{font-size:28px;margin:0 0 6px}header p{margin:0;color:#d5e6df}
-.logout{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border:1px solid #92b8aa;border-radius:6px;color:white;text-decoration:none;font-weight:700;white-space:nowrap}
-.logout:hover,.logout:focus-visible{background:#28594c;outline:2px solid white;outline-offset:2px}
-main{max-width:1080px;margin:0 auto;padding:24px;display:grid;grid-template-columns:380px 1fr;gap:20px}
-section{background:white;border:1px solid #d6dde2;border-radius:8px;padding:20px}h2{font-size:18px;margin:0 0 18px}
-label{display:grid;gap:7px;font-weight:650;margin-bottom:16px}select,button{min-height:42px;border-radius:6px;font:inherit}
-select{border:1px solid #aebac3;background:white;padding:8px}button{border:0;background:#176b54;color:white;font-weight:750;cursor:pointer}
-button:disabled{background:#80938d;cursor:wait}
-.profile{border-left:4px solid #3c8c74;background:#f5faf8;padding:12px;margin:-4px 0 16px;line-height:1.45}
-.status-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
-.state{display:inline-flex;align-items:center;gap:9px;font-size:18px;font-weight:800}
-.state-dot{width:11px;height:11px;border-radius:50%;background:#74818a;flex:none}
-.state.working .state-dot{background:#c17b17;animation:pulse 1.4s ease-in-out infinite}
-.state.ready .state-dot{background:#16805d}.state.failed .state-dot{background:#b33232}
-.progress{height:5px;background:#e3e8eb;overflow:hidden;margin:0 0 16px}
-.progress span{display:block;width:36%;height:100%;background:#c17b17;animation:progress 1.6s ease-in-out infinite}
-.progress[hidden]{display:none}.activity{margin:0 0 16px;font-weight:650;line-height:1.45}
-.status{white-space:pre-wrap;line-height:1.5}.muted{color:#65737d}.error{color:#a12828}
-.poll-meta{font-size:13px;color:#65737d;text-align:right}
-@keyframes pulse{50%{opacity:.35;transform:scale(.8)}}@keyframes progress{0%{transform:translateX(-110%)}100%{transform:translateX(320%)}}
-dl{display:grid;grid-template-columns:170px 1fr;gap:8px;margin:0}dt{color:#65737d}dd{margin:0;font-weight:600}
-@media(max-width:760px){header{align-items:flex-start}main{grid-template-columns:1fr}.logout{min-width:88px}.status-head{align-items:flex-start;flex-direction:column}.poll-meta{text-align:left}}
+*{box-sizing:border-box}body{margin:0;background:#f5f7fa;color:#172434;font:14px system-ui,sans-serif}.app{min-height:100vh;display:grid;grid-template-columns:230px 1fr}
+aside{background:#fff;border-right:1px solid #dce3ea;padding:20px 14px;position:sticky;top:0;height:100vh}.brand{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800;padding:2px 8px 24px}.logo{display:grid;place-items:center;width:36px;height:36px;border-radius:8px;background:#1677e8;color:#fff}
+nav button{width:100%;display:flex;align-items:center;gap:10px;border:0;background:transparent;color:#52677d;padding:11px 12px;border-radius:6px;text-align:left;font:inherit;cursor:pointer}nav button.active{background:#eaf3ff;color:#0969d7;font-weight:750;border-left:3px solid #1677e8}
+.shell{min-width:0}.top{height:66px;background:#fff;border-bottom:1px solid #dce3ea;display:flex;align-items:center;justify-content:space-between;padding:0 28px}.crumb{color:#61758a}.user{display:flex;align-items:center;gap:10px}.avatar{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#eaf3ff;color:#0969d7;font-weight:800}.logout{color:#536a80;text-decoration:none}
+main{padding:26px;max-width:1400px}.view{display:none}.view.active{display:block}.heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px}h1{font-size:27px;margin:0 0 6px}h2{font-size:18px;margin:0}.muted{color:#6b7f92}.panel,.card{background:#fff;border:1px solid #dce3ea;border-radius:8px;box-shadow:0 1px 2px #142b4410}.panel{padding:20px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+label{display:grid;gap:7px;font-weight:650;margin-bottom:16px}select,button{min-height:40px;border-radius:6px;font:inherit}select{border:1px solid #b8c5d1;background:white;padding:8px}.primary{border:0;background:#1677e8;color:white;font-weight:750;padding:0 16px}.danger{border:0;background:#c93535;color:white;font-weight:750;padding:0 16px}.secondary{border:1px solid #b8c5d1;background:#fff;color:#263b50;padding:0 14px}
+.profile{border-left:3px solid #1677e8;background:#f2f7fd;padding:12px;margin:-4px 0 16px;line-height:1.45}.card{overflow:hidden}.card-head{padding:16px;border-bottom:1px solid #e7ecf1;display:flex;justify-content:space-between;gap:12px}.card-body{padding:16px;display:grid;gap:10px}.card-foot{background:#f7f9fb;padding:12px 16px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.title{font-weight:800;font-size:16px}.badge{display:inline-flex;padding:4px 8px;border-radius:12px;background:#eaf3ff;color:#0969d7;font-size:12px;font-weight:750}.badge.ready{background:#e5f7f1;color:#08785a}.badge.work{background:#fff3da;color:#9a6200}.badge.error{background:#fde9e9;color:#ad2929}.kv{display:grid;grid-template-columns:120px 1fr;gap:6px}.kv span:nth-child(odd){color:#718497}.mono{font-family:ui-monospace,monospace;overflow-wrap:anywhere}.status{white-space:pre-wrap;line-height:1.5}.progress{height:4px;background:#e6ebf0;overflow:hidden}.progress span{display:block;width:35%;height:100%;background:#1677e8;animation:move 1.5s infinite}@keyframes move{from{transform:translateX(-110%)}to{transform:translateX(330%)}}
+.modal{position:fixed;inset:0;background:#10203388;display:none;place-items:center;padding:20px;z-index:10}.modal.open{display:grid}.dialog{width:min(520px,100%);background:#fff;border-radius:8px;padding:22px}.warning{background:#fff4e4;border-left:3px solid #d98b15;padding:12px;margin:16px 0}.actions{display:flex;justify-content:flex-end;gap:10px}.empty{padding:42px;text-align:center;color:#718497}
+@media(max-width:760px){.app{grid-template-columns:1fr}aside{height:auto;position:static;border-right:0;border-bottom:1px solid #dce3ea}.brand{padding-bottom:10px}nav{display:flex;overflow:auto}nav button{white-space:nowrap}.top{padding:0 16px}.user span:not(.avatar){display:none}main{padding:18px}.heading{align-items:flex-start;flex-direction:column}.grid{grid-template-columns:1fr}}
 </style></head><body>
-<header><div><h1>Practicum Self-Service</h1><p>Заказ временных стендов через единый GitOps-процесс</p></div><a class="logout" href="/logout">Выйти</a></header>
-<main><section><h2>Новая заявка</h2><div id="user" class="muted"></div>
+<div class="app"><aside><div class="brand"><span class="logo">P</span>Practicum</div><nav>
+<button data-view="new" class="active">＋ Новый стенд</button><button data-view="mine">▣ Мои стенды</button><button data-view="history">≡ История</button></nav></aside>
+<div class="shell"><header class="top"><div class="crumb">Self-Service › <b id="crumb">Новый стенд</b></div><div class="user"><span class="avatar" id="initial">U</span><span id="user"></span><a class="logout" href="/logout">Выйти</a></div></header>
+<main><section id="new" class="view active"><div class="heading"><div><h1>Новый стенд</h1><div class="muted">Заказ ресурсов через GitOps</div></div></div><div class="panel">
 <form id="form"><label>Профиль стенда<select id="profile"></select></label><div id="details" class="profile"></div>
 <label id="postgresVersionField" hidden>Версия PostgreSQL<select id="postgresVersion"></select></label>
 <label>Назначение<select id="purpose"><option value="feature">Разработка функции</option><option value="bugfix">Проверка исправления</option><option value="demo">Демонстрация</option><option value="loadtest">Нагрузочный тест</option></select></label>
-<label>Время жизни<select id="ttl"></select></label><button id="submit">Отправить заявку</button></form></section>
-<section><h2>Результат</h2><div class="status-head"><div id="state" class="state"><span class="state-dot"></span><span>Ожидание</span></div><div id="pollMeta" class="poll-meta"></div></div>
-<div id="progress" class="progress" hidden><span></span></div><p id="activity" class="activity muted">После отправки здесь появятся текущий этап, Git commit, Argo CD, ресурсы, AWX job и TTL.</p>
-<div id="result" class="status muted"></div></section></main>
+<label>Время жизни<select id="ttl"></select></label><button id="submit" class="primary">Отправить заявку</button></form></div>
+<div class="panel" style="margin-top:16px"><h2>Результат</h2><div id="progress" class="progress" hidden><span></span></div><p id="activity" class="muted">После отправки здесь появится ход выполнения.</p><div id="result" class="status"></div></div></section>
+<section id="mine" class="view"><div class="heading"><div><h1>Мои стенды</h1><div class="muted">Активные приложения и виртуальные машины</div></div><button class="secondary" onclick="loadEnvs()">↻ Обновить</button></div><div id="envs" class="grid"></div></section>
+<section id="history" class="view"><div class="heading"><div><h1>История</h1><div class="muted">Очищенные стенды и последние операции</div></div></div><div id="historyList" class="grid"></div></section></main></div></div>
+<div id="modal" class="modal"><div class="dialog"><h2 id="modalTitle"></h2><p id="modalText"></p><div class="warning" id="modalWarning"></div><div class="actions"><button class="secondary" onclick="closeModal()">Отмена</button><button class="danger" id="confirmAction">Подтвердить</button></div></div></div>
 <script>
-let profiles=[],last=null,pollCount=0,startedAt=null,pollTimer=null;const $=id=>document.getElementById(id);
+let profiles=[],last=null,pollTimer=null,pendingAction=null;const $=id=>document.getElementById(id);
 async function api(path,opts={}){const r=await fetch(path,{headers:{"Content-Type":"application/json"},...opts});const p=await r.json();if(!r.ok)throw Error(p.error||"Ошибка");return p}
 function profile(){return profiles.find(p=>p.name===$("profile").value)}
 function renderProfile(){const p=profile();$("details").innerHTML=`<b>${p.title}</b><br>${p.description}<br><br><b>Ресурсы:</b> приложение 1 replica, 25m CPU / 32Mi RAM${p.vm?`, VM ${p.vm.cpu}, RAM ${p.vm.memory}, диск ${p.vm.disk}`:"; VM не создаётся"}.<br><b>Namespace:</b> practicum-tks`;$("ttl").innerHTML=p.ttl.map(v=>`<option>${v}</option>`).join("");const versions=p.postgresVersions||[];$("postgresVersionField").hidden=!versions.length;$("postgresVersion").innerHTML=versions.map(v=>`<option value="${v}">PostgreSQL ${v}</option>`).join("")}
-function viewState(s){const state=s.state||s.status||"Submitted";if(["Rejected","Error"].includes(state))return{label:"Ошибка",kind:"failed",working:false};if(state==="Ready")return{label:"Готово",kind:"ready",working:false};if(state==="Cleaned")return{label:"Удалено по TTL",kind:"ready",working:false};if(state==="Expired")return{label:"Срок истёк",kind:"ready",working:false};if(state==="Queued")return{label:"В очереди",kind:"working",working:true};return{label:"В работе",kind:"working",working:true}}
-function activity(s){const state=s.state||s.status||"Submitted";if(state==="Submitted")return"Заявка записана в Git. Ожидаем, когда request controller начнёт обработку.";if(state==="Queued")return"Заявка проверена и ждёт свободной квоты платформы.";if(["Rejected","Error"].includes(state))return s.reason?`Обработка остановлена: ${s.reason}`:"Обработка остановлена. Проверьте причину ниже.";if(state==="Ready")return"Стенд готов к использованию. Все обязательные проверки завершены.";if(state==="Cleaned")return"Время жизни завершилось, ресурсы заявки удалены через GitOps.";if(state==="Expired")return"Время жизни завершилось. Выполняется GitOps-очистка ресурсов.";if(state==="Provisioning"){if(!s.application)return"Argo CD применяет манифесты приложения и инфраструктуры.";if((s.application.readyReplicas??0)<(s.application.replicas??1))return"Kubernetes запускает контейнерное приложение.";if(!s.virtualMachine&&s.profile!=="app-only")return"Приложение запущено. DVP создаёт диск и виртуальную машину.";if(!s.virtualMachine)return"Приложение запущено. Завершаются проверки готовности стенда.";if(s.virtualMachine.phase!=="Running")return`DVP создаёт и запускает виртуальную машину. Текущая фаза: ${s.virtualMachine.phase||"ожидание"}.`;if(!s.virtualMachine.guestReady)return"Виртуальная машина запущена. Ожидаем готовность гостевой ОС и qemu-guest-agent.";if(!s.awxJob)return"Гостевая ОС готова. Request controller запускает AWX post-configuration.";if(["failed","error","canceled"].includes(s.awxStatus))return`AWX job ${s.awxJob} завершился со статусом ${s.awxStatus}. Controller проверяет возможность повторного запуска.`;if(s.awxStatus!=="successful")return`AWX выполняет настройку и проверку ОС. Job ${s.awxJob}, статус ${s.awxStatus||"pending"}.`;return"AWX завершил работу успешно. Controller выполняет итоговую проверку стенда."}return"Система обрабатывает заявку."}
-function render(s){const v=viewState(s);$("state").className=`state ${v.kind}`;$("state").querySelector("span:last-child").textContent=v.label;$("progress").hidden=!v.working;$("activity").className=`activity ${v.kind==="failed"?"error":"muted"}`;$("activity").textContent=activity(s);const elapsed=startedAt?Math.max(0,Math.floor((Date.now()-startedAt)/1000)):0;$("pollMeta").textContent=v.working?`Проверка каждые 5 секунд · ${pollCount} · прошло ${elapsed} сек.`:`Обновлено ${new Date().toLocaleTimeString("ru-RU")}`;$("result").className=`status ${v.kind==="failed"?"error":""}`;$("result").textContent=`Environment ID: ${s.environmentId}
+function working(s){return !["Ready","Rejected","Error","Cleaned","ActionFailed"].includes(s.state)}
+function render(s){$("progress").hidden=!working(s);$("activity").textContent=working(s)?"Система выполняет GitOps-операцию. Статус обновляется каждые 5 секунд.":s.state==="Ready"?"Стенд готов.":"Операция завершена.";$("result").textContent=`Environment ID: ${s.environmentId}
 Namespace: ${s.namespace}
 Технический статус: ${s.state||s.status}
 Причина: ${s.reason||"-"}
@@ -277,9 +321,16 @@ VM: ${s.virtualMachine?`${s.virtualMachine.cpu}, RAM ${s.virtualMachine.memory},
 Логин VM: ${s.virtualMachine?.access?.username||"-"} (${s.virtualMachine?.access?.authentication||"-"})
 SSH: ${s.virtualMachine?.access?.command||"-"}
 AWX job/status: ${s.awxJob||"-"} / ${s.awxStatus||"-"}`;}
-async function poll(){if(!last)return;pollCount++;try{const s=await api(`/api/status/${last}`);render(s);if(["Ready","Rejected","Error","Cleaned"].includes(s.state)){$("submit").disabled=false;return}}catch(e){$("state").className="state failed";$("state").querySelector("span:last-child").textContent="Ошибка связи";$("activity").className="activity error";$("activity").textContent=`Не удалось получить статус: ${e.message}. Повторим через 5 секунд.`}pollTimer=setTimeout(poll,5000)}
-async function init(){const me=await api("/api/me");profiles=me.profiles;$("user").textContent=`${me.email||me.name} · ${me.groups.join(", ")}`;$("profile").innerHTML=profiles.map(p=>`<option value="${p.name}">${p.title}</option>`).join("");if(!profiles.length){$("form").hidden=true;$("result").textContent="Для групп пользователя нет доступных профилей.";return}$("profile").onchange=renderProfile;renderProfile()}
-$("form").onsubmit=async e=>{e.preventDefault();clearTimeout(pollTimer);$("submit").disabled=true;$("state").className="state working";$("state").querySelector("span:last-child").textContent="Отправка";$("progress").hidden=false;$("activity").className="activity muted";$("activity").textContent="Создаём EnvironmentRequest в Git...";$("result").textContent="";$("pollMeta").textContent="";const p=profile();try{const r=await api("/api/requests",{method:"POST",body:JSON.stringify({profile:$("profile").value,purpose:$("purpose").value,ttl:$("ttl").value,postgresVersion:p.postgresVersions?.length?$("postgresVersion").value:null})});last=r.environmentId;pollCount=0;startedAt=Date.now();render(r);poll()}catch(err){$("submit").disabled=false;$("progress").hidden=true;$("state").className="state failed";$("state").querySelector("span:last-child").textContent="Ошибка";$("activity").className="activity error";$("activity").textContent="Заявку не удалось отправить.";$("result").className="status error";$("result").textContent=err.message}};
+async function poll(){if(!last)return;try{const s=await api(`/api/status/${last}`);render(s);if(!working(s)){$("submit").disabled=false;loadEnvs();return}}catch(e){$("activity").textContent=`Ошибка связи: ${e.message}. Повтор через 5 секунд.`}pollTimer=setTimeout(poll,5000)}
+function badge(s){const c=s==="Ready"?"ready":s==="Cleaned"?"":s.includes("Error")||s==="Rejected"?"error":"work";return`<span class="badge ${c}">${s}</span>`}
+function card(s,history=false){const vm=s.virtualMachine;return `<article class="card"><div class="card-head"><div><div class="title">${s.environmentId}</div><div class="muted">${s.profile||"-"}</div></div>${badge(s.state)}</div><div class="card-body"><div class="kv"><span>TTL</span><b>${s.expiresAt||"-"}</b><span>Приложение</span><b>${s.application?.readyReplicas??"-"}/${s.application?.replicas??"-"}</b><span>VM</span><b>${vm?`${vm.phase} · ${vm.ip||"-"}`:"Нет"}</b><span>AWX</span><b>${s.awxJob||"-"} / ${s.awxStatus||"-"}</b></div>${s.lastAction?`<div class="muted">Последнее действие: ${s.lastAction.action} · ${s.lastAction.status}</div>`:""}</div>${history?"":`<div class="card-foot">${vm?`<button class="secondary" onclick="ask('${s.environmentId}','delete-vm')">Удалить VM</button>`:"<span></span>"}<button class="danger" onclick="ask('${s.environmentId}','delete-environment')">Удалить стенд</button></div>`}</article>`}
+async function loadEnvs(){const active=await api("/api/environments");$("envs").innerHTML=active.length?active.map(s=>card(s)).join(""):`<div class="panel empty">Активных стендов нет</div>`;const history=await api("/api/environments?history=1");const cleaned=history.filter(s=>s.state==="Cleaned");$("historyList").innerHTML=cleaned.length?cleaned.map(s=>card(s,true)).join(""):`<div class="panel empty">История пока пуста</div>`}
+function ask(env,action){pendingAction={environment:env,action};$("modalTitle").textContent=action==="delete-vm"?"Удалить виртуальную машину?":"Удалить стенд?";$("modalText").textContent=env;$("modalWarning").textContent=action==="delete-vm"?"VM и VirtualDisk будут необратимо удалены. Приложение сохранится.":"Deployment, Service, Ingress, VM и диск будут удалены через Argo CD prune.";$("modal").classList.add("open")}
+function closeModal(){$("modal").classList.remove("open");pendingAction=null}
+$("confirmAction").onclick=async()=>{const a=pendingAction;closeModal();await api("/api/actions",{method:"POST",body:JSON.stringify(a)});last=a.environment;show("mine");poll()}
+function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll("nav button").forEach(v=>v.classList.toggle("active",v.dataset.view===id));$("crumb").textContent={new:"Новый стенд",mine:"Мои стенды",history:"История"}[id];if(id!=="new")loadEnvs()}
+async function init(){const me=await api("/api/me");profiles=me.profiles;$("user").textContent=me.email||me.name;$("initial").textContent=(me.name||"U")[0].toUpperCase();$("profile").innerHTML=profiles.map(p=>`<option value="${p.name}">${p.title}</option>`).join("");document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>show(b.dataset.view));$("profile").onchange=renderProfile;renderProfile();loadEnvs()}
+$("form").onsubmit=async e=>{e.preventDefault();clearTimeout(pollTimer);$("submit").disabled=true;$("progress").hidden=false;$("activity").textContent="Создаём EnvironmentRequest в Git...";const p=profile();try{const r=await api("/api/requests",{method:"POST",body:JSON.stringify({profile:$("profile").value,purpose:$("purpose").value,ttl:$("ttl").value,postgresVersion:p.postgresVersions?.length?$("postgresVersion").value:null})});last=r.environmentId;render(r);poll()}catch(err){$("submit").disabled=false;$("progress").hidden=true;$("activity").textContent=err.message}};
 init().catch(e=>{$("result").textContent=e.message});
 </script></body></html>"""
 
@@ -302,6 +353,9 @@ class Handler(BaseHTTPRequestHandler):
                     if set(user["groups"]).intersection(profile["groups"])
                 ]
                 return send(self, 200, {**user, "profiles": allowed, "namespace": NAMESPACE})
+            if self.path.startswith("/api/environments"):
+                include_cleaned = urllib.parse.urlparse(self.path).query == "history=1"
+                return send(self, 200, environments_for(user, include_cleaned))
             if self.path.startswith("/api/status/"):
                 environment = slug(urllib.parse.unquote(self.path.rsplit("/", 1)[1]))
                 status = get_text(f"{STATUS_ROOT}/{environment}.json")
@@ -314,11 +368,14 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         try:
-            if self.path != "/api/requests":
+            if self.path not in {"/api/requests", "/api/actions"}:
                 return send(self, 404, {"error": "Not found"})
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length) or b"{}")
-            return send(self, 201, create_request(current_user(self.headers), payload))
+            user = current_user(self.headers)
+            if self.path == "/api/actions":
+                return send(self, 201, create_action(user, payload))
+            return send(self, 201, create_request(user, payload))
         except PermissionError as exc:
             return send(self, 403, {"error": str(exc)})
         except ValueError as exc:
