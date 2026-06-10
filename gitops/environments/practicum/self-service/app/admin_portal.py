@@ -9,6 +9,8 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
@@ -23,6 +25,9 @@ ACTION_ROOT = "gitops/self-service/practicum/actions"
 ADMIN_EMAIL = "victor.melnikov.practicum@demo.local"
 ADMIN_NAME = "victor-melnikov-practicum"
 ADMIN_GROUP = "practicum-vm-operators"
+ENVIRONMENT_CACHE_TTL = 15
+ENVIRONMENT_CACHE = {"loadedAt": 0.0, "data": []}
+ENVIRONMENT_CACHE_LOCK = threading.Lock()
 
 
 def basic_auth():
@@ -116,20 +121,47 @@ def send(handler, status, payload, content_type="application/json; charset=utf-8
     handler.send_response(status)
     handler.send_header("Content-Type", content_type)
     handler.send_header("Content-Length", str(len(body)))
+    handler.send_header("Cache-Control", "no-store")
     handler.end_headers()
     handler.wfile.write(body)
 
 
 def environments():
-    result = []
-    for item in list_dir(STATUS_ROOT):
-        if item.get("type") != "file" or not item["name"].endswith(".json"):
-            continue
-        status = json.loads(get_text(item["path"], "{}") or "{}")
-        environment = status.get("environmentId", "")
-        if environment.startswith("practicum-env-"):
-            result.append(status)
-    return sorted(result, key=lambda value: value.get("updatedAt", ""), reverse=True)
+    now = time.monotonic()
+    if ENVIRONMENT_CACHE["data"] and now - ENVIRONMENT_CACHE["loadedAt"] < ENVIRONMENT_CACHE_TTL:
+        return ENVIRONMENT_CACHE["data"]
+
+    with ENVIRONMENT_CACHE_LOCK:
+        now = time.monotonic()
+        if ENVIRONMENT_CACHE["data"] and now - ENVIRONMENT_CACHE["loadedAt"] < ENVIRONMENT_CACHE_TTL:
+            return ENVIRONMENT_CACHE["data"]
+        try:
+            items = [
+                item
+                for item in list_dir(STATUS_ROOT)
+                if item.get("type") == "file" and item["name"].endswith(".json")
+            ]
+
+            def load_status(item):
+                return json.loads(get_text(item["path"], "{}") or "{}")
+
+            with ThreadPoolExecutor(max_workers=min(6, max(1, len(items)))) as executor:
+                statuses = executor.map(load_status, items)
+            result = [
+                status
+                for status in statuses
+                if status.get("environmentId", "").startswith("practicum-env-")
+            ]
+            ENVIRONMENT_CACHE["data"] = sorted(
+                result,
+                key=lambda value: value.get("updatedAt", ""),
+                reverse=True,
+            )
+            ENVIRONMENT_CACHE["loadedAt"] = time.monotonic()
+        except Exception:
+            if not ENVIRONMENT_CACHE["data"]:
+                raise
+        return ENVIRONMENT_CACHE["data"]
 
 
 def create_action(admin, payload):
@@ -177,23 +209,27 @@ HTML = """<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name=
 <title>Practicum VM Administration</title><style>
 *{box-sizing:border-box}body{margin:0;background:#f5f7fa;color:#172434;font:14px system-ui,sans-serif}.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
 aside{background:#fff;border-right:1px solid #dce3ea;padding:20px 14px;position:sticky;top:0;height:100vh}.brand{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800;padding:2px 8px 24px}.logo{display:grid;place-items:center;width:36px;height:36px;border-radius:8px;background:#1677e8;color:#fff}
-nav button{width:100%;display:flex;gap:10px;border:0;background:transparent;color:#52677d;padding:11px 12px;border-radius:6px;text-align:left;font:inherit}nav button.active{background:#eaf3ff;color:#0969d7;font-weight:750;border-left:3px solid #1677e8}.shell{min-width:0}.top{height:66px;background:#fff;border-bottom:1px solid #dce3ea;display:flex;justify-content:space-between;align-items:center;padding:0 28px}.avatar{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#eaf3ff;color:#0969d7;font-weight:800}.logout{color:#536a80;text-decoration:none;margin-left:12px}
-main{padding:26px;min-width:0}.heading{display:flex;justify-content:space-between;align-items:end;margin-bottom:18px}h1{font-size:27px;margin:0 0 5px}.muted{color:#6b7f92}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}.kpi,.panel{min-width:0;background:#fff;border:1px solid #dce3ea;border-radius:8px;box-shadow:0 1px 2px #142b4410}.kpi{padding:16px}.kpi b{font-size:28px;display:block;margin-top:12px}.toolbar{display:flex;flex-wrap:wrap;gap:10px;padding:14px}.toolbar input,.toolbar select,.dialog textarea{min-width:0;border:1px solid #b8c5d1;border-radius:6px;padding:9px;font:inherit}.toolbar input{flex:1 1 220px}.table-wrap{overflow:auto;max-width:100%}table{width:100%;border-collapse:collapse}th,td{padding:12px 14px;border-top:1px solid #e7ecf1;text-align:left;white-space:nowrap}th{color:#6b7f92;font-size:12px}.badge{padding:4px 8px;border-radius:12px;background:#eaf3ff;color:#0969d7;font-weight:750;font-size:12px}.badge.Ready{background:#e5f7f1;color:#08785a}.badge.Error,.badge.ActionFailed{background:#fde9e9;color:#ad2929}.menu button,.secondary{border:1px solid #b8c5d1;background:#fff;border-radius:6px;padding:7px 10px}.danger{background:#c93535;color:#fff;border:0;border-radius:6px;padding:9px 14px}.modal{position:fixed;inset:0;background:#10203388;display:none;place-items:center;padding:20px}.modal.open{display:grid}.dialog{background:#fff;border-radius:8px;padding:22px;width:min(540px,100%)}.dialog textarea{width:100%;min-height:90px}.warning{background:#fff4e4;border-left:3px solid #d98b15;padding:12px;margin:14px 0}.actions{display:flex;justify-content:flex-end;gap:10px}.mono{font-family:ui-monospace,monospace}
+nav button{width:100%;display:flex;gap:10px;border:0;background:transparent;color:#52677d;padding:11px 12px;border-radius:6px;text-align:left;font:inherit;cursor:pointer}nav button.active{background:#eaf3ff;color:#0969d7;font-weight:750;border-left:3px solid #1677e8}.shell{min-width:0}.top{height:66px;background:#fff;border-bottom:1px solid #dce3ea;display:flex;justify-content:space-between;align-items:center;padding:0 28px}.avatar{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#eaf3ff;color:#0969d7;font-weight:800}.logout{color:#536a80;text-decoration:none;margin-left:12px}
+main{padding:26px;min-width:0}.heading{display:flex;justify-content:space-between;align-items:end;margin-bottom:18px}h1{font-size:27px;margin:0 0 5px}.muted{color:#6b7f92}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}.kpi,.panel{min-width:0;background:#fff;border:1px solid #dce3ea;border-radius:8px;box-shadow:0 1px 2px #142b4410}.kpi{padding:16px}.kpi b{font-size:28px;display:block;margin-top:12px}.toolbar{display:flex;flex-wrap:wrap;gap:10px;padding:14px}.toolbar input,.toolbar select,.dialog textarea{min-width:0;border:1px solid #b8c5d1;border-radius:6px;padding:9px;font:inherit}.toolbar input{flex:1 1 220px}.table-wrap{overflow:auto;max-width:100%}table{width:100%;border-collapse:collapse}th,td{padding:12px 14px;border-top:1px solid #e7ecf1;text-align:left;white-space:nowrap}th{color:#6b7f92;font-size:12px}.badge{padding:4px 8px;border-radius:12px;background:#eaf3ff;color:#0969d7;font-weight:750;font-size:12px}.badge.Ready{background:#e5f7f1;color:#08785a}.badge.Error,.badge.ActionFailed{background:#fde9e9;color:#ad2929}.menu button,.secondary{border:1px solid #b8c5d1;background:#fff;border-radius:6px;padding:7px 10px}.danger{background:#c93535;color:#fff;border:0;border-radius:6px;padding:9px 14px}.modal{position:fixed;inset:0;background:#10203388;display:none;place-items:center;padding:20px}.modal.open{display:grid}.dialog{background:#fff;border-radius:8px;padding:22px;width:min(540px,100%)}.dialog textarea{width:100%;min-height:90px}.warning{background:#fff4e4;border-left:3px solid #d98b15;padding:12px;margin:14px 0}.actions{display:flex;justify-content:flex-end;gap:10px}.mono{font-family:ui-monospace,monospace}.loading{min-height:20px;margin:0 0 12px}.empty{text-align:center;padding:36px;color:#6b7f92}
 @media(max-width:900px){.app{grid-template-columns:1fr}aside{position:static;height:auto}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.top{padding:0 16px}main{padding:18px}.toolbar select{flex:1 1 150px}}
-</style></head><body><div class="app"><aside><div class="brand"><span class="logo">P</span>Practicum Admin</div><nav><button class="active">▦ Обзор</button><button>▣ Стенды</button><button>▤ Виртуальные машины</button><button>↻ Операции</button><button>⌕ Аудит</button></nav></aside>
+</style></head><body><div class="app"><aside><div class="brand"><span class="logo">P</span>Practicum Admin</div><nav><button data-view="overview" class="active">▦ Обзор</button><button data-view="environments">▣ Стенды</button><button data-view="virtual-machines">▤ Виртуальные машины</button><button data-view="operations">↻ Операции</button><button data-view="audit">⌕ Аудит</button></nav></aside>
 <div class="shell"><header class="top"><div>Practicum › <b>Управление стендами</b></div><div><span class="avatar">V</span> <span id="user">Victor</span><a href="/logout" class="logout">Выйти</a></div></header><main>
-<div class="heading"><div><h1>Стенды пользователей</h1><div class="muted">GitOps-управление tenant environments в practicum-tks</div></div><button class="secondary" onclick="load()">↻ Обновить</button></div>
+<div class="heading"><div><h1 id="viewTitle">Обзор</h1><div id="viewSubtitle" class="muted">GitOps-управление tenant environments в practicum-tks</div></div><button id="refresh" class="secondary" onclick="load(true)">↻ Обновить</button></div>
+<div id="loadState" class="muted loading"></div>
 <div class="kpis"><div class="kpi">Активные стенды<b id="active">0</b></div><div class="kpi">Работающие VM<b id="running">0</b></div><div class="kpi">Queued<b id="queued">0</b></div><div class="kpi">Ошибки<b id="errors">0</b></div><div class="kpi">Истекают в течение часа<b id="expiring">0</b></div></div>
 <section class="panel"><div class="toolbar"><input id="search" placeholder="Поиск по Environment ID или владельцу"><select id="status"><option value="">Все статусы</option><option>Ready</option><option>Queued</option><option>Error</option><option>Cleaned</option></select><select id="vm"><option value="">Все стенды</option><option value="yes">С VM</option><option value="no">Без VM</option></select></div>
 <div class="table-wrap"><table><thead><tr><th>Environment</th><th>Владелец</th><th>Профиль</th><th>Статус</th><th>TTL</th><th>VM / IP</th><th>AWX</th><th>Действия</th></tr></thead><tbody id="rows"></tbody></table></div></section>
 </main></div></div><div id="modal" class="modal"><div class="dialog"><h2 id="title"></h2><p class="mono" id="environment"></p><div class="warning" id="warning"></div><label>Причина<textarea id="reason" placeholder="Обязательное обоснование"></textarea></label><div class="actions"><button class="secondary" onclick="closeModal()">Отмена</button><button id="confirm" class="danger">Подтвердить</button></div></div></div>
 <script>
-const $=id=>document.getElementById(id);let data=[],pending=null;async function api(path,opts={}){const r=await fetch(path,{headers:{"Content-Type":"application/json"},...opts});const p=await r.json();if(!r.ok)throw Error(p.error||"Ошибка");return p}
+const $=id=>document.getElementById(id);let data=[],pending=null,currentView="overview",loading=false,pollTimer=null;async function api(path,opts={}){const r=await fetch(path,{cache:"no-store",headers:{"Content-Type":"application/json"},...opts});const p=await r.json();if(!r.ok)throw Error(p.error||"Ошибка");return p}
 function metrics(){const now=Date.now();$("active").textContent=data.filter(x=>x.state!=="Cleaned").length;$("running").textContent=data.filter(x=>x.virtualMachine?.phase==="Running").length;$("queued").textContent=data.filter(x=>x.state==="Queued").length;$("errors").textContent=data.filter(x=>["Error","Rejected","ActionFailed"].includes(x.state)).length;$("expiring").textContent=data.filter(x=>{const t=Date.parse(x.expiresAt);return t>now&&t-now<3600000}).length}
 function buttons(x){if(x.state==="Cleaned")return"-";const vm=x.virtualMachine;return `<span class="menu">${vm?`<button onclick="ask('${x.environmentId}','start-vm')">▶</button><button onclick="ask('${x.environmentId}','stop-vm')">■</button><button onclick="ask('${x.environmentId}','restart-vm')">↻</button><button onclick="ask('${x.environmentId}','delete-vm')">Удалить VM</button>`:""}<button onclick="ask('${x.environmentId}','delete-environment')">Удалить стенд</button></span>`}
-function render(){const q=$("search").value.toLowerCase(),st=$("status").value,v=$("vm").value;const rows=data.filter(x=>(x.environmentId+" "+x.owner).toLowerCase().includes(q)&&(!st||x.state===st)&&(!v||(v==="yes")===!!x.virtualMachine));$("rows").innerHTML=rows.map(x=>`<tr><td class="mono">${x.environmentId}</td><td>${x.owner||"-"}</td><td>${x.profile||"-"}</td><td><span class="badge ${x.state}">${x.state}</span></td><td>${x.expiresAt||"-"}</td><td>${x.virtualMachine?`${x.virtualMachine.phase} / ${x.virtualMachine.ip||"-"}`:"-"}</td><td>${x.awxJob||"-"} / ${x.awxStatus||"-"}</td><td>${buttons(x)}</td></tr>`).join("")}
-async function load(){data=await api("/api/environments");metrics();render()}function ask(env,action){pending={environment:env,action};$("title").textContent=action.replace("-"," ");$("environment").textContent=env;$("warning").textContent=action.startsWith("delete")?"Удаление выполняется через Git и Argo CD prune. Диск восстановить нельзя.":"Операция будет записана в Git и выполнена DVP.";$("reason").value="";$("modal").classList.add("open")}function closeModal(){$("modal").classList.remove("open");pending=null}
-$("confirm").onclick=async()=>{const reason=$("reason").value.trim();if(!reason)return alert("Укажите причину");await api("/api/actions",{method:"POST",body:JSON.stringify({...pending,reason})});closeModal();setTimeout(load,2000)};["search","status","vm"].forEach(id=>$(id).oninput=render);async function init(){const me=await api("/api/me");$("user").textContent=me.email;await load();setInterval(load,5000)}init().catch(e=>alert(e.message));
+function viewRows(){let rows=data;if(currentView==="environments")rows=data.filter(x=>x.state!=="Cleaned");if(currentView==="virtual-machines")rows=data.filter(x=>x.virtualMachine);if(currentView==="operations")rows=data.filter(x=>x.lastAction);if(currentView==="audit")rows=data.filter(x=>x.state==="Cleaned"||x.lastAction);const q=$("search").value.toLowerCase(),st=$("status").value,v=$("vm").value;return rows.filter(x=>(x.environmentId+" "+(x.owner||"")).toLowerCase().includes(q)&&(!st||x.state===st)&&(!v||(v==="yes")===!!x.virtualMachine))}
+function render(){const rows=viewRows();$("rows").innerHTML=rows.length?rows.map(x=>`<tr><td class="mono">${x.environmentId}</td><td>${x.owner||"-"}</td><td>${x.profile||"-"}</td><td><span class="badge ${x.state}">${x.state}</span></td><td>${x.expiresAt||"-"}</td><td>${x.virtualMachine?`${x.virtualMachine.phase} / ${x.virtualMachine.ip||"-"}`:"-"}</td><td>${x.awxJob||"-"} / ${x.awxStatus||"-"}</td><td>${buttons(x)}</td></tr>`).join(""):`<tr><td colspan="8" class="empty">Нет записей для выбранного представления</td></tr>`}
+const views={overview:["Обзор","Сводное состояние пользовательских стендов"],environments:["Стенды","Активные tenant environments всех владельцев"],"virtual-machines":["Виртуальные машины","Только пользовательские стенды с DVP VM"],operations:["Операции","Стенды с зафиксированными lifecycle-действиями"],audit:["Аудит","Очищенные стенды и история административных действий"]};
+function show(view){currentView=view;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===view));$("viewTitle").textContent=views[view][0];$("viewSubtitle").textContent=views[view][1];render()}
+async function load(manual=false){if(loading)return;loading=true;$("refresh").disabled=true;$("loadState").textContent=manual?"Обновляем данные из Git...":"Загружаем данные...";try{data=await api(`/api/environments?t=${Date.now()}`);metrics();render();$("loadState").textContent=`Получено записей: ${data.length}. Обновлено ${new Date().toLocaleTimeString("ru-RU")}.`}catch(e){$("loadState").textContent=`Ошибка обновления: ${e.message}. Сохраняем последние успешно загруженные данные.`}finally{loading=false;$("refresh").disabled=false;clearTimeout(pollTimer);pollTimer=setTimeout(()=>load(false),15000)}}function ask(env,action){pending={environment:env,action};$("title").textContent=action.replace("-"," ");$("environment").textContent=env;$("warning").textContent=action.startsWith("delete")?"Удаление выполняется через Git и Argo CD prune. Диск восстановить нельзя.":"Операция будет записана в Git и выполнена DVP.";$("reason").value="";$("modal").classList.add("open")}function closeModal(){$("modal").classList.remove("open");pending=null}
+$("confirm").onclick=async()=>{const reason=$("reason").value.trim();if(!reason)return alert("Укажите причину");await api("/api/actions",{method:"POST",body:JSON.stringify({...pending,reason})});closeModal();setTimeout(()=>load(true),2000)};["search","status","vm"].forEach(id=>$(id).oninput=render);async function init(){const me=await api("/api/me");$("user").textContent=me.email;document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>show(b.dataset.view));show("overview");await load()}init().catch(e=>{$("loadState").textContent=e.message});
 </script></body></html>"""
 
 
@@ -207,10 +243,12 @@ class Handler(BaseHTTPRequestHandler):
                 return send(self, 200, {"status": "ok"})
             if self.path == "/":
                 return send(self, 200, HTML, "text/html; charset=utf-8")
+            if self.path == "/favicon.ico":
+                return send(self, 204, b"", "image/x-icon")
             admin = current_admin(self.headers)
             if self.path == "/api/me":
                 return send(self, 200, admin)
-            if self.path == "/api/environments":
+            if self.path.startswith("/api/environments"):
                 return send(self, 200, environments())
             return send(self, 404, {"error": "Not found"})
         except PermissionError as exc:
