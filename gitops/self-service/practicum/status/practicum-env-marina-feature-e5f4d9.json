@@ -1,7 +1,7 @@
 {
   "environmentId": "practicum-env-marina-feature-e5f4d9",
   "namespace": "practicum-tks",
-  "state": "Deleting",
+  "state": "Cleaned",
   "owner": "marina-volkova-practicum",
   "profile": "app-with-postgres-vm",
   "postgresVersion": "17",
@@ -48,7 +48,7 @@
     "reason": "owner-request",
     "requestedAt": "2026-06-10T09:31:12Z",
     "gitCommit": "e33fd2dde67fff58da9f7d28bf1a2bdd65e98791",
-    "status": "Running"
+    "status": "Completed"
   },
-  "updatedAt": "2026-06-10T09:32:03Z"
+  "updatedAt": "2026-06-10T09:33:04Z"
 }
