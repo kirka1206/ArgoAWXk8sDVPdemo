@@ -10,7 +10,7 @@
     "groups": [
       "practicum-qa-devs"
     ],
-    "profile": "app-with-vm",
+    "profile": "app-only",
     "purpose": "bugfix",
     "ttl": "2h",
     "createdAt": "2026-06-10T07:08:05Z"
