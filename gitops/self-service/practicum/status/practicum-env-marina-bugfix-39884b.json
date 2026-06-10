@@ -1,0 +1,13 @@
+{
+  "environmentId": "practicum-env-marina-bugfix-39884b",
+  "namespace": "practicum-tks",
+  "state": "Queued",
+  "owner": "marina-volkova-practicum",
+  "profile": "app-with-postgres-vm",
+  "postgresVersion": "17",
+  "reason": "capacity-limit",
+  "activeEnvironments": 2,
+  "activeVirtualMachines": 2,
+  "expiresAt": "2026-06-10T11:13:41Z",
+  "updatedAt": "2026-06-10T07:14:04Z"
+}
