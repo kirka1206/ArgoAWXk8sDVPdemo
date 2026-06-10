@@ -1,7 +1,7 @@
 {
   "environmentId": "practicum-env-marina-feature-10d265",
   "namespace": "practicum-tks",
-  "state": "Error",
+  "state": "Provisioning",
   "owner": "marina-volkova-practicum",
   "profile": "app-with-postgres-vm",
   "purpose": "feature",
@@ -10,8 +10,7 @@
   "gitCommit": "c33226626cbdd06dc28f86ed648975e4fa5bbe2c",
   "awxJob": 70,
   "awxStatus": "failed",
-  "awxAttempts": 3,
-  "reason": "AWX post-configuration failed after 3 attempts; last job: 70, status: failed",
+  "awxAttempts": 2,
   "argoCD": {
     "sync": "Synced",
     "health": "Healthy"
