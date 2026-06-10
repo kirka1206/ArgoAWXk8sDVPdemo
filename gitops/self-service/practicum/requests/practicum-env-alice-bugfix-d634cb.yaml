@@ -1,0 +1,18 @@
+{
+  "apiVersion": "demo.practicum/v1",
+  "kind": "EnvironmentRequest",
+  "metadata": {
+    "name": "practicum-env-alice-bugfix-d634cb"
+  },
+  "spec": {
+    "owner": "alice-koroleva-practicum",
+    "email": "alice.koroleva.practicum@demo.local",
+    "groups": [
+      "practicum-payments-devs"
+    ],
+    "profile": "app-with-vm",
+    "purpose": "bugfix",
+    "ttl": "8h",
+    "createdAt": "2026-06-10T15:30:01Z"
+  }
+}
