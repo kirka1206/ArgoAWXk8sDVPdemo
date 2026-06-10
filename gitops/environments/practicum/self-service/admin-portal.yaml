@@ -54,6 +54,8 @@ spec:
       app: practicum-vm-admin-portal
   template:
     metadata:
+      annotations:
+        demo.practicum/config-version: "2026-06-10-v2"
       labels:
         app: practicum-vm-admin-portal
         app.kubernetes.io/part-of: practicum-demo
