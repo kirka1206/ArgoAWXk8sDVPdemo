@@ -106,6 +106,9 @@ DexAuthenticator имеет состояние `2/2`.
 - один namespace для всех environments: `practicum-tks`;
 - лимиты вынесены в env request controller:
   `MAX_ACTIVE_ENVIRONMENTS=7`, `MAX_ACTIVE_VMS=7`;
+- изменение лимитов проверено на заявке
+  `practicum-env-marina-bugfix-39884b`: после rollout controller она
+  автоматически вышла из `Queued/capacity-limit` в `Provisioning`;
 - controller не выполняет прямой `kubectl delete`;
 - AWX стартует после guest readiness, максимум 3 попытки.
 
