@@ -1,0 +1,15 @@
+{
+  "apiVersion": "demo.practicum/v1",
+  "kind": "EnvironmentAction",
+  "metadata": {
+    "name": "practicum-env-alice-demo-08fbfe-start-vm-c18960"
+  },
+  "spec": {
+    "environment": "practicum-env-alice-demo-08fbfe",
+    "action": "start-vm",
+    "actor": "victor-melnikov-practicum",
+    "actorEmail": "victor.melnikov.practicum@demo.local",
+    "reason": "надо запустить цифровой рубль",
+    "requestedAt": "2026-06-11T07:41:22Z"
+  }
+}
