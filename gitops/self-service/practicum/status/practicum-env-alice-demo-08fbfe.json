@@ -1,0 +1,12 @@
+{
+  "environmentId": "practicum-env-alice-demo-08fbfe",
+  "namespace": "practicum-tks",
+  "state": "Provisioning",
+  "owner": "alice-koroleva-practicum",
+  "profile": "app-with-vm",
+  "postgresVersion": null,
+  "createdAt": "2026-06-11T07:04:14Z",
+  "expiresAt": "2026-06-11T09:04:14Z",
+  "gitCommit": "651a4c34a1e3c9b8a07efc4df6aef2c34d060e80",
+  "updatedAt": "2026-06-11T07:04:55Z"
+}
