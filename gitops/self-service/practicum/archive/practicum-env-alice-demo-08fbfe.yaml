@@ -1,0 +1,18 @@
+{
+  "apiVersion": "demo.practicum/v1",
+  "kind": "EnvironmentRequest",
+  "metadata": {
+    "name": "practicum-env-alice-demo-08fbfe"
+  },
+  "spec": {
+    "owner": "alice-koroleva-practicum",
+    "email": "alice.koroleva.practicum@demo.local",
+    "groups": [
+      "practicum-payments-devs"
+    ],
+    "profile": "app-with-vm",
+    "purpose": "demo",
+    "ttl": "2h",
+    "createdAt": "2026-06-11T07:04:14Z"
+  }
+}
