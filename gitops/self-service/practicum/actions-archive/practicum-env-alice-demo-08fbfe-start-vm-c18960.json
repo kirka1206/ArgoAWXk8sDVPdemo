@@ -1,0 +1,11 @@
+{
+  "id": "practicum-env-alice-demo-08fbfe-start-vm-c18960",
+  "environment": "practicum-env-alice-demo-08fbfe",
+  "action": "start-vm",
+  "actor": "victor-melnikov-practicum",
+  "reason": "надо запустить цифровой рубль",
+  "requestedAt": "2026-06-11T07:41:22Z",
+  "gitCommit": "6f9b3bad689a03fff343affa87bc7e04d6c9ebd6",
+  "outcome": "Completed",
+  "completedAt": "2026-06-11T07:42:41Z"
+}
