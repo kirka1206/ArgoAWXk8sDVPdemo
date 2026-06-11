@@ -2,6 +2,10 @@
 
 ## Приоритет 1. Подготовить стенд к повторному показу
 
+Для всех следующих прогонов использовать только
+`scenarios/d8case/README.md`. Корневые исторические сценарии не смешивать с
+командами practicum-стенда.
+
 1. Создать DNS-записи для `gitea-practicum.d8case.ru`,
    `argocd-practicum.d8case.ru`, `awx-practicum.d8case.ru` и
    `selfservice-practicum.d8case.ru` на `192.168.2.31`.

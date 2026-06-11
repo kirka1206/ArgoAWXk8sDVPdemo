@@ -1,6 +1,6 @@
 # Текущий статус
 
-Обновлено: 2026-06-10 MSK
+Обновлено: 2026-06-11 MSK
 
 ## Правило работы
 
@@ -251,6 +251,22 @@ TTL. Для выполнения сценария VM drift нужно созда
   restart;
 - `scenarios/13-manual-environment-lifecycle.md`: пользовательское удаление
   собственных ресурсов и административные операции Victor через Git actions.
+
+Для действующего стенда создан отдельный канонический комплект
+`scenarios/d8case/`:
+
+- preflight с проверкой context, Application, DVP и URL;
+- архитектурный рассказ Git → controller → Argo CD → DVP → AWX;
+- golden image lifecycle с актуальными `practicum-*` объектами;
+- Git/YAML self-service с `EnvironmentRequest`;
+- Web self-service через Dex;
+- административный lifecycle Victor;
+- drift correction tenant VM;
+- cleanup и troubleshooting.
+
+В комплекте отсутствуют команды `demo-prod`, домен `d8.kir.lab` и имена
+объектов старого стенда. Корневые `scenarios/01-13` сохранены как исторические
+варианты и явно отделены в README.
 
 Это стабильная точка продолжения: Application `Synced/Healthy`, временные
 environment-ресурсы очищены, golden images и остановленные builder-диски

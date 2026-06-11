@@ -7,6 +7,13 @@
 - Argo CD управляет Kubernetes/DVP-ресурсами из Git.
 - AWX/Ansible выполняет настройку внутри ОС уже созданных workload'ов или виртуальных машин.
 
+> **Актуальные инструкции для стенда `d8case.ru`:**
+> [scenarios/d8case/README.md](scenarios/d8case/README.md).
+> Параметры и имена объектов собраны в
+> [docs/d8case/README.md](docs/d8case/README.md).
+> Сценарии в корне `scenarios/`, содержащие `demo-prod` или `d8.kir.lab`,
+> относятся к предыдущему стенду и сохранены только как исторические варианты.
+
 В локальном Docker Desktop Kubernetes для простого запуска используются два Linux pod'а с SSH. В DKP/DVP-кластере дополнительно разворачивается настоящий минимальный DVP-контур: приложение, tenant и тестовая VM `postgres-vm`.
 
 ## Что демонстрирует стенд
@@ -58,12 +65,14 @@ flowchart LR
 | `self-service-ui/` | Одностраничный web UI для генерации GitOps self-service request. |
 | `gitops/awx/` | AWX playbooks, PostSync hook и пример Secret без реальных токенов. |
 | `gitops/infrastructure/dvp/` | Reference template для DVP VM. |
-| `scenarios/` | Подробные демонстрационные сценарии. |
+| `scenarios/d8case/` | Канонические сценарии действующего стенда `practicum-tks` на `d8case.ru`. |
+| `scenarios/` | Исторические и универсальные варианты предыдущих стендов. |
 | `awx/os-demo-playbook.yml` | Playbook для pod-only сценария `demo-os`. |
 | `manifests/argocd/` | Argo CD Application manifests. |
 | `manifests/dkp/` | Ingress'ы для DKP-кластера. |
 | `scripts/` | Bootstrap, deploy, port-forward, run-demo-job, cleanup. |
 | `docs/` | Русские use cases, runbook, talk track, пререквизиты и план переноса. |
+| `docs/d8case/` | Актуальный паспорт Project/namespace, URL и объектов practicum-стенда. |
 
 ## Правило ведения контекста
 
@@ -269,6 +278,19 @@ RAM: 512Mi
 VM специально минимальная, чтобы стенд не потреблял лишние ресурсы.
 
 ## Сценарии
+
+Для действующего practicum-стенда используйте отдельный комплект:
+
+- [индекс и порядок показа](scenarios/d8case/README.md);
+- [подготовка демонстратора](scenarios/d8case/00-preflight.md);
+- [golden images](scenarios/d8case/02-golden-image-lifecycle.md);
+- [заявка через Git](scenarios/d8case/03-git-environment-request.md);
+- [заявка через Web](scenarios/d8case/04-web-self-service.md);
+- [административный lifecycle Victor](scenarios/d8case/05-victor-lifecycle.md);
+- [DVP VM drift correction](scenarios/d8case/06-vm-drift-correction.md).
+
+Таблица ниже описывает исторический комплект и не является runbook для
+`d8case.ru`.
 
 | Сценарий | Что показывает |
 | --- | --- |
