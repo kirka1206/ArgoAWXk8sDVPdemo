@@ -9,9 +9,9 @@
   "createdAt": "2026-06-11T07:04:14Z",
   "expiresAt": "2026-06-11T09:04:14Z",
   "gitCommit": "651a4c34a1e3c9b8a07efc4df6aef2c34d060e80",
-  "awxJob": null,
-  "awxStatus": null,
-  "awxAttempts": 0,
+  "awxJob": 92,
+  "awxStatus": "pending",
+  "awxAttempts": 1,
   "reason": null,
   "argoCD": {
     "sync": "Synced",
@@ -28,8 +28,8 @@
     "name": "practicum-env-alice-demo-08fbfe-vm",
     "phase": "Running",
     "ip": "10.66.0.32",
-    "agentReady": false,
-    "guestReady": false,
+    "agentReady": true,
+    "guestReady": true,
     "cpu": "1 core, 5%",
     "memory": "512Mi",
     "disk": "768Mi",
@@ -41,5 +41,5 @@
       "command": "d8 v ssh ansible@practicum-env-alice-demo-08fbfe-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "updatedAt": "2026-06-11T07:07:13Z"
+  "updatedAt": "2026-06-11T07:08:29Z"
 }
