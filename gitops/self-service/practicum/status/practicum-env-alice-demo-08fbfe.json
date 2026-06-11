@@ -1,8 +1,8 @@
 {
   "environmentId": "practicum-env-alice-demo-08fbfe",
   "namespace": "practicum-tks",
-  "state": "Expired",
+  "state": "Cleaned",
   "owner": "alice-koroleva-practicum",
   "expiresAt": "2026-06-11T09:04:14Z",
-  "updatedAt": "2026-06-11T09:04:36Z"
+  "updatedAt": "2026-06-11T09:05:06Z"
 }
