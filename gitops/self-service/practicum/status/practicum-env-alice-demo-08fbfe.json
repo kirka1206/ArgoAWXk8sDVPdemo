@@ -1,7 +1,7 @@
 {
   "environmentId": "practicum-env-alice-demo-08fbfe",
   "namespace": "practicum-tks",
-  "state": "Provisioning",
+  "state": "VMStarting",
   "owner": "alice-koroleva-practicum",
   "profile": "app-with-vm",
   "postgresVersion": null,
@@ -41,5 +41,15 @@
       "command": "d8 v ssh ansible@practicum-env-alice-demo-08fbfe-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "updatedAt": "2026-06-11T07:40:33Z"
+  "lastAction": {
+    "id": "practicum-env-alice-demo-08fbfe-start-vm-c18960",
+    "action": "start-vm",
+    "actor": "victor-melnikov-practicum",
+    "reason": "надо запустить цифровой рубль",
+    "requestedAt": "2026-06-11T07:41:22Z",
+    "gitCommit": "6f9b3bad689a03fff343affa87bc7e04d6c9ebd6",
+    "status": "Running",
+    "operation": "practicum-env-alice-demo-08fbfe-start-c18960"
+  },
+  "updatedAt": "2026-06-11T07:41:56Z"
 }
