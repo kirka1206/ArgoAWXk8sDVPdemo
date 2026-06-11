@@ -1,7 +1,7 @@
 {
   "environmentId": "practicum-env-alice-demo-08fbfe",
   "namespace": "practicum-tks",
-  "state": "Ready",
+  "state": "Provisioning",
   "owner": "alice-koroleva-practicum",
   "profile": "app-with-vm",
   "postgresVersion": null,
@@ -26,10 +26,10 @@
   },
   "virtualMachine": {
     "name": "practicum-env-alice-demo-08fbfe-vm",
-    "phase": "Running",
+    "phase": "Stopped",
     "ip": "10.66.0.32",
-    "agentReady": true,
-    "guestReady": true,
+    "agentReady": false,
+    "guestReady": false,
     "cpu": "1 core, 5%",
     "memory": "512Mi",
     "disk": "768Mi",
@@ -41,14 +41,5 @@
       "command": "d8 v ssh ansible@practicum-env-alice-demo-08fbfe-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "lastAction": {
-    "id": "practicum-env-alice-demo-08fbfe-stop-vm-68f934",
-    "action": "stop-vm",
-    "actor": "victor-melnikov-practicum",
-    "reason": "захотелось остановить VM",
-    "requestedAt": "2026-06-11T07:38:31Z",
-    "gitCommit": "05ee743031cc7c7d757cac95b11402ec8ce840d1",
-    "status": "Completed"
-  },
-  "updatedAt": "2026-06-11T07:39:59Z"
+  "updatedAt": "2026-06-11T07:40:33Z"
 }
