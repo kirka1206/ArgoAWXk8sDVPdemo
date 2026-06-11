@@ -1,0 +1,14 @@
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualMachineOperation
+metadata:
+  name: practicum-env-alice-demo-08fbfe-start-c18960
+  namespace: practicum-tks
+  annotations:
+    demo.deckhouse.io/description: "4 practicum"
+  labels:
+    app.kubernetes.io/part-of: practicum-demo
+    demo.practicum/environment: practicum-env-alice-demo-08fbfe
+    demo.practicum/action: practicum-env-alice-demo-08fbfe-start-vm-c18960
+spec:
+  type: Start
+  virtualMachineName: practicum-env-alice-demo-08fbfe-vm
