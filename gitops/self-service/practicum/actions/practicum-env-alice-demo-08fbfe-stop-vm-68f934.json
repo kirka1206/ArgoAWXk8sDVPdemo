@@ -1,0 +1,15 @@
+{
+  "apiVersion": "demo.practicum/v1",
+  "kind": "EnvironmentAction",
+  "metadata": {
+    "name": "practicum-env-alice-demo-08fbfe-stop-vm-68f934"
+  },
+  "spec": {
+    "environment": "practicum-env-alice-demo-08fbfe",
+    "action": "stop-vm",
+    "actor": "victor-melnikov-practicum",
+    "actorEmail": "victor.melnikov.practicum@demo.local",
+    "reason": "захотелось остановить VM",
+    "requestedAt": "2026-06-11T07:38:31Z"
+  }
+}
