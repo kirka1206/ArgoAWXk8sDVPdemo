@@ -15,7 +15,7 @@
   "reason": null,
   "argoCD": {
     "sync": "Synced",
-    "health": "Progressing"
+    "health": "Healthy"
   },
   "application": {
     "name": "practicum-env-alice-demo-08fbfe",
@@ -41,5 +41,5 @@
       "command": "d8 v ssh ansible@practicum-env-alice-demo-08fbfe-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "updatedAt": "2026-06-11T07:05:25Z"
+  "updatedAt": "2026-06-11T07:05:53Z"
 }
