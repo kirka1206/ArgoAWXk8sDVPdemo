@@ -1,6 +1,6 @@
 # Текущий статус
 
-Обновлено: 2026-06-11 MSK
+Обновлено: 2026-06-16 MSK
 
 ## Правило работы
 
@@ -60,6 +60,12 @@ DexAuthenticator имеет состояние `2/2`.
 - active image: v2;
 - AWX workflow job `40`: successful;
 - оба builder VM остановлены, ресурсы минимальные.
+- сценарий `scenarios/d8case/02-golden-image-lifecycle.md` дополнен
+  примерами альтернативных source images для демо: Alpine 3.23 v2,
+  Alpine 3.22 v1 и Ubuntu 24.04 как более тяжёлый архитектурный пример;
+- в сценарии явно описан rollback через отдельный Git commit,
+  переключающий `activeGoldenImage` обратно на предыдущую версию; rollback
+  влияет только на новые VM и не изменяет уже provisioned VirtualDisk.
 
 ## Self-service
 

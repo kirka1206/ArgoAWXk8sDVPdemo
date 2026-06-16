@@ -39,6 +39,75 @@ gitops/environments/practicum/golden-images/source-image.yaml
 https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/cloud/generic_alpine-3.23.3-x86_64-bios-cloudinit-r0.qcow2
 ```
 
+### Альтернативные source images для демонстрации
+
+Для live-показа лучше использовать небольшие cloud images. Самый безопасный
+вариант для текущего стенда — Alpine: импорт быстрый, размер небольшой, AWX
+playbooks уже адаптированы.
+
+Пример новой версии на той же ветке Alpine:
+
+```yaml
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualImage
+metadata:
+  name: practicum-alpine-base-3-23-v2
+  namespace: practicum-tks
+spec:
+  storage: ContainerRegistry
+  dataSource:
+    type: HTTP
+    http:
+      url: https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/cloud/generic_alpine-3.23.3-x86_64-bios-cloudinit-r0.qcow2
+```
+
+Пример смены minor-линейки Alpine:
+
+```yaml
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualImage
+metadata:
+  name: practicum-alpine-base-3-22-v1
+  namespace: practicum-tks
+spec:
+  storage: ContainerRegistry
+  dataSource:
+    type: HTTP
+    http:
+      url: https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/cloud/generic_alpine-3.22.2-x86_64-bios-cloudinit-r0.qcow2
+```
+
+Более понятный аудитории, но более тяжёлый вариант — Ubuntu cloud image:
+
+```yaml
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualImage
+metadata:
+  name: practicum-ubuntu-base-24-04-v1
+  namespace: practicum-tks
+spec:
+  storage: ContainerRegistry
+  dataSource:
+    type: HTTP
+    http:
+      url: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+```
+
+Для короткой демонстрации рекомендуется показывать переход:
+
+```text
+Alpine 3.22 → Alpine 3.23
+```
+
+или:
+
+```text
+Alpine 3.23 v1 → Alpine 3.23 v2
+```
+
+Ubuntu лучше оставить как архитектурный пример: он крупнее, дольше
+импортируется и может потребовать отдельной адаптации AWX playbooks.
+
 Проверка:
 
 ```bash
@@ -144,7 +213,37 @@ Rollback не удаляет v2. Отдельным Git commit верните:
 activeGoldenImage: practicum-alpine-golden-3-23-v1
 ```
 
+Полный пример:
+
+```bash
+git fetch practicum-gitea main
+git pull --rebase practicum-gitea main
+
+$EDITOR gitops/environments/practicum/golden-images/catalog.yaml
+git diff
+git add gitops/environments/practicum/golden-images/catalog.yaml
+git commit -m "Rollback active golden image to v1"
+git push practicum-gitea main
+```
+
+После синхронизации:
+
+```bash
+kubectl get cm practicum-golden-image-catalog -n "$NAMESPACE" \
+  -o jsonpath='{.data.activeGoldenImage}{"\n"}'
+```
+
+Ожидаемо:
+
+```text
+practicum-alpine-golden-3-23-v1
+```
+
 Это влияет только на новые VM. Уже созданные VM сохраняют исходный диск.
+Такой rollback не пересобирает и не меняет существующие VirtualDisk: это
+важное свойство безопасной эксплуатации. Если нужно перевести уже работающий
+стенд на другой образ, создавайте новый environment или отдельный controlled
+recreate/restore flow.
 
 ## Нельзя делать
 
@@ -156,4 +255,3 @@ kubectl delete vi practicum-alpine-golden-3-23-v1 ...
 
 У provisioned `VirtualDisk` нельзя менять data source. Для новой версии нужен
 новый versioned объект.
-
