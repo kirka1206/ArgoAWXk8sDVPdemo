@@ -259,23 +259,95 @@ def table_from_lines(lines: list[str]):
     return [Spacer(1, 3), table, Spacer(1, 6)]
 
 
+def mermaid_flowchart(lines: list[str]) -> list:
+    labels: dict[str, str] = {}
+    edges: list[tuple[str, str]] = []
+    node_re = re.compile(r'([A-Za-z0-9_]+)\["([^"]+)"\]')
+    edge_re = re.compile(r"([A-Za-z0-9_]+)(?:\[.*?\])?\s*-->\s*([A-Za-z0-9_]+)(?:\[.*?\])?")
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("flowchart"):
+            continue
+        for node, label in node_re.findall(stripped):
+            labels[node] = label.replace("\\n", "\n")
+        match = edge_re.search(stripped)
+        if match:
+            edges.append((match.group(1), match.group(2)))
+
+    if not edges:
+        return []
+
+    ordered: list[str] = []
+    for left, right in edges:
+        if left not in ordered:
+            ordered.append(left)
+        if right not in ordered:
+            ordered.append(right)
+
+    rows = []
+    for index, node in enumerate(ordered, 1):
+        title = labels.get(node, node)
+        rows.append([
+            Paragraph(str(index), S["table"]),
+            Paragraph(clean_inline(title).replace("\n", "<br/>"), S["table"]),
+        ])
+
+    diagram = Table(rows, colWidths=[1.0 * cm, A4[0] - 5.2 * cm])
+    diagram.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#1f78d1")),
+                ("TEXTCOLOR", (0, 0), (0, -1), colors.white),
+                ("BACKGROUND", (1, 0), (1, -1), colors.HexColor("#f2f7fd")),
+                ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#b7c9de")),
+                ("INNERGRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#d7e2ef")),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("ALIGN", (0, 0), (0, -1), "CENTER"),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("LEFTPADDING", (0, 0), (-1, -1), 7),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+            ]
+        )
+    )
+
+    edge_text = " → ".join(clean_inline(labels.get(node, node).replace("\n", " ")) for node in ordered)
+    return [
+        Spacer(1, 4),
+        Paragraph("Диаграмма Mermaid преобразована в читаемую цепочку:", S["small"]),
+        diagram,
+        Spacer(1, 4),
+        Paragraph(edge_text, S["small"]),
+        Spacer(1, 8),
+    ]
+
+
 def markdown_to_flowables(text: str, source_path: Path, bookmark_prefix: str, include_title: bool = True) -> list:
     story: list = []
     paragraph_lines: list[str] = []
     code_lines: list[str] = []
+    code_lang = ""
     table_lines: list[str] = []
     in_code = False
     heading_counter = 0
 
     def flush_code():
-        nonlocal code_lines
+        nonlocal code_lines, code_lang
         if code_lines:
+            if code_lang == "mermaid":
+                rendered = mermaid_flowchart(code_lines)
+                if rendered:
+                    story.extend(rendered)
+                    code_lines = []
+                    code_lang = ""
+                    return
             wrapped: list[str] = []
             for line in code_lines:
                 wrapped.extend(wrap_code_line(line.rstrip()))
             story.append(
                 Table(
-                    [[Preformatted(html.escape("\n".join(wrapped)), S["code"])]],
+                    [[Preformatted("\n".join(wrapped), S["code"])]],
                     colWidths=[A4[0] - 4.2 * cm],
                     style=TableStyle(
                         [
@@ -291,6 +363,7 @@ def markdown_to_flowables(text: str, source_path: Path, bookmark_prefix: str, in
             )
             story.append(Spacer(1, 6))
         code_lines = []
+        code_lang = ""
 
     def flush_table():
         nonlocal table_lines
@@ -308,6 +381,7 @@ def markdown_to_flowables(text: str, source_path: Path, bookmark_prefix: str, in
                 flush_code()
             else:
                 in_code = True
+                code_lang = line.strip("`").strip().lower()
                 code_lines = []
             continue
         if in_code:
