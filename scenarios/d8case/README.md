@@ -43,7 +43,7 @@ Tenant Ingress имеет динамическое имя:
 1. [Подготовка демонстратора](00-preflight.md).
 2. [Архитектура и границы ответственности](01-architecture-tour.md).
 3. [Управление golden images](02-golden-image-lifecycle.md).
-4. [Self-service через Git и YAML](03-git-environment-request.md).
+4. [Self-service через Git и JSON](03-git-environment-request.md).
 5. [Self-service через Web](04-web-self-service.md).
 6. [Административное управление Victor](05-victor-lifecycle.md).
 7. [Drift correction DVP VM](06-vm-drift-correction.md).
@@ -79,4 +79,3 @@ Tenant Ingress имеет динамическое имя:
 | 11 Practicum End-to-End | Разделён на понятные этапы | `01`-`05` |
 | 12 DVP VM Drift | Актуализирован | `06` |
 | 13 Manual Lifecycle | Актуализирован | `05` |
-

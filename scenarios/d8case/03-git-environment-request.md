@@ -1,4 +1,4 @@
-# 03. Self-service через Git и YAML
+# 03. Self-service через Git и JSON
 
 ## Цель
 
@@ -8,6 +8,19 @@ Argo CD, DVP и AWX создают стенд без ручного `kubectl app
 Все ресурсы создаются в namespace `practicum-tks`. Новый DKP Project или
 namespace для каждой заявки не создаётся.
 
+## Важное ограничение текущей реализации
+
+Сервис обработки заявок ищет файлы с расширением `.yaml`, но текущая версия
+Python-кода читает их содержимое как JSON. Поэтому для этого сценария:
+
+- имя файла должно оканчиваться на `.yaml`;
+- содержимое файла должно быть корректным JSON;
+- обычный YAML с первой строкой `apiVersion:` использовать нельзя: заявка
+  получит статус `Rejected` до создания ресурсов.
+
+Это техническое ограничение текущего демо-стенда. В дальнейшей версии сервиса
+следует добавить полноценную поддержку YAML.
+
 ## 1. Подготовить переменные
 
 ```bash
@@ -15,9 +28,12 @@ cd /Users/kir/code/ArgoAWXk8sDVPdemo
 git fetch practicum-gitea main
 git pull --rebase practicum-gitea main
 
+export NAMESPACE=practicum-tks
 export ENV_ID="practicum-env-marina-demo-$(date +%H%M%S)"
 export CREATED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-echo "$ENV_ID $CREATED_AT"
+export REQUEST_FILE="/Users/kir/code/ArgoAWXk8sDVPdemo/gitops/self-service/practicum/requests/${ENV_ID}.yaml"
+printf 'Environment ID: %s\nCreated at: %s\nRequest file: %s\n' \
+  "$ENV_ID" "$CREATED_AT" "$REQUEST_FILE"
 ```
 
 Имя должно:
@@ -26,10 +42,13 @@ echo "$ENV_ID $CREATED_AT"
 - содержать только lowercase, цифры и `-`;
 - быть не длиннее 63 символов.
 
-## 2. Создать EnvironmentRequest
+## 2. Создать EnvironmentRequest в JSON-формате
+
+Несмотря на расширение `.yaml`, ниже записывается JSON. Не заменяйте фигурные
+скобки YAML-отступами.
 
 ```bash
-cat > "gitops/self-service/practicum/requests/${ENV_ID}.yaml" <<EOF
+cat > "$REQUEST_FILE" <<EOF
 {
   "apiVersion": "demo.practicum/v1",
   "kind": "EnvironmentRequest",
@@ -47,6 +66,8 @@ cat > "gitops/self-service/practicum/requests/${ENV_ID}.yaml" <<EOF
   }
 }
 EOF
+
+jq . "$REQUEST_FILE"
 ```
 
 Разрешённые профили:
@@ -68,7 +89,7 @@ EOF
 ## 3. Commit и push
 
 ```bash
-git add "gitops/self-service/practicum/requests/${ENV_ID}.yaml"
+git add "$REQUEST_FILE"
 git commit -m "Request practicum environment ${ENV_ID}"
 git push practicum-gitea main
 ```
@@ -90,22 +111,38 @@ Controller может создать несколько status-коммитов.
 ## 5. Наблюдать Argo CD
 
 ```bash
-watch -n 2 kubectl get application practicum-demo -n practicum-tks
+while true; do
+  clear
+  date
+  kubectl get application practicum-demo -n "$NAMESPACE" \
+    -o custom-columns=NAME:.metadata.name,SYNC:.status.sync.status,HEALTH:.status.health.status,REVISION:.status.sync.revision
+  sleep 5
+done
 ```
 
-В UI Argo CD найдите ресурсы по Environment ID.
+Остановить просмотр: `Ctrl+C`. В UI Argo CD найдите ресурсы по Environment ID.
 
 ## 6. Наблюдать Kubernetes/DVP
 
 ```bash
-kubectl get deploy,svc,ingress,vd,vm -n practicum-tks \
-  -l "demo.practicum/environment=${ENV_ID}" -w
+while true; do
+  clear
+  date
+  kubectl get deploy,svc,ingress,vd,vm -n "$NAMESPACE" \
+    -l "demo.practicum/environment=${ENV_ID}" \
+    --request-timeout=10s
+  sleep 5
+done
 ```
+
+Пока сервис обработки заявок не создал generated manifests, команда покажет
+`No resources found`. После обработки заявки она начнёт показывать Deployment,
+Service, Ingress, VirtualDisk и VirtualMachine. Остановить просмотр: `Ctrl+C`.
 
 Для VM:
 
 ```bash
-kubectl get vm "${ENV_ID}-vm" -n practicum-tks -o wide
+kubectl get vm "${ENV_ID}-vm" -n "$NAMESPACE" -o wide
 ```
 
 ## 7. Наблюдать AWX
@@ -121,9 +158,15 @@ Controller запустит job после готовности VM и guest agen
 ## 8. Прочитать итоговый status
 
 ```bash
-git pull --rebase practicum-gitea main
-jq . "gitops/self-service/practicum/status/${ENV_ID}.json"
+git fetch practicum-gitea main
+git show "FETCH_HEAD:gitops/self-service/practicum/status/${ENV_ID}.json" | jq .
 ```
+
+Сервис обработки заявок создаёт отдельные status-коммиты в Gitea. Для их
+просмотра не нужен `git pull --rebase`: он не выполнится при незакоммиченных
+изменениях в рабочей копии. `git fetch` получает актуальную версию ветки, а
+`git show FETCH_HEAD:...` читает status напрямую из неё, не изменяя файлы на
+ноутбуке.
 
 Ожидается:
 
@@ -140,14 +183,20 @@ jq . "gitops/self-service/practicum/status/${ENV_ID}.json"
 kubectl get ingress "$ENV_ID" -n practicum-tks
 
 d8 v ssh "ansible@${ENV_ID}-vm" \
-  --namespace practicum-tks \
+  --namespace "$NAMESPACE" \
   --identity-file local/practicum-ssh/id_ed25519 \
   --local-ssh
 ```
+
+## Если ранее отправлен обычный YAML
+
+Не исправляйте уже отклонённую заявку во время показа: она полезна как
+диагностический след. Создайте новую заявку с новым `ENV_ID` по шагам выше.
+Так аудитория увидит чистый успешный путь, а в Git сохранится причина ошибки
+предыдущего запуска.
 
 ## Cleanup
 
 Удаляйте стенд через портал пользователя или Victor. Не удаляйте request и
 generated-каталог вручную во время демонстрации: lifecycle должен остаться
 аудитируемым.
-

@@ -100,6 +100,13 @@ DexAuthenticator имеет состояние `2/2`.
   `successful` за `43.5` секунды, итоговый status заявки — `Ready`;
 - portal и request contract расширены выбором PostgreSQL `16`, `17` или `18`;
   controller валидирует allowlist и передаёт точный пакет в AWX;
+- выявлено ограничение Git-сценария: текущий Python-сервис читает файлы
+  `EnvironmentRequest` с расширением `.yaml` как JSON. Актуальный сценарий
+  `scenarios/d8case/03-git-environment-request.md` требует JSON-содержимое
+  и явно запрещает обычный YAML до доработки parser;
+- итоговый status Git-сценария читается через `git fetch` и
+  `git show FETCH_HEAD:...`, а не через `git pull --rebase`, чтобы
+  незакоммиченные локальные файлы не блокировали проверку результата;
 - для VM-профилей status и portal показывают пользователя `ansible`, SSH key
   authentication и готовую команду `d8 v ssh`; секреты в Git не добавляются;
 - обработчик временной ошибки Gitea сохраняет AWX job, attempts и runtime-поля
