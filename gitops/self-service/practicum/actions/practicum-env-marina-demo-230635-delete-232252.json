@@ -1,0 +1,15 @@
+{
+  "apiVersion": "demo.practicum/v1",
+  "kind": "EnvironmentAction",
+  "metadata": {
+    "name": "practicum-env-marina-demo-230635-delete-232252"
+  },
+  "spec": {
+    "environment": "practicum-env-marina-demo-230635",
+    "action": "delete-environment",
+    "actor": "victor-melnikov-practicum",
+    "actorEmail": "victor.melnikov.practicum@demo.local",
+    "reason": "Очистка стенда после демонстрации",
+    "requestedAt": "2026-06-23T20:22:52Z"
+  }
+}
