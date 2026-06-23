@@ -2,12 +2,18 @@
   "apiVersion": "demo.practicum/v1",
   "kind": "EnvironmentRequest",
   "metadata": {
-    "name": "practicum-env-marina-demo-230635"
+    "name": "practicum-env-marina-demo-230635",
+    "annotations": {
+      "demo.practicum/deleted-by": "victor-melnikov-practicum",
+      "demo.practicum/delete-reason": "Очистка стенда после демонстрации"
+    }
   },
   "spec": {
     "owner": "marina-volkova-practicum",
     "email": "marina.volkova.practicum@demo.local",
-    "groups": ["practicum-qa-devs"],
+    "groups": [
+      "practicum-qa-devs"
+    ],
     "profile": "app-with-vm",
     "purpose": "demo",
     "ttl": "2h",
