@@ -1,0 +1,11 @@
+{
+  "id": "practicum-env-marina-demo-230635-delete-232252",
+  "environment": "practicum-env-marina-demo-230635",
+  "action": "delete-environment",
+  "actor": "victor-melnikov-practicum",
+  "reason": "Очистка стенда после демонстрации",
+  "requestedAt": "2026-06-23T20:22:52Z",
+  "gitCommit": "d67b3dd499dc0bd9e82190ca6b829417e26d7f6b",
+  "outcome": "Completed",
+  "completedAt": "2026-06-23T20:24:11Z"
+}
