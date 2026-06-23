@@ -1,6 +1,6 @@
 # Текущий статус
 
-Обновлено: 2026-06-19 MSK
+Обновлено: 2026-06-23 MSK
 
 ## Правило работы
 
@@ -57,7 +57,8 @@ DexAuthenticator имеет состояние `2/2`.
 - source `practicum-alpine-base-3-23-v1`: Ready;
 - immutable `practicum-alpine-golden-3-23-v1`: Ready;
 - immutable `practicum-alpine-golden-3-23-v2`: Ready;
-- active image: v2;
+- active image: v1; временно переключён для live-демонстрации 2026-06-23,
+  образ v2 остаётся `Ready` и должен быть возвращён как активный после показа;
 - AWX workflow job `40`: successful;
 - оба builder VM остановлены, ресурсы минимальные.
 - сценарий `scenarios/d8case/02-golden-image-lifecycle.md` дополнен
@@ -66,6 +67,11 @@ DexAuthenticator имеет состояние `2/2`.
 - в сценарии явно описан rollback через отдельный Git commit,
   переключающий `activeGoldenImage` обратно на предыдущую версию; rollback
   влияет только на новые VM и не изменяет уже provisioned VirtualDisk.
+- в актуальный сценарий добавлена полная PlantUML sequence-диаграмма выпуска
+  golden image: Git, Gitea webhook, Argo CD, Kubernetes, DVP, AWX, сервис
+  обработки заявок и безопасный rollback.
+- в архитектурный сценарий добавлена крупноблочная PlantUML-схема связей между
+  Git, Argo CD, Kubernetes/DVP, AWX, Python-сервисом обработки заявок и VM.
 
 ## Self-service
 

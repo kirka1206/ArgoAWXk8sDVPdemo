@@ -15,6 +15,131 @@ URL source image в Git
 → новые tenant VM
 ```
 
+## Последовательность работы компонентов
+
+Диаграмма показывает полный выпуск новой версии, например `v3`. В текущем
+стенде опубликованы и сохранены `v1` и `v2`; `v3` приведена как безопасный
+пример следующего выпуска.
+
+```plantuml
+@startuml
+title Управление golden image: Git -> Argo CD -> DVP -> AWX -> новые VM
+
+autonumber
+
+actor "Администратор\nплатформы" as Admin
+participant "Рабочая копия Git\n/Users/kir/code/ArgoAWXk8sDVPdemo" as LocalGit
+database "Gitea\npracticum/practicum-demo" as Gitea
+participant "Gitea webhook" as Webhook
+participant "Argo CD\nApplication practicum-demo" as Argo
+participant "Kubernetes API\nnamespace practicum-tks" as K8s
+participant "DVP\nVirtualization controllers" as DVP
+database "DVP storage\nStorageClass replicated" as Storage
+participant "Builder VM\npracticum-golden-builder-v3-vm" as Builder
+participant "Гостевая ОС\nв Builder VM" as GuestOS
+participant "AWX\npracticum-awx" as AWX
+participant "Сервис обработки заявок\nPython Deployment\npracticum-request-controller" as RequestService
+actor "Разработчик\nили портал self-service" as Developer
+participant "Новая tenant VM" as TenantVM
+
+== Подготовка исходного образа ==
+
+Admin -> LocalGit: Изменяет manifest исходного образа\nsource-image-v3.yaml\nURL, версия, checksum при необходимости
+Admin -> LocalGit: Создаёт manifests builder disk и builder VM v3
+Admin -> LocalGit: git add / git commit / git push
+LocalGit -> Gitea: Публикует commit в main
+
+Gitea -> Webhook: Push event
+Webhook -> Argo: Уведомление о новой revision
+Argo -> Gitea: Читает manifests из commit
+Argo -> K8s: Применяет желаемое состояние\nVirtualImage, VirtualDisk, VirtualMachine
+K8s -> DVP: Передаёт DVP CRD
+
+DVP -> DVP: Создаёт VirtualImage\npracticum-alpine-base-3-23-v3
+DVP -> Storage: Импортирует исходный cloud image\nпо URL из Git
+Storage --> DVP: Исходный образ готов
+DVP -> Storage: Создаёт builder disk v3
+DVP -> Builder: Создаёт и запускает builder VM v3\n1 core, 5%, 512 MiB
+Builder -> GuestOS: Загружает ОС из builder disk
+GuestOS --> Builder: SSH и guest agent доступны
+
+== Настройка и проверка ОС ==
+
+DVP --> K8s: VM готова к подключению
+K8s --> AWX: Событие или запуск workflow\nподготовки golden image
+AWX -> Builder: Подключается по SSH
+AWX -> GuestOS: prepare-golden-image.yml\nустановка пакетов и конфигураций
+AWX -> GuestOS: Очистка временных данных,\nлогов, machine-id и host keys
+AWX -> GuestOS: validate-golden-image.yml\nпроверка пакетов, сервисов и конфигурации
+
+alt Validation successful
+    AWX -> Builder: Корректно выключает VM
+    Builder -> DVP: VM переходит в Stopped
+    DVP -> Storage: Фиксирует подготовленный builder disk v3
+    DVP -> K8s: Публикует новый versioned VirtualImage\npracticum-alpine-golden-3-23-v3
+    K8s --> Argo: Ресурс готов
+    Argo --> Admin: Application остаётся Synced/Healthy
+else Validation failed
+    AWX --> Admin: Workflow Failed,\nлоги и причина доступны в AWX
+    note right of AWX
+      Образ v3 не назначается активным.
+      Версии v1 и v2 остаются без изменений.
+    end note
+end
+
+== Отдельное назначение активной версии ==
+
+Admin -> LocalGit: Проверяет v3 и согласует выпуск
+Admin -> LocalGit: Изменяет файл\n.../golden-images/catalog.yaml
+note right of LocalGit
+activeGoldenImage:
+  practicum-alpine-golden-3-23-v3
+end note
+
+Admin -> LocalGit: git commit / git push
+LocalGit -> Gitea: Commit promotion
+Gitea -> Webhook: Push event
+Webhook -> Argo: Уведомление о новой revision
+Argo -> Gitea: Читает catalog.yaml
+Argo -> K8s: Обновляет ConfigMap\npracticum-golden-image-catalog
+K8s --> Argo: ConfigMap применён
+Argo --> Admin: Synced / Healthy
+
+== Использование образа новой заявкой ==
+
+Developer -> RequestService: Создаёт EnvironmentRequest\nчерез портал или Git
+RequestService -> K8s: Читает ConfigMap\nactiveGoldenImage
+K8s --> RequestService: practicum-alpine-golden-3-23-v3
+RequestService -> Gitea: Создаёт generated desired state\nдля tenant environment
+Gitea -> Webhook: Push event
+Webhook -> Argo: Уведомление о новой revision
+Argo -> K8s: Применяет manifests новой tenant VM
+K8s -> DVP: Создаёт VirtualDisk и VM
+DVP -> Storage: Создаёт диск из golden image v3
+DVP -> TenantVM: Запускает новую VM
+TenantVM --> Developer: VM создана из v3
+
+== Безопасный rollback ==
+
+opt Если v3 требует отката
+    Admin -> LocalGit: Меняет activeGoldenImage обратно на v2
+    Admin -> LocalGit: git commit / git push
+    LocalGit -> Gitea: Commit rollback
+    Gitea -> Webhook: Push event
+    Webhook -> Argo: Уведомление о новой revision
+    Argo -> K8s: Возвращает ConfigMap на v2
+    note right of K8s
+      Меняется только выбор образа
+      для будущих VM.
+
+      Уже созданные VM и их диски
+      не изменяются.
+    end note
+end
+
+@enduml
+```
+
 ## Исходное состояние
 
 ```bash

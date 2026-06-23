@@ -5,7 +5,74 @@
 До изменения ресурсов объяснить аудитории весь pipeline и показать, где
 настроена каждая связь.
 
-## Цепочка
+## Крупноблочная схема
+
+```plantuml
+@startuml
+title GitOps-стенд: основные компоненты и связи
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 8
+
+actor "Администратор\nплатформы" as Admin
+actor "Разработчик" as Dev
+
+rectangle "Git-репозиторий\nGitea" as Git #EAF2FF {
+  file "Manifests Kubernetes и DVP\nобразы, VM, диски,\nactiveGoldenImage" as Manifests
+  file "Ansible playbook" as Playbooks
+  file "Заявки и статусы\nпользовательских стендов" as Requests
+}
+
+rectangle "Argo CD" as Argo #DDF4E5 {
+  component "Application\npracticum-demo" as App
+}
+
+rectangle "Kubernetes\nnamespace practicum-tks" as K8s #FFF5D9 {
+  component "Python-сервис\nобработки заявок\npracticum-request-controller" as Controller
+  component "AWX" as AWX
+  component "DVP" as DVP
+  database "Хранилище DVP" as Storage
+}
+
+rectangle "Временная VM\nдля сборки образа" as Builder #F3E8FF
+rectangle "Пользовательская\nвиртуальная машина" as TenantVM #F3E8FF
+
+Admin --> Git : создаёт и изменяет\nконфигурацию
+Dev --> Git : создаёт заявку\nчерез портал или Git
+
+Git --> App : repository webhook\nи чтение Git
+App --> Manifests : читает желаемое\nсостояние
+Argo --> K8s : применяет manifests\nи поддерживает состояние
+
+Controller --> Requests : читает заявки\nи статусы
+Controller --> Git : создаёт manifests\nи записывает статусы
+Controller --> AWX : запускает задачи\nнастройки и проверки
+
+DVP --> Storage : создаёт и хранит\nобразы и диски
+DVP --> Builder : создаёт временную VM\nдля подготовки образа
+AWX --> Builder : настраивает и проверяет\nгостевую ОС
+Builder --> DVP : подготовленный диск\nстановится новой версией образа
+
+DVP --> TenantVM : создаёт новую VM\nиз активного образа
+AWX --> TenantVM : выполняет настройку\nи проверку ОС
+
+note bottom of Argo
+Argo CD Application задаёт:
+репозиторий, ветку, путь к manifests
+и целевой namespace.
+end note
+
+note bottom of Controller
+Это наша Python-программа.
+Она не применяет ресурсы напрямую:
+она меняет Git, а Argo CD
+применяет изменения в кластере.
+end note
+
+@enduml
+```
+
+## Поток заявки
 
 ```mermaid
 flowchart LR
@@ -128,4 +195,3 @@ kubectl get vi,vd,vm,vmop -n practicum-tks -o wide
 > Argo CD синхронизирует Kubernetes/DVP-объекты. DVP исполняет виртуализацию.
 > AWX меняет состояние внутри гостевой ОС. Portal только создаёт запрос и
 > показывает status, но не удаляет ресурсы напрямую.
-
