@@ -1,0 +1,11 @@
+{
+  "id": "practicum-env-marina-git-111133-delete-114320",
+  "environment": "practicum-env-marina-git-111133",
+  "action": "delete-environment",
+  "actor": "marina-volkova-practicum",
+  "reason": "Завершение Git self-service демонстрации",
+  "requestedAt": "2026-06-24T08:43:20Z",
+  "gitCommit": "363f49e1dae3392cc474e6568d754d8110383771",
+  "outcome": "Completed",
+  "completedAt": "2026-06-24T08:46:50Z"
+}
