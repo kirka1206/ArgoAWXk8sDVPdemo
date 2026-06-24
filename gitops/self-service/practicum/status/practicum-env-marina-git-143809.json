@@ -26,7 +26,7 @@
   },
   "virtualMachine": {
     "name": "practicum-env-marina-git-143809-vm",
-    "phase": "Pending",
+    "phase": "Running",
     "ip": "10.66.0.32",
     "agentReady": false,
     "guestReady": false,
@@ -41,5 +41,5 @@
       "command": "d8 v ssh ansible@practicum-env-marina-git-143809-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "updatedAt": "2026-06-24T11:40:15Z"
+  "updatedAt": "2026-06-24T11:41:09Z"
 }
