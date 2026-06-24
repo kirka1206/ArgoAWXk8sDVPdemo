@@ -1,7 +1,7 @@
 {
   "environmentId": "practicum-env-marina-feature-2246d4",
   "namespace": "practicum-tks",
-  "state": "Provisioning",
+  "state": "Ready",
   "owner": "marina-volkova-practicum",
   "profile": "app-with-postgres-vm",
   "postgresVersion": "18",
@@ -10,7 +10,7 @@
   "expiresAt": "2026-06-24T16:42:19Z",
   "gitCommit": "a11beb932727dc2e47626d05b5def9e72142d85f",
   "awxJob": 116,
-  "awxStatus": "running",
+  "awxStatus": "successful",
   "awxAttempts": 1,
   "reason": null,
   "argoCD": {
@@ -41,5 +41,5 @@
       "command": "d8 v ssh ansible@practicum-env-marina-feature-2246d4-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "updatedAt": "2026-06-24T12:47:29Z"
+  "updatedAt": "2026-06-24T12:48:25Z"
 }
