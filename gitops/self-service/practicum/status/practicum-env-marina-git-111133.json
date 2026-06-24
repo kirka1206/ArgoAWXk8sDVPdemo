@@ -9,9 +9,9 @@
   "createdAt": "2026-06-24T08:11:33Z",
   "expiresAt": "2026-06-24T10:11:33Z",
   "gitCommit": "3190b4e41ac0f22f19174534680e077cae78f3a7",
-  "awxJob": null,
-  "awxStatus": null,
-  "awxAttempts": 0,
+  "awxJob": 108,
+  "awxStatus": "pending",
+  "awxAttempts": 1,
   "reason": null,
   "argoCD": {
     "sync": "Synced",
@@ -28,8 +28,8 @@
     "name": "practicum-env-marina-git-111133-vm",
     "phase": "Running",
     "ip": "10.66.0.32",
-    "agentReady": false,
-    "guestReady": false,
+    "agentReady": true,
+    "guestReady": true,
     "cpu": "1 core, 5%",
     "memory": "512Mi",
     "disk": "768Mi",
@@ -41,5 +41,5 @@
       "command": "d8 v ssh ansible@practicum-env-marina-git-111133-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "updatedAt": "2026-06-24T08:20:46Z"
+  "updatedAt": "2026-06-24T08:22:08Z"
 }
