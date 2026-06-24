@@ -1,0 +1,12 @@
+{
+  "environmentId": "practicum-env-marina-git-115534",
+  "namespace": "practicum-tks",
+  "state": "Provisioning",
+  "owner": "marina-volkova-practicum",
+  "profile": "app-with-vm",
+  "postgresVersion": null,
+  "createdAt": "2026-06-24T08:55:34Z",
+  "expiresAt": "2026-06-24T10:55:34Z",
+  "gitCommit": "8a92cbf66e893d71a2b0930ba704324a7e6096f6",
+  "updatedAt": "2026-06-24T09:02:00Z"
+}
