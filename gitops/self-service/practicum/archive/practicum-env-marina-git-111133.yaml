@@ -2,12 +2,18 @@
   "apiVersion": "demo.practicum/v1",
   "kind": "EnvironmentRequest",
   "metadata": {
-    "name": "practicum-env-marina-git-111133"
+    "name": "practicum-env-marina-git-111133",
+    "annotations": {
+      "demo.practicum/deleted-by": "marina-volkova-practicum",
+      "demo.practicum/delete-reason": "Завершение Git self-service демонстрации"
+    }
   },
   "spec": {
     "owner": "marina-volkova-practicum",
     "email": "marina.volkova.practicum@demo.local",
-    "groups": ["practicum-qa-devs"],
+    "groups": [
+      "practicum-qa-devs"
+    ],
     "profile": "app-with-vm",
     "purpose": "git-demo",
     "ttl": "2h",
