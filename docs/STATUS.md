@@ -100,6 +100,14 @@ DexAuthenticator имеет состояние `2/2`.
   `successful` за `43.5` секунды, итоговый status заявки — `Ready`;
 - portal и request contract расширены выбором PostgreSQL `16`, `17` или `18`;
   controller валидирует allowlist и передаёт точный пакет в AWX;
+- web-сценарий PostgreSQL 18 повторно пройден 2026-06-24 на
+  `practicum-env-marina-feature-2246d4`: Argo CD достиг `Synced/Healthy`, AWX
+  job `116` завершился `successful`, в VM подтверждён `psql (PostgreSQL) 18.4`;
+- стенд Marina удалён из portal через `EnvironmentAction`; status — `Cleaned`,
+  request/action находятся в Git archive, tenant-ресурсы удалены Argo CD prune;
+- `scenarios/d8case/04-web-self-service.md` дополнен явным GitOps cleanup,
+  terminal audit, проверкой PostgreSQL и пояснением, почему SSH идёт через
+  `d8 v ssh`, а не на внутренний VM IP;
 - выявлено ограничение Git-сценария: текущий Python-сервис читает файлы
   `EnvironmentRequest` с расширением `.yaml` как JSON. Актуальный сценарий
   `scenarios/d8case/03-git-environment-request.md` требует JSON-содержимое
