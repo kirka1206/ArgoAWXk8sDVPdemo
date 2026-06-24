@@ -5,8 +5,41 @@
   "owner": "marina-volkova-practicum",
   "profile": "app-with-vm",
   "postgresVersion": null,
+  "purpose": "git-demo",
   "createdAt": "2026-06-24T11:38:09Z",
   "expiresAt": "2026-06-24T13:38:09Z",
   "gitCommit": "326cd99181b8d6d80805003a80a580ddb30f9d39",
-  "updatedAt": "2026-06-24T11:39:13Z"
+  "awxJob": null,
+  "awxStatus": null,
+  "awxAttempts": 0,
+  "reason": null,
+  "argoCD": {
+    "sync": "Synced",
+    "health": "Progressing"
+  },
+  "application": {
+    "name": "practicum-env-marina-git-143809",
+    "replicas": 1,
+    "readyReplicas": 1,
+    "url": "http://practicum-env-marina-git-143809.d8case.ru",
+    "ingressReady": true
+  },
+  "virtualMachine": {
+    "name": "practicum-env-marina-git-143809-vm",
+    "phase": "Pending",
+    "ip": "10.66.0.32",
+    "agentReady": false,
+    "guestReady": false,
+    "cpu": "1 core, 5%",
+    "memory": "512Mi",
+    "disk": "768Mi",
+    "image": "practicum-alpine-golden-3-23-v2",
+    "access": {
+      "username": "ansible",
+      "authentication": "SSH key",
+      "identityFile": "local/practicum-ssh/id_ed25519",
+      "command": "d8 v ssh ansible@practicum-env-marina-git-143809-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
+    }
+  },
+  "updatedAt": "2026-06-24T11:39:45Z"
 }
