@@ -21,6 +21,11 @@ URL source image в Git
 стенде опубликованы и сохранены `v1` и `v2`; `v3` приведена как безопасный
 пример следующего выпуска.
 
+Перед любым push в Gitea синхронизируйте рабочую копию с
+`practicum-gitea/main`. Это особенно важно для общего demo-репозитория:
+controller self-service также пишет в `main` служебные status-коммиты. Никогда
+не используйте force-push.
+
 ```plantuml
 @startuml
 title Управление golden image: Git -> Argo CD -> DVP -> AWX -> новые VM
@@ -46,7 +51,7 @@ participant "Новая tenant VM" as TenantVM
 
 Admin -> LocalGit: Изменяет manifest исходного образа\nsource-image-v3.yaml\nURL, версия, checksum при необходимости
 Admin -> LocalGit: Создаёт manifests builder disk и builder VM v3
-Admin -> LocalGit: git add / git commit / git push
+Admin -> LocalGit: git add / git commit /\ngit fetch / git rebase / git push
 LocalGit -> Gitea: Публикует commit в main
 
 Gitea -> Webhook: Push event
@@ -96,7 +101,7 @@ activeGoldenImage:
   practicum-alpine-golden-3-23-v3
 end note
 
-Admin -> LocalGit: git commit / git push
+Admin -> LocalGit: git commit /\ngit fetch / git rebase / git push
 LocalGit -> Gitea: Commit promotion
 Gitea -> Webhook: Push event
 Webhook -> Argo: Уведомление о новой revision
@@ -123,7 +128,7 @@ TenantVM --> Developer: VM создана из v3
 
 opt Если v3 требует отката
     Admin -> LocalGit: Меняет activeGoldenImage обратно на v2
-    Admin -> LocalGit: git commit / git push
+    Admin -> LocalGit: git commit /\ngit fetch / git rebase / git push
     LocalGit -> Gitea: Commit rollback
     Gitea -> Webhook: Push event
     Webhook -> Argo: Уведомление о новой revision
@@ -342,14 +347,20 @@ activeGoldenImage: practicum-alpine-golden-3-23-v1
 
 ```bash
 git fetch practicum-gitea main
-git pull --rebase practicum-gitea main
+git pull --ff-only practicum-gitea main
 
 $EDITOR gitops/environments/practicum/golden-images/catalog.yaml
 git diff
 git add gitops/environments/practicum/golden-images/catalog.yaml
 git commit -m "Rollback active golden image to v1"
+git fetch practicum-gitea main
+git rebase practicum-gitea/main
 git push practicum-gitea main
 ```
+
+Если push отклонён с `non-fast-forward`, ещё раз выполните `git fetch`,
+`git rebase practicum-gitea/main` и `git push`. Force-push запрещён: он может
+удалить commit controller с self-service status.
 
 После синхронизации:
 

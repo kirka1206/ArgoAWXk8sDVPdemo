@@ -1,6 +1,6 @@
 # Текущий статус
 
-Обновлено: 2026-06-23 MSK
+Обновлено: 2026-06-24 MSK
 
 ## Правило работы
 
@@ -57,8 +57,8 @@ DexAuthenticator имеет состояние `2/2`.
 - source `practicum-alpine-base-3-23-v1`: Ready;
 - immutable `practicum-alpine-golden-3-23-v1`: Ready;
 - immutable `practicum-alpine-golden-3-23-v2`: Ready;
-- active image: v1; временно переключён для live-демонстрации 2026-06-23,
-  образ v2 остаётся `Ready` и должен быть возвращён как активный после показа;
+- active image: v2; `practicum-alpine-golden-3-23-v2` подтверждён текущим
+  значением ConfigMap `practicum-golden-image-catalog`;
 - AWX workflow job `40`: successful;
 - оба builder VM остановлены, ресурсы минимальные.
 - сценарий `scenarios/d8case/02-golden-image-lifecycle.md` дополнен
@@ -107,6 +107,12 @@ DexAuthenticator имеет состояние `2/2`.
 - итоговый status Git-сценария читается через `git fetch` и
   `git show FETCH_HEAD:...`, а не через `git pull --rebase`, чтобы
   незакоммиченные локальные файлы не блокировали проверку результата;
+- Git self-service сценарий дополнен двумя PlantUML блок-схемами: общей
+  цепочкой и детальной обработкой request/action, а также полной
+  sequence-диаграммой создания, настройки, retry AWX и GitOps cleanup;
+- после практического прогона сценария уточнено правило concurrent commits:
+  перед каждым push в `practicum-gitea/main` выполнять `git fetch` и
+  `git rebase practicum-gitea/main`; force-push запрещён;
 - для VM-профилей status и portal показывают пользователя `ansible`, SSH key
   authentication и готовую команду `d8 v ssh`; секреты в Git не добавляются;
 - обработчик временной ошибки Gitea сохраняет AWX job, attempts и runtime-поля
