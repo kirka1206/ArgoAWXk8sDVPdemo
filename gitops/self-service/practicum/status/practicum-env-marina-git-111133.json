@@ -10,7 +10,7 @@
   "expiresAt": "2026-06-24T10:11:33Z",
   "gitCommit": "3190b4e41ac0f22f19174534680e077cae78f3a7",
   "awxJob": 108,
-  "awxStatus": "pending",
+  "awxStatus": "running",
   "awxAttempts": 1,
   "reason": null,
   "argoCD": {
@@ -41,5 +41,5 @@
       "command": "d8 v ssh ansible@practicum-env-marina-git-111133-vm --namespace practicum-tks --identity-file local/practicum-ssh/id_ed25519 --local-ssh"
     }
   },
-  "updatedAt": "2026-06-24T08:22:08Z"
+  "updatedAt": "2026-06-24T08:22:38Z"
 }
